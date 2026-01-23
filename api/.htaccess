@@ -1,0 +1,41 @@
+# Configuration Apache pour l'API REST
+# Note: Ce fichier fonctionne uniquement si mod_rewrite est activé sur Free
+# Si mod_rewrite n'est pas disponible, utilisez les URLs avec ?endpoint=
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirection de toutes les requêtes vers index.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^v1/(.*)$ v1/index.php?endpoint=$1 [QSA,L]
+
+</IfModule>
+
+# Sécurité: Désactiver l'affichage des erreurs PHP
+php_flag display_errors Off
+php_flag display_startup_errors Off
+
+# Sécurité: Headers de sécurité
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "DENY"
+    Header set X-XSS-Protection "1; mode=block"
+
+    # CORS - À adapter selon vos besoins
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>
+
+# Empêcher l'accès direct aux fichiers sensibles
+<FilesMatch "\.(inc|config|conf)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Désactiver le listing des répertoires
+Options -Indexes
+
+# Forcer l'encodage UTF-8
+AddDefaultCharset UTF-8

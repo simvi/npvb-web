@@ -1,0 +1,26 @@
+# Logs
+logs/
+*.log
+
+# Configuration sensible (si vous externalisez les credentials)
+config/database.local.php
+.env
+.env.local
+
+# Fichiers temporaires
+*.tmp
+*.temp
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Backup
+*.bak
+*.backup
+
+# Cache (si implémenté)
+cache/
