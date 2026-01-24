@@ -8,45 +8,84 @@ if ($ErreurDonnees["Login"]){print("\t<tr>\n\t\t<td><p class=\"ModifError\">".$E
 ?>
 	<tr>
 		<td>
-				
+
+<?php
+// ============================================================
+// Affichage des messages actifs de la page d'accueil
+// ============================================================
+$query_messages = "SELECT * FROM NPVB_Messages WHERE is_active = 1 ORDER BY created_at DESC LIMIT 5";
+$result_messages = mysql_query($query_messages, $sdblink);
+$has_messages = false;
+
+if ($result_messages && mysql_num_rows($result_messages) > 0) {
+	$has_messages = true;
+?>
+	<div style="background: #fffacd; border: 2px solid #ffa500; border-radius: 5px; padding: 15px; margin-bottom: 20px;">
+		<h3 style="margin-top: 0; color: #ff6600; border-bottom: 2px solid #ffa500; padding-bottom: 10px;">
+			ðŸ“¢ Messages importants
+		</h3>
+<?php
+	while ($message = mysql_fetch_object($result_messages)) {
+?>
+		<div style="margin-bottom: 15px; padding: 10px; background: white; border-left: 4px solid #ffa500;">
+<?php if ($message->title): ?>
+			<h4 style="margin: 0 0 10px 0; color: #003366;">
+				<?php echo htmlspecialchars($message->title, ENT_QUOTES, 'ISO-8859-1'); ?>
+			</h4>
+<?php endif; ?>
+			<div style="line-height: 1.6;">
+				<?php echo $message->content; ?>
+			</div>
+			<div style="font-size: 11px; color: #666; margin-top: 5px; font-style: italic;">
+				PubliÃ© le <?php echo date('d/m/Y', strtotime($message->created_at)); ?>
+			</div>
+		</div>
+<?php
+	}
+?>
+	</div>
+<?php
+}
+?>
+
 <?
 if (!$Joueur){
 	//********************************************************************************************************************************************//
-	//											Ici la page d'accueil pour les personnes non identifiées 										  //
+	//											Ici la page d'accueil pour les personnes non identifiï¿½es 										  //
 	//********************************************************************************************************************************************//
 	
 ?>
 		
-		<p><em>Mise à jour : 1 Novembre 2025</em></p>
-		<p align="center">Bienvenue à tous les sportifs !<br>
+		<p><em>Mise ï¿½ jour : 1 Novembre 2025</em></p>
+		<p align="center">Bienvenue ï¿½ tous les sportifs !<br>
 		<p align="center"><em>Le NPVB est un club de volley loisirs dont les mots d'ordre principaux sont</em>
-<p align="center"><em>« détente, plaisir et progrès collectif ».</em><br><br>
+<p align="center"><em>ï¿½ dï¿½tente, plaisir et progrï¿½s collectif ï¿½.</em><br><br>
 
-		<h3>Présentation générale</h3>
-		<p>Historiquement situé dans l'Est nantais, le club ouvre ses portes à toute personne <strong>majeure maîtrisant les règles et gestes de base</strong> et désirant jouer au volleyball dans un cadre loisir mais sportif.
+		<h3>Prï¿½sentation gï¿½nï¿½rale</h3>
+		<p>Historiquement situï¿½ dans l'Est nantais, le club ouvre ses portes ï¿½ toute personne <strong>majeure maï¿½trisant les rï¿½gles et gestes de base</strong> et dï¿½sirant jouer au volleyball dans un cadre loisir mais sportif.
 		</p>
-		<p>Nous disposons actuellement de 4 créneaux d'entraînement hebdomadaires :
+		<p>Nous disposons actuellement de 4 crï¿½neaux d'entraï¿½nement hebdomadaires :
 		<ul>
-			<li>Lundi, Mercredi et Jeudi de 20 h à 22 h au <a href="https://www.google.com/maps/d/u/0/viewer?mid=1beBtdHzJw2FiLivhUvttzyMPtulFTew6&ll=47.23101189185592%2C-1.5257359986317987&z=15" target="_blank">gymnase Noé Lambert</a></strong> (boulevard des Poilus)
+			<li>Lundi, Mercredi et Jeudi de 20 h ï¿½ 22 h au <a href="https://www.google.com/maps/d/u/0/viewer?mid=1beBtdHzJw2FiLivhUvttzyMPtulFTew6&ll=47.23101189185592%2C-1.5257359986317987&z=15" target="_blank">gymnase Noï¿½ Lambert</a></strong> (boulevard des Poilus)
 			</li>
-			<li>Mardi de 21 h à 23 h au <a href="https://www.google.com/maps/d/u/0/viewer?mid=1beBtdHzJw2FiLivhUvttzyMPtulFTew6&ll=47.23796131997372%2C-1.509853378467405&z=15" target="_blank">gymnase Bottière-Chénaie</a></strong> (route de Sainte Luce - Tramway L1, arrêt Souillarderie)
+			<li>Mardi de 21 h ï¿½ 23 h au <a href="https://www.google.com/maps/d/u/0/viewer?mid=1beBtdHzJw2FiLivhUvttzyMPtulFTew6&ll=47.23796131997372%2C-1.509853378467405&z=15" target="_blank">gymnase Bottiï¿½re-Chï¿½naie</a></strong> (route de Sainte Luce - Tramway L1, arrï¿½t Souillarderie)
 			</li>
 			
-			<br>Ces séances de progrès se décomposent en 3 phases : échauffement, travail de technique individuelle ou collective puis petits matchs.
+			<br>Ces sï¿½ances de progrï¿½s se dï¿½composent en 3 phases : ï¿½chauffement, travail de technique individuelle ou collective puis petits matchs.
 		</ul>
 		</p>
 
-		<p>Pour ceux qui aiment la compétition loisir, 11 équipes sont engagées dans les championnats détente de Loire-Atlantique (plus de 1000 licenciés) :</p>
+		<p>Pour ceux qui aiment la compï¿½tition loisir, 11 ï¿½quipes sont engagï¿½es dans les championnats dï¿½tente de Loire-Atlantique (plus de 1000 licenciï¿½s) :</p>
 		
 		<ul>
-		 <li>2 équipes mixtes participent au <strong>championnat Ufolep</strong> organisé par <a href="https://www.ufolep44.com/activites-sportives/volley-ball" target="_blank">le volley-ball à l'UFOLEP 44</a></li>
-		 <li>7 équipes mixtes et 2 équipes féminines participent aux <strong>championnats Competlib</strong> organisés par le <a href="https://www.comite44volleyball.org/" target="_blank">Comité Départemental 44 de Volley-Ball</a></li>
+		 <li>2 ï¿½quipes mixtes participent au <strong>championnat Ufolep</strong> organisï¿½ par <a href="https://www.ufolep44.com/activites-sportives/volley-ball" target="_blank">le volley-ball ï¿½ l'UFOLEP 44</a></li>
+		 <li>7 ï¿½quipes mixtes et 2 ï¿½quipes fï¿½minines participent aux <strong>championnats Competlib</strong> organisï¿½s par le <a href="https://www.comite44volleyball.org/" target="_blank">Comitï¿½ Dï¿½partemental 44 de Volley-Ball</a></li>
 		</ul>
 
-		<p>Les matchs se déroulent en semaine (aucun matchs le week-end), à la fréquence d'une fois par semaine pour les équipes mixtes en Competlib, d'une fois toutes les deux semaines pour les équipes en Ufolep et d'une fois par mois pour les équipes féminines en Competlib.</p>
+		<p>Les matchs se dï¿½roulent en semaine (aucun matchs le week-end), ï¿½ la frï¿½quence d'une fois par semaine pour les ï¿½quipes mixtes en Competlib, d'une fois toutes les deux semaines pour les ï¿½quipes en Ufolep et d'une fois par mois pour les ï¿½quipes fï¿½minines en Competlib.</p>
 
 <!--
-		<p>Le NPVB organise également chaque année au printemps son Tournoi Green Volley. Pour plus d'infos, n'hésitez pas à en discuter avec les membres du codir, ou envoyez-nous un mail ^^</p>
+		<p>Le NPVB organise ï¿½galement chaque annï¿½e au printemps son Tournoi Green Volley. Pour plus d'infos, n'hï¿½sitez pas ï¿½ en discuter avec les membres du codir, ou envoyez-nous un mail ^^</p>
 -->
 
 		<br />
@@ -55,14 +94,14 @@ if (!$Joueur){
 		<strong> !ATTENTION</strong></p>
 
 		<br />
-		<h3>Note à l'attention des personnes souhaitant nous rejoindre</h3>
-		<p>Vous êtes très nombreuses et nombreux à nous solliciter chaque année et nous ne pouvons malheureusement pas accepter tout le monde. <strong>Nous ne faisons pas de recrutement en cours d’année</strong> : si vous souhaitez nous rejoindre pour la saison prochaine, merci de nous envoyer un mail à <a href="mailto:nantespvb@gmail.com">l’adresse de messagerie du club</a> où nous collectons vos demandes pour vous inviter, en fonction des places disponibles, aux séances d’essai qui se déroulent généralement fin Août, début Septembre.</p>
+		<h3>Note ï¿½ l'attention des personnes souhaitant nous rejoindre</h3>
+		<p>Vous ï¿½tes trï¿½s nombreuses et nombreux ï¿½ nous solliciter chaque annï¿½e et nous ne pouvons malheureusement pas accepter tout le monde. <strong>Nous ne faisons pas de recrutement en cours dï¿½annï¿½e</strong> : si vous souhaitez nous rejoindre pour la saison prochaine, merci de nous envoyer un mail ï¿½ <a href="mailto:nantespvb@gmail.com">lï¿½adresse de messagerie du club</a> oï¿½ nous collectons vos demandes pour vous inviter, en fonction des places disponibles, aux sï¿½ances dï¿½essai qui se dï¿½roulent gï¿½nï¿½ralement fin Aoï¿½t, dï¿½but Septembre.</p>
 
-<p>Nous vous rappelons que nous sommes un club loisir et que <strong>nous ne dispensons pas de cours</strong> (nous n’avons pas d’entraîneurs). Il est donc nécessaire d’avoir <strong>déjà pratiqué le volley-ball</strong> et de <strong>maîtriser les gestes de base</strong> (passe, manchette, attaque, bloc et service) pour pouvoir nous rejoindre. <strong>Nous ne prenons pas non plus les mineurs</strong> : vous trouverez l’ensemble des clubs formateurs sur le site du <a href="https://www.ffvbbeach.org/ffvbapp/adressier/rech_aff.php?ws_new_ligue=0&ws_new_comit=044&ws_list_dep=44&id_club=" target="_blank">comité départemental FFVB</a> ou sur le site de <a href="https://www.ufolep44.com/activites-sportives/volley-ball" target="_blank">l'UFOLEP</a>.</p>
+<p>Nous vous rappelons que nous sommes un club loisir et que <strong>nous ne dispensons pas de cours</strong> (nous nï¿½avons pas dï¿½entraï¿½neurs). Il est donc nï¿½cessaire dï¿½avoir <strong>dï¿½jï¿½ pratiquï¿½ le volley-ball</strong> et de <strong>maï¿½triser les gestes de base</strong> (passe, manchette, attaque, bloc et service) pour pouvoir nous rejoindre. <strong>Nous ne prenons pas non plus les mineurs</strong> : vous trouverez lï¿½ensemble des clubs formateurs sur le site du <a href="https://www.ffvbbeach.org/ffvbapp/adressier/rech_aff.php?ws_new_ligue=0&ws_new_comit=044&ws_list_dep=44&id_club=" target="_blank">comitï¿½ dï¿½partemental FFVB</a> ou sur le site de <a href="https://www.ufolep44.com/activites-sportives/volley-ball" target="_blank">l'UFOLEP</a>.</p>
 
 		<br />
 		<h3>Supporterre</h3>
-		<p>Le NPVB est membre de l'association nantaise <a href="https://www.supporterre.fr/" target="_blank">SupporTerre</a>, engagée pour rendre le sport plus responsable, en y favorisant les actions sociales et environnementales.</p>
+		<p>Le NPVB est membre de l'association nantaise <a href="https://www.supporterre.fr/" target="_blank">SupporTerre</a>, engagï¿½e pour rendre le sport plus responsable, en y favorisant les actions sociales et environnementales.</p>
 
 		<p><a href="Documents/2024_charte_responsable_alimentation_comp.pdf" target="ailleurs">Charte d'achats responsables dans l'alimentation.</a></p>
 
@@ -77,35 +116,35 @@ if (!$Joueur){
 <?
 }else{
 	//********************************************************************************************************************************************//
-	//											Ici la page d'accueil pour les utilisateurs identifiés	 										  //
+	//											Ici la page d'accueil pour les utilisateurs identifiï¿½s	 										  //
 	//********************************************************************************************************************************************//
 
 ?>
 		
 		<br />
-		<h3>Inscription aux séances</h3>
+		<h3>Inscription aux sï¿½ances</h3>
 
-		<p>Vous êtes désormais connecté et pouvez renseigner vos présences dans le calendrier. Par défaut, vous êtes absent. Il vous est donc demandé de renseigner vos présences, et cela au moins trois jours avant un événement. Pensez également à vous désinscrire dans l'éventualité où vous ne pourriez pas être présent, le plus tôt possible étant le mieux pour que les autres adhérents puissent disposer d'une place libre.</p>
+		<p>Vous ï¿½tes dï¿½sormais connectï¿½ et pouvez renseigner vos prï¿½sences dans le calendrier. Par dï¿½faut, vous ï¿½tes absent. Il vous est donc demandï¿½ de renseigner vos prï¿½sences, et cela au moins trois jours avant un ï¿½vï¿½nement. Pensez ï¿½galement ï¿½ vous dï¿½sinscrire dans l'ï¿½ventualitï¿½ oï¿½ vous ne pourriez pas ï¿½tre prï¿½sent, le plus tï¿½t possible ï¿½tant le mieux pour que les autres adhï¿½rents puissent disposer d'une place libre.</p>
 
-		<p>Les inscriptions pour les matchs en championnat sont également possibles : seuls les membres des équipes concernées peuvent renseigner leur présence. Contactez nous ou votre capitaine d'équipe si vous ne parvenez pas à vous inscrire.</p>
+		<p>Les inscriptions pour les matchs en championnat sont ï¿½galement possibles : seuls les membres des ï¿½quipes concernï¿½es peuvent renseigner leur prï¿½sence. Contactez nous ou votre capitaine d'ï¿½quipe si vous ne parvenez pas ï¿½ vous inscrire.</p>
 
-		<p><a href="Documents/calendrier.pdf" target="ailleurs">Voici un petit guide qui vous explique comment noter votre présence à un événement.</a></p>
+		<p><a href="Documents/calendrier.pdf" target="ailleurs">Voici un petit guide qui vous explique comment noter votre prï¿½sence ï¿½ un ï¿½vï¿½nement.</a></p>
 	    
 		<br />
-		<h3>Pendant les séances</h3>
+		<h3>Pendant les sï¿½ances</h3>
 
-		<p>Merci de participer au montage et démontage des terrains pour que chacun puisse bénéficier d'un plus grand temps de jeu. Nous vous rappelons également que <strong>vous devez apporter votre ballon aux séances</strong> ; si vous n'en avez pas, vous pouvez en acheter un à tarif préférentiel sur <a href="https://www.helloasso.com/associations/npvb/boutiques/boutique-npvb-2025-2026" target="_blank">la boutique du club.</a> </p>
+		<p>Merci de participer au montage et dï¿½montage des terrains pour que chacun puisse bï¿½nï¿½ficier d'un plus grand temps de jeu. Nous vous rappelons ï¿½galement que <strong>vous devez apporter votre ballon aux sï¿½ances</strong> ; si vous n'en avez pas, vous pouvez en acheter un ï¿½ tarif prï¿½fï¿½rentiel sur <a href="https://www.helloasso.com/associations/npvb/boutiques/boutique-npvb-2025-2026" target="_blank">la boutique du club.</a> </p>
 
-		<p>Pour toute autre question, n'hésitez pas à consulter le <a href="Documents/2025_Livret_accueil.pdf" target="ailleurs">livret d'accueil du NPVB.</a></p>
+		<p>Pour toute autre question, n'hï¿½sitez pas ï¿½ consulter le <a href="Documents/2025_Livret_accueil.pdf" target="ailleurs">livret d'accueil du NPVB.</a></p>
 
 		<br />
-   		<h3>Réinscription 2025-2026</h3>
+   		<h3>Rï¿½inscription 2025-2026</h3>
 <iframe id="haWidget" allowtransparency="true" src="https://www.helloasso.com/associations/npvb/adhesions/adhesion-inscription-npvb-2025-2026/widget-bouton" style="width: 100%; height: 70px; border: none;" onload="window.addEventListener( 'message', e => { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget'); haWidgetElement.height = dataHeight + 'px'; } )" ></iframe>
 
 		<br />
 		<h3>Documents</h3>
 		<ul>
-			<li><a href="Documents/2025_Reglement_interieur_NPVB.pdf" target="_blank">Réglement intérieur du club</a></li>
+			<li><a href="Documents/2025_Reglement_interieur_NPVB.pdf" target="_blank">Rï¿½glement intï¿½rieur du club</a></li>
 			<li><a href="Documents/STATUTS_2022.pdf" target="_blank">Statuts du club</a></li>
 			<li><a href="Documents/iban_NANTES_PLAISIR_DU_VOLLEY_BALL_00011507001.pdf" target="_blank">IBAN / RIB du compte bancaire du NPVB</a></li>
 			<li><a href="Documents/240703_CR_AG_NPVB.pdf" target="_blank"><strong>Compte-rendu de l'AG du 03/07/2024</strong></a></li>
@@ -115,7 +154,7 @@ if (!$Joueur){
 		<br />
    		<h3>Applications NPVB</h3>
 		
-		<p>Inscrivez-vous aux matchs et entraînements directement avec votre téléphone !</p>
+		<p>Inscrivez-vous aux matchs et entraï¿½nements directement avec votre tï¿½lï¿½phone !</p>
 		<div class="applications">
 			<a href="https://apps.apple.com/us/app/nantes-pvb/id793137223"><img src="./Images/applestore.svg" alt="App Apple Store"/></a>
 			<a href="https://play.google.com/store/apps/details?id=npvb.appid"><img src="./Images/googleplay.svg" alt="App Google Play"/></a>
@@ -127,9 +166,9 @@ if (!$Joueur){
 		<p><u>Pour tous renseignements</u> :</p>
 		<ul>
 		  <li>Messagerie du club : <a href="mailto:nantespvb@gmail.com">nantespvb@gmail.com</a></li>
-		  <li>Trésorerie : <a href="mailto:npvbtreso@gmail.com">npvbtreso@gmail.com</a></li>
-		  <li>Convivialité : <a href="mailto:npvbconviv@gmail.com">npvbconviv@gmail.com</a></li>
-		  <li>Équipe Green : <a href="mailto:greenvolleynpvb@gmail.com">greenvolleynpvb@gmail.com</a>		  </li>
+		  <li>Trï¿½sorerie : <a href="mailto:npvbtreso@gmail.com">npvbtreso@gmail.com</a></li>
+		  <li>Convivialitï¿½ : <a href="mailto:npvbconviv@gmail.com">npvbconviv@gmail.com</a></li>
+		  <li>ï¿½quipe Green : <a href="mailto:greenvolleynpvb@gmail.com">greenvolleynpvb@gmail.com</a>		  </li>
 		</ul>
 		<br />
 		
@@ -141,7 +180,7 @@ if (!$Joueur){
 		if ($ListeAnniversaires)
 		{
 ?>
-		<p>Pour la discrétion c'est raté!!!!!
+		<p>Pour la discrï¿½tion c'est ratï¿½!!!!!
 		<br/>Aujourd'hui, c'est l'anniversaire de <?=$ListeAnniversaires?>.</p>
 <?
 		}
@@ -151,7 +190,7 @@ if (!$Joueur){
 <?php
 if($Joueur->DieuToutPuissant=="o"){
 	//********************************************************************************************************************************************//
-	//											Complément éventuel pour les super-utilisateurs			 										  //
+	//											Complï¿½ment ï¿½ventuel pour les super-utilisateurs			 										  //
 	//********************************************************************************************************************************************//
 ?>
 		

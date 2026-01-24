@@ -58,7 +58,7 @@ if (!isset($Page) || empty($Page)) {
 $pages_autorisees = array(
 	'accueil', 'calendrier', 'jour', 'membres', 'Erreur404', 'maintenance',
 	'adminstats', 'adminfichejour', 'adminevenements', 'adminequipes',
-	'adminmembres', 'adminaccueil', 'adminnewmessage', 'adminfichemembre'
+	'adminmembres', 'adminaccueil', 'adminnewmessage', 'adminfichemembre', 'adminmessages'
 );
 
 // Vérifier que la page demandée est autorisée
@@ -69,7 +69,7 @@ if (!in_array($Page, $pages_autorisees)) {
 // CORRECTIF SÉCURITÉ #3: Contrôle d'accès corrigé avec break appropriés
 $pages_admin = array('adminstats', 'adminfichejour', 'adminevenements',
                      'adminequipes', 'adminmembres', 'adminaccueil',
-                     'adminnewmessage', 'adminfichemembre');
+                     'adminnewmessage', 'adminfichemembre', 'adminmessages');
 
 if (in_array($Page, $pages_admin)) {
 	// Vérification admin stricte
@@ -210,6 +210,7 @@ if (isset($Joueur) && is_object($Joueur) && $Joueur->DieuToutPuissant=="o"){
 		<li<?php echo ((($Page=="adminevenements")||($Page=="adminfichejour"))?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=adminevenements">Admin.Evenements</a></li>
 		<li<?php echo ((($Page=="adminmembres")||($Page=="adminfichemembre"))?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=adminmembres">Admin.Membres</a></li>
 		<li<?php echo ((($Page=="adminaccueil")||($Page=="adminaccueil"))?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=adminaccueil">Admin.Accueil</a></li>
+		<li<?php echo (($Page=="adminmessages")?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=adminmessages">Admin.Messages</a></li>
 	</ul>
 <?php
 }
