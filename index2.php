@@ -25,7 +25,7 @@ if (!$ConnectDB) $Page="maintenance";
 
 // CORRECTIF SÉCURITÉ #1: Suppression eval() - Whitelist des variables autorisées
 // Compatible PHP 4 - Pas d'utilisation de filter_input()
-$allowed_vars = array('Page', 'Pseudonyme', 'Password', 'Action', 'Equipe', 'Jour', 'Mois', 'Annee', 'DateHeure', 'Libelle');
+$allowed_vars = array('Page', 'Pseudonyme', 'Password', 'Action', 'Equipe', 'Jour', 'Mois', 'Annee', 'DateHeure', 'Libelle', 'PageMsg');
 
 if(isset($_POST) && is_array($_POST)) {
 	foreach($_POST as $key => $val) {
