@@ -160,7 +160,24 @@ if ($resource == 'members') {
         $result = mysql_query($query);
 
         if ($result && mysql_num_rows($result) > 0) {
-            echo json_encode(array('success' => true, 'data' => array(mysql_fetch_assoc($result))));
+            $member = mysql_fetch_assoc($result);
+
+            // Ajouter le nom de fichier Photo (pas stocké en DB)
+            $member['Photo'] = $member['Pseudonyme'];
+
+            // Récupérer les appartenances pour ce membre
+            $appQuery = "SELECT Equipe FROM NPVB_Appartenance WHERE Joueur='$username'";
+            $appResult = mysql_query($appQuery);
+
+            $appartenances = array();
+            while ($appRow = mysql_fetch_assoc($appResult)) {
+                $appartenances[] = array('Libelle' => $appRow['Equipe']);
+            }
+
+            // Ajouter les appartenances au membre
+            $member['Appartenances'] = $appartenances;
+
+            echo json_encode(array('success' => true, 'data' => array($member)));
         } else {
             echo json_encode(array('success' => false, 'error' => array('code' => 'NOT_FOUND', 'message' => 'Member not found')));
         }
@@ -171,7 +188,26 @@ if ($resource == 'members') {
                   FROM NPVB_Joueurs WHERE etat='V' ORDER BY Nom, Prenom";
         $result = mysql_query($query);
         $data = array();
-        while ($row = mysql_fetch_assoc($result)) $data[] = array($row);
+
+        while ($row = mysql_fetch_assoc($result)) {
+            // Ajouter le nom de fichier Photo (pas stocké en DB)
+            $row['Photo'] = $row['Pseudonyme'];
+
+            // Récupérer les appartenances pour ce membre
+            $pseudo = mysql_real_escape_string($row['Pseudonyme']);
+            $appQuery = "SELECT Equipe FROM NPVB_Appartenance WHERE Joueur='$pseudo'";
+            $appResult = mysql_query($appQuery);
+
+            $appartenances = array();
+            while ($appRow = mysql_fetch_assoc($appResult)) {
+                $appartenances[] = array('Libelle' => $appRow['Equipe']);
+            }
+
+            // Ajouter les appartenances au membre
+            $row['Appartenances'] = $appartenances;
+
+            $data[] = array($row);
+        }
 
         echo json_encode(array('success' => true, 'data' => $data));
     }
@@ -212,7 +248,7 @@ if ($resource == 'events') {
         $libelle = mysql_real_escape_string($libelle);
 
         $query = "SELECT DateHeure, Libelle, Etat, Titre, Intitule, Lieu, Adresse,
-                         Adversaire, Analyse, InscritsMax FROM NPVB_Evenements
+                         Adversaire, Domicile, Resultat, Analyse, InscritsMax FROM NPVB_Evenements
                   WHERE DateHeure='$dateHeure' AND Libelle='$libelle'";
         $result = mysql_query($query);
 
@@ -224,7 +260,7 @@ if ($resource == 'events') {
     } else {
         // GET /events (tous)
         $query = "SELECT DateHeure, Libelle, Etat, Titre, Intitule, Lieu, Adresse,
-                         Adversaire, Analyse, InscritsMax FROM NPVB_Evenements
+                         Adversaire, Domicile, Resultat, Analyse, InscritsMax FROM NPVB_Evenements
                   WHERE DateHeure > 20190000000000 AND etat != 'I' ORDER BY DateHeure ASC";
         $result = mysql_query($query);
         $data = array();
