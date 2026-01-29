@@ -35,8 +35,8 @@ if (isset($_POST['GenererLienReset']) && $_POST['GenererLienReset'] == 'o') {
 				$PseudoEscaped = mysql_real_escape_string($PseudoMembre);
 
 				// Insérer le token
-				$query = "INSERT INTO NPVB_PasswordReset (Token, Pseudonyme, DateCreation, DateExpiration, Utilise, IpDemande, EmailEnvoye)
-				          VALUES ('$Token', '$PseudoEscaped', '$DateCreation', '$DateExpiration', 'n', '$IpDemande', 'n')";
+				$query = "INSERT INTO NPVB_PasswordReset (Token, Pseudonyme, DateCreation, DateExpiration, Utilise, IpDemande)
+				          VALUES ('$Token', '$PseudoEscaped', '$DateCreation', '$DateExpiration', 'n', '$IpDemande')";
 
 				if (mysql_query($query, $sdblink)) {
 					// Construire le lien complet
