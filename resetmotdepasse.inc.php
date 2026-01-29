@@ -1,9 +1,6 @@
 <?
 if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
 
-// Inclure la classe d'envoi d'emails Brevo API
-include('brevo_api.inc.php');
-
 // Note: La verification de connexion est geree dans index.php avant l'envoi de contenu
 
 $MessageConfirmation = "";
@@ -65,19 +62,6 @@ if ($TokenValide && isset($_POST['ChangerMotDePasse']) && $_POST['ChangerMotDePa
 				// Marquer le token comme utilise
 				MarquerTokenUtilise($Token);
 
-				// Recuperer l'email du membre
-				$queryEmail = "SELECT Email FROM NPVB_Joueurs WHERE Pseudonyme='$PseudoEscaped'";
-				$resultEmail = mysql_query($queryEmail, $sdblink);
-
-				if ($resultEmail && mysql_num_rows($resultEmail) > 0) {
-					$rowEmail = mysql_fetch_assoc($resultEmail);
-					$EmailMembre = $rowEmail['Email'];
-
-					// Envoyer un email de confirmation via Brevo API
-					if ($EmailMembre) {
-						EnvoyerEmailBrevo($EmailMembre, $SujetMailConfirmationReset, $CorpsMailConfirmationReset, "simon.viaud@gmail.com", "NPVB");
-					}
-				}
 
 				// Message de succes
 				$MessageConfirmation = "Votre mot de passe a ete modifie avec succes !";
@@ -116,8 +100,7 @@ if ($TokenValide && isset($_POST['ChangerMotDePasse']) && $_POST['ChangerMotDePa
 				<h3>Mot de passe modifi&eacute; !</h3>
 				<p><?= $MessageConfirmation ?></p>
 				<p>
-					Un email de confirmation vous a &eacute;t&eacute; envoy&eacute;.
-				</p>
+					</p>
 				<p>
 					Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.
 				</p>

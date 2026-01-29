@@ -42,7 +42,7 @@ if (isset($_POST['GenererLienReset']) && $_POST['GenererLienReset'] == 'o') {
 					// Construire le lien complet
 					$LienGenere = "http://" . $_SERVER['HTTP_HOST'] . "/index.php?Page=resetmotdepasse&Token=" . $Token;
 				} else {
-					$ErreurGeneration = "Erreur lors de la g&eacute;n&eacute;ration du lien.";
+					$ErreurGeneration = "Erreur SQL : " . mysql_error($sdblink) . " (Code: " . mysql_errno($sdblink) . ")";
 				}
 			} else {
 				$ErreurGeneration = "Ce membre n'a pas d'adresse email.";
