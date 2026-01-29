@@ -20,9 +20,11 @@ $LiensLettres="";
 foreach($LettresNoms as $Lettre=>$Presente){
 	$LiensLettres .= (($LiensLettres)?(($Lettre=="N")?"<br/>":" - "):"").(($Presente)?"<a href=\"#Lettre".$Lettre."\">".$Lettre."</a>":$Lettre);
 }
-?>
 
-<form action="<?=$PHP_SELF?>" method="get">
+// Note: Le système de réinitialisation de mot de passe se fait maintenant
+// directement depuis la fiche membre (adminfichemembre.inc.php)
+
+?><form action="<?=$PHP_SELF?>" method="get">
 	<b>Ajout d'un nouveau membre</b>
 	<input type="hidden" name="Page" value="adminfichemembre" />
 	<input type="submit" value="Ajouter" class="Bouton Action" />
@@ -101,7 +103,7 @@ foreach($Joueurs as $UnJoueur){
 				<tr>	
 					<td colspan="2" class="Colonne">
 					<table>
-<?	if ($Joueurs[$Membre]->DateNaissance<>"0000-00-00") {?>						<tr><td colspan="2">N�<?=($Joueurs[$Membre]->Sexe=="f")?"e":""?> le <?=substr($Joueurs[$Membre]->DateNaissance, 8, 2)?> <?=$montharray[(int)substr($Joueurs[$Membre]->DateNaissance, 5, 2)]?> <?=substr($Joueurs[$Membre]->DateNaissance, 0, 4)?></td></tr><?}?>
+<?	if ($Joueurs[$Membre]->DateNaissance<>"0000-00-00") {?>						<tr><td colspan="2">N�<?=($Joueurs[$Membre]->Sexe=="f")?"e":""?> le <?=substr($Joueurs[$Membre]->DateNaissance, 8, 2)?> <?=$montharray[(int)substr($Joueurs[$Membre]->DateNaissance, 5, 2)]?> <?=substr($Joueurs[$Membre]->DateNaissance, 0, 4)?></td></tr><?}?>
 <?	if ($Joueurs[$Membre]->Adresse<>"") {?>						<tr><td>Adresse: </td><td><?=$Joueurs[$Membre]->Adresse."<br/>".$Joueurs[$Membre]->CPVille?></td></tr><?}?>
 
 <?	if ($Joueurs[$Membre]->Profession<>"") {?>						

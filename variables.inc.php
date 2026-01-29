@@ -2,27 +2,37 @@
 if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
 
 //**********************************VARIABLES GLOBALES A PARAMETRABLES************************************************//
-//+++++++++expressions régulières: caractères autorisés (voir doc avant de changer)
-$EregTexteSeulement="[^a-zA-Z0-9_\ ',ç€@éêèùàâûîôäëïöüÂÄÎÏÔÖÛÜÊË-]";
+//+++++++++expressions rï¿½guliï¿½res: caractï¿½res autorisï¿½s (voir doc avant de changer)
+$EregTexteSeulement="[^a-zA-Z0-9_\ ',ï¿½@ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½-]";
 $EregTexteComplet="[$<>]";
 
-//++++++++++++++Durées
+//++++++++++++++Durï¿½es
 $FermetureEvenementAvant=4*24;//nombre d'heures avant l'event pour permettre sa fermeture
 $DureeEvenement=1;//nombre d'heures apres le debut event pour la saisie des resultats
 
 
 //++++++++++++++Membres
 $NombreMembresParLigne = 6;//a l'affichage des membres
-$MembreModifCoordonnes=true;//Attention, le bouton retour est à modifier si on met la valeur à vrai!!!
+$MembreModifCoordonnes=true;//Attention, le bouton retour est ï¿½ modifier si on met la valeur ï¿½ vrai!!!
 
-$SujetMailCreationCompte = "Votre compte a été créé sur le site de NPVB";
-$CorpsMailCreationCompte = "Bonjour,\n\nVotre compte a été créé pour accéder au calendrier de Nantes Plaisir du Volley Ball.\n\nvotre login: $Membre\nvotre mot de passe: $MotDePasse\n\nIdentifiez vous sur le site pour accéder à la liste des membres et saisir vos présences futures aux séances et aux matches, pour une meilleure gestion du club.\n\nVous pouvez changer vos coordonnées et votre mot de passe en visualisant vos coordonnées dans le menu 'Membres'.\nVous pouvez aussi choisir de ne pas diffuser vos coordonnées aux autres membres en cochant 'accord pour diffusion'='non'\n\nA très bientôt sur http://nantespvb.free.fr .\n\n ATTENTION. NE PAS REPONDRE A CET EMAIL : vous pouvez contacter nantespvb@gmail.com en cas de besoin";
-$SujetMailModifMotDePasse = "Votre mot de passe pour accéder au calendrier de NPVB a été changé";
-$CorpsMailModifMotDePasse = "Bonjour,\n\nVotre nouveau mot de passe pour accéder au calendrier de Nantes Plaisir du Volley Ball est: $MotDePasse\n\nJe vous rappelle que vous pouvez le modifier, ainsi que vos coordonnées, directement sur le site en visualisant votre fiche à partir du menu 'Membres'.\n\nA très bientôt sur http://nantespvb.free.fr .\n\n ATTENTION. NE PAS REPONDRE A CET EMAIL : vous pouvez contacter nantespvb@gmail.com en cas de besoin";
+$SujetMailCreationCompte = "Votre compte a ï¿½tï¿½ crï¿½ï¿½ sur le site de NPVB";
+$CorpsMailCreationCompte = "Bonjour,\n\nVotre compte a ï¿½tï¿½ crï¿½ï¿½ pour accï¿½der au calendrier de Nantes Plaisir du Volley Ball.\n\nvotre login: $Membre\nvotre mot de passe: $MotDePasse\n\nIdentifiez vous sur le site pour accï¿½der ï¿½ la liste des membres et saisir vos prï¿½sences futures aux sï¿½ances et aux matches, pour une meilleure gestion du club.\n\nVous pouvez changer vos coordonnï¿½es et votre mot de passe en visualisant vos coordonnï¿½es dans le menu 'Membres'.\nVous pouvez aussi choisir de ne pas diffuser vos coordonnï¿½es aux autres membres en cochant 'accord pour diffusion'='non'\n\nA trï¿½s bientï¿½t sur http://nantespvb.free.fr .\n\n ATTENTION. NE PAS REPONDRE A CET EMAIL : vous pouvez contacter nantespvb@gmail.com en cas de besoin";
+$SujetMailModifMotDePasse = "Votre mot de passe pour accï¿½der au calendrier de NPVB a ï¿½tï¿½ changï¿½";
+$CorpsMailModifMotDePasse = "Bonjour,\n\nVotre nouveau mot de passe pour accï¿½der au calendrier de Nantes Plaisir du Volley Ball est: $MotDePasse\n\nJe vous rappelle que vous pouvez le modifier, ainsi que vos coordonnï¿½es, directement sur le site en visualisant votre fiche ï¿½ partir du menu 'Membres'.\n\nA trï¿½s bientï¿½t sur http://nantespvb.free.fr .\n\n ATTENTION. NE PAS REPONDRE A CET EMAIL : vous pouvez contacter nantespvb@gmail.com en cas de besoin";
+
+//++++++++++++++Reinitialisation mot de passe
+$DureeValiditeTokenHeures = 24; // Duree de validite du lien (en heures) - 24h pour laisser le temps aux utilisateurs
+$LimiteDemandesParHeure = 3;   // Maximum de demandes de reset par heure (anti-spam)
+
+$SujetMailDemandeReset = "Reinitialisation de votre mot de passe NPVB";
+$CorpsMailDemandeReset = "Bonjour,\n\nVous avez demande la reinitialisation de votre mot de passe pour acceder au calendrier de Nantes Plaisir du Volley Ball.\n\nCliquez sur le lien ci-dessous pour definir un nouveau mot de passe :\n\nhttp://nantespvb.free.fr/index.php?Page=resetmotdepasse&Token=\$Token\n\nCe lien est valable pendant \$DureeValiditeTokenHeures heures.\n\nSi vous n'etes pas a l'origine de cette demande, ignorez cet email. Votre mot de passe actuel reste inchange.\n\nA tres bientot sur http://nantespvb.free.fr .\n\n ATTENTION. NE PAS REPONDRE A CET EMAIL : vous pouvez contacter nantespvb@gmail.com en cas de besoin";
+
+$SujetMailConfirmationReset = "Votre mot de passe NPVB a ete modifie";
+$CorpsMailConfirmationReset = "Bonjour,\n\nVotre mot de passe pour acceder au calendrier de Nantes Plaisir du Volley Ball vient d'etre modifie avec succes.\n\nSi vous n'etes pas a l'origine de ce changement, contactez immediatement un administrateur a nantespvb@gmail.com.\n\nVous pouvez desormais vous connecter avec votre nouveau mot de passe sur http://nantespvb.free.fr .\n\nA tres bientot sur http://nantespvb.free.fr .\n\n ATTENTION. NE PAS REPONDRE A CET EMAIL : vous pouvez contacter nantespvb@gmail.com en cas de besoin";
 
 
 //++++++++++++++Divers
-$EquipeComplete=6; //Nombre d'inscits mni à un match pour qu'il s'affiche avec équipe complète
+$EquipeComplete=6; //Nombre d'inscits mni ï¿½ un match pour qu'il s'affiche avec ï¿½quipe complï¿½te
 
 $NavigateursSupportentPNG = array("Firefox/1.0", "Safari/85.8.1");
 

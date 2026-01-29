@@ -25,7 +25,7 @@ if (!$ConnectDB) $Page="maintenance";
 
 // CORRECTIF SÉCURITÉ #1: Suppression eval() - Whitelist des variables autorisées
 // Compatible PHP 4 - Pas d'utilisation de filter_input()
-$allowed_vars = array('Page', 'Pseudonyme', 'Password', 'Action', 'Equipe', 'Jour', 'Mois', 'Annee', 'DateHeure', 'Libelle', 'PageMsg');
+$allowed_vars = array('Page', 'Pseudonyme', 'Password', 'Action', 'Equipe', 'Jour', 'Mois', 'Annee', 'DateHeure', 'Libelle', 'PageMsg', 'Token', 'Identifiant', 'DemandeReset', 'NouveauMotDePasse', 'ConfirmationMotDePasse', 'ChangerMotDePasse');
 
 if(isset($_POST) && is_array($_POST)) {
 	foreach($_POST as $key => $val) {
@@ -58,7 +58,8 @@ if (!isset($Page) || empty($Page)) {
 $pages_autorisees = array(
 	'accueil', 'calendrier', 'jour', 'membres', 'Erreur404', 'maintenance',
 	'adminstats', 'adminfichejour', 'adminevenements', 'adminequipes',
-	'adminmembres', 'adminnewmessage', 'adminfichemembre', 'adminmessages'
+	'adminmembres', 'adminnewmessage', 'adminfichemembre', 'adminmessages',
+	'resetmotdepasse'
 );
 
 // Vérifier que la page demandée est autorisée
@@ -183,6 +184,11 @@ if ((!isset($Joueur) || !is_object($Joueur)) && ($Page=="accueil")){
 			<input type="submit" value="S'identifier"  class="PetitBouton Action"/>
 		</div>
 		</form>
+		<div style="margin-top: 5px; text-align: center; font-size: 0.85em;">
+			<?php if (isset($ErreurDonnees["Login"]) && $ErreurDonnees["Login"]) { ?>
+			<span style="color: #666;">Mot de passe oubli&eacute; ? Contactez <a href="mailto:nantespvb@gmail.com" style="color: #666;">nantespvb@gmail.com</a></span>
+		<?php } ?>
+		</div>
 		</li>
 <?php
 }

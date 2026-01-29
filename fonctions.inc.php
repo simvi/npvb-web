@@ -105,7 +105,7 @@ function ChargeNews(){
 
 function ChargeEvenements($Annee, $Mois, $Jour){
 	//***
-	//   ATTENTION, soit on spécifie l'année et le mois, soit le jour entier sous la forme AAAAMMJJ
+	//   ATTENTION, soit on spï¿½cifie l'annï¿½e et le mois, soit le jour entier sous la forme AAAAMMJJ
 	//***
 	GLOBAL $sdblink;
 	$LocalEquipes = ChargeEquipes();
@@ -129,19 +129,19 @@ function ChargeEvenements($Annee, $Mois, $Jour){
 		$etaientPresents = array();
 		$TMPJoueurs = array();
 		$DBJoueurs = mySql_query("SELECT * FROM NPVB_Presence WHERE (DateHeure = '".$Event->DateHeure."' AND Libelle = '".$Event->Libelle."')", $sdblink);
-		//On recupere les joueurs qui ont saisi une présence pour l'event
+		//On recupere les joueurs qui ont saisi une prï¿½sence pour l'event
 		while ($Joueur = mySql_fetch_object($DBJoueurs))
 			$TMPJoueurs[$Joueur->Joueur] = $Joueur;
 		if ($LocalEquipes[$Event->Libelle]->PresenceDefaut=="o"){
 			//Si l'event a PresenceDefaut=o
-			//Pour chaque joueur, on regarde si son absence n'est pas renseignée et on l'ajoute
+			//Pour chaque joueur, on regarde si son absence n'est pas renseignï¿½e et on l'ajoute
 			foreach($LocalJoueurs as $Joueur){
 				if (($TMPJoueurs[$Joueur->Pseudonyme]->Prevue=="o")||(($TMPJoueurs[$Joueur->Pseudonyme]->Prevue<>"n")&&($LocalEquipes[$Event->Libelle]->faisPartie($Joueur->Pseudonyme)))) $serontPresents[$Joueur->Pseudonyme]="o";
 				if ($TMPJoueurs[$Joueur->Pseudonyme]->Effective<>"") $etaientPresents[$Joueur->Pseudonyme]=$TMPJoueurs[$Joueur->Pseudonyme]->Effective;
 			}
 		}else{
 			//Si l'event a PresenceDefaut=n
-			//on ajoute le joueur si sa présence est saisie
+			//on ajoute le joueur si sa prï¿½sence est saisie
 			foreach($TMPJoueurs as $PresenceJoueur){
 				if ($PresenceJoueur->Prevue=="o") $serontPresents[$PresenceJoueur->Joueur]="o";
 				if ($PresenceJoueur->Effective<>"") $etaientPresents[$PresenceJoueur->Joueur]=$PresenceJoueur->Effective;
@@ -151,5 +151,141 @@ function ChargeEvenements($Annee, $Mois, $Jour){
 		}
 	return $Evenements;
 	}
+
+//********************************** FONCTIONS RESET MOT DE PASSE ************************************************//
+
+// Gï¿½nï¿½re un token sï¿½curisï¿½ pour la rï¿½initialisation de mot de passe (PHP 4 compatible)
+// Utilise SHA1 avec plusieurs sources d'entropie pour maximiser la sï¿½curitï¿½
+function GenererTokenReset($Pseudonyme) {
+	// Source 1 : ID unique basï¿½ sur le temps avec entropie supplï¿½mentaire
+	$random1 = uniqid($Pseudonyme, true);
+
+	// Source 2 : Nombre alï¿½atoire (Mersenne Twister)
+	$random2 = mt_rand();
+
+	// Source 3 : Microtime pour prï¿½cision ï¿½ la microseconde
+	$random3 = microtime();
+
+	// Source 4 : Adresse IP du demandeur (si disponible)
+	$random4 = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'unknown';
+
+	// Source 5 : User Agent (pour encore plus d'entropie)
+	$random5 = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
+
+	// Combinaison et double hachage SHA1 (40 caractï¿½res hexadï¿½cimaux)
+	$combined = $random1 . $random2 . $random3 . $random4 . $random5;
+	$token = sha1($combined);
+
+	return $token;
+}
+
+// Vï¿½rifie si un token est valide (existe, non expirï¿½, non utilisï¿½)
+// Retourne le pseudonyme associï¿½ si valide, false sinon
+function VerifierTokenReset($Token) {
+	GLOBAL $sdblink;
+
+	// Protection SQL injection
+	$Token = mysql_real_escape_string($Token);
+
+	// Vï¿½rification : token existe, non expirï¿½, non utilisï¿½, et compte toujours valide
+	$query = "SELECT r.Pseudonyme
+	          FROM NPVB_PasswordReset r
+	          INNER JOIN NPVB_Joueurs j ON r.Pseudonyme = j.Pseudonyme
+	          WHERE r.Token='$Token'
+	          AND r.DateExpiration > NOW()
+	          AND r.Utilise='n'
+	          AND j.Etat='V'";
+
+	$result = mysql_query($query, $sdblink);
+
+	if ($result && mysql_num_rows($result) > 0) {
+		$row = mysql_fetch_assoc($result);
+		return $row['Pseudonyme'];
+	}
+
+	return false;
+}
+
+// Marque un token comme utilisï¿½ (aprï¿½s un reset rï¿½ussi)
+function MarquerTokenUtilise($Token) {
+	GLOBAL $sdblink;
+
+	// Protection SQL injection
+	$Token = mysql_real_escape_string($Token);
+
+	$query = "UPDATE NPVB_PasswordReset
+	          SET Utilise='o'
+	          WHERE Token='$Token'";
+
+	return mysql_query($query, $sdblink);
+}
+
+// Compte le nombre de demandes rï¿½centes pour un utilisateur (anti-spam)
+function CompterDemandesRecentes($Pseudonyme, $HeuresRecentes = 1) {
+	GLOBAL $sdblink;
+
+	// Protection SQL injection
+	$Pseudonyme = mysql_real_escape_string($Pseudonyme);
+
+	// Calcul de la date de dï¿½but (X heures avant maintenant)
+	$timestampDebut = time() - ($HeuresRecentes * 3600);
+	$dateDebut = date('Y-m-d H:i:s', $timestampDebut);
+
+	$query = "SELECT COUNT(*) as nb
+	          FROM NPVB_PasswordReset
+	          WHERE Pseudonyme='$Pseudonyme'
+	          AND DateCreation >= '$dateDebut'";
+
+	$result = mysql_query($query, $sdblink);
+
+	if ($result) {
+		$row = mysql_fetch_assoc($result);
+		return intval($row['nb']);
+	}
+
+	return 0;
+}
+
+// Nettoie les tokens expirï¿½s (appel opportuniste pour ï¿½viter l'accumulation)
+function NettoyerTokensExpires() {
+	GLOBAL $sdblink;
+
+	// Supprime tous les tokens dont la date d'expiration est dï¿½passï¿½e
+	$query = "DELETE FROM NPVB_PasswordReset
+	          WHERE DateExpiration < NOW()";
+
+	return mysql_query($query, $sdblink);
+}
+
+// Vï¿½rifie si un email est valide (regex PHP 4 compatible)
+function EmailValide($email) {
+	if (!$email) return false;
+
+	// Regex simple mais efficace pour PHP 4
+	return ereg("^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$", $email);
+}
+
+// Recherche un membre par pseudonyme OU email
+// Retourne un tableau avec Pseudonyme et Email si trouvï¿½, false sinon
+function RechercherMembreParIdentifiant($Identifiant) {
+	GLOBAL $sdblink;
+
+	// Protection SQL injection
+	$Identifiant = mysql_real_escape_string(trim($Identifiant));
+
+	// Recherche par pseudo OU email pour un compte valide
+	$query = "SELECT Pseudonyme, Email
+	          FROM NPVB_Joueurs
+	          WHERE (Pseudonyme='$Identifiant' OR Email='$Identifiant')
+	          AND Etat='V'";
+
+	$result = mysql_query($query, $sdblink);
+
+	if ($result && mysql_num_rows($result) > 0) {
+		return mysql_fetch_assoc($result);
+	}
+
+	return false;
+}
 
 ?>

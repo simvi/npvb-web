@@ -3,11 +3,62 @@ if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
 if ($Joueur->DieuToutPuissant=="n"){ require("accueil.inc.php"); return;}
 
 //******************
+//** GÃ©nÃ©ration de lien de rÃ©initialisation
+//******************
+$LienGenere = "";
+$ErreurGeneration = "";
+
+if (isset($_POST['GenererLienReset']) && $_POST['GenererLienReset'] == 'o') {
+	// Bypass des validations de fiche membre pour la gÃ©nÃ©ration de lien
+	$Modification = false;
+	$PseudoMembre = isset($_POST['MembrePourReset']) ? trim($_POST['MembrePourReset']) : '';
+
+	if ($PseudoMembre) {
+		// RÃ©cupÃ©rer l'email du membre
+		$queryMembre = "SELECT Email FROM NPVB_Joueurs WHERE Pseudonyme='" . mysql_real_escape_string($PseudoMembre) . "' AND Etat='V'";
+		$resultMembre = mysql_query($queryMembre, $sdblink);
+
+		if ($resultMembre && mysql_num_rows($resultMembre) > 0) {
+			$rowMembre = mysql_fetch_assoc($resultMembre);
+			$emailMembre = $rowMembre['Email'];
+
+			if ($emailMembre) {
+				// GÃ©nÃ©rer le token (mÃªme fonction que motdepasseoublie)
+				$Token = sha1(uniqid(rand(), true) . $PseudoMembre . time());
+
+				// Dates
+				$DateCreation = date('Y-m-d H:i:s');
+				$DateExpiration = date('Y-m-d H:i:s', time() + (24 * 3600)); // 24h
+
+				// IP admin
+				$IpDemande = isset($_SERVER['REMOTE_ADDR']) ? mysql_real_escape_string($_SERVER['REMOTE_ADDR']) : '';
+				$PseudoEscaped = mysql_real_escape_string($PseudoMembre);
+
+				// InsÃ©rer le token
+				$query = "INSERT INTO NPVB_PasswordReset (Token, Pseudonyme, DateCreation, DateExpiration, Utilise, IpDemande, EmailEnvoye)
+				          VALUES ('$Token', '$PseudoEscaped', '$DateCreation', '$DateExpiration', 'n', '$IpDemande', 'n')";
+
+				if (mysql_query($query, $sdblink)) {
+					// Construire le lien complet
+					$LienGenere = "http://" . $_SERVER['HTTP_HOST'] . "/index.php?Page=resetmotdepasse&Token=" . $Token;
+				} else {
+					$ErreurGeneration = "Erreur lors de la g&eacute;n&eacute;ration du lien.";
+				}
+			} else {
+				$ErreurGeneration = "Ce membre n'a pas d'adresse email.";
+			}
+		} else {
+			$ErreurGeneration = "Membre introuvable.";
+		}
+	}
+}
+
+//******************
 //** Modif de la fiche
 //******************
 
-if (($Mode=="Modif")||($Mode=="Nouveau")) {
-	
+if ((($Mode=="Modif")||($Mode=="Nouveau")) && !isset($_POST['GenererLienReset'])) {
+
 	$Modification=true;
 	
 	//**************************************
@@ -18,16 +69,21 @@ if (($Mode=="Modif")||($Mode=="Nouveau")) {
 	if (!$Membre){$ErreurDonnees["Pseudonyme"] .= "Le pseudonyme est obligatoire";
 	}else if (ereg("[^a-zA-Z0-9_]", $Membre)){$ErreurDonnees["Pseudonyme"] .= "Le format du pseudonyme est incorrect";
 	}
-	if ((!$MotDePasse)&&($Mode=="Nouveau")){$ErreurDonnees["Pseudonyme"] .= "Le mot de passe est obligatoire<br/>pour la création d'un compte";
-	}else if (ereg("[^a-zA-Z0-9_\*\+éêèùàâûîô\(\)\[\]=-]", $MotDePasse)){$ErreurDonnees["Pseudonyme"] .= "Le format du mot de passe est incorrect";
+	// Validation du mot de passe uniquement pour la crÃ©ation de compte
+	if ($Mode=="Nouveau") {
+		if (!$MotDePasse){
+			$ErreurDonnees["Pseudonyme"] .= "Le mot de passe est obligatoire<br/>pour la crï¿½ation d'un compte";
+		}else if (ereg("[^a-zA-Z0-9_\*\+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\(\)\[\]=-]", $MotDePasse)){
+			$ErreurDonnees["Pseudonyme"] .= "Le format du mot de passe est incorrect";
+		}
 	}
 	
-	//Test de la Civilité
+	//Test de la Civilitï¿½
 	if (!$Nom){$ErreurDonnees["Civillite"] .= "Le Nom est obligatoire<br/>";
-	}else if (ereg("[^a-zA-Z0-9_\ éêèùàâûîô-]", $Nom)){$ErreurDonnees["Civillite"] .= "Le format du Nom est incorrect<br/>";
+	}else if (ereg("[^a-zA-Z0-9_\ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½-]", $Nom)){$ErreurDonnees["Civillite"] .= "Le format du Nom est incorrect<br/>";
 	}
-	if (!$Prenom){$ErreurDonnees["Civillite"] .= "Le Prénom est obligatoire<br/>";
-	}else if (ereg("[^a-zA-Z0-9_\ éêèùàâûîô-]", $Prenom)){$ErreurDonnees["Civillite"] .= "Le format du Prénom est incorrect<br/>";
+	if (!$Prenom){$ErreurDonnees["Civillite"] .= "Le Prï¿½nom est obligatoire<br/>";
+	}else if (ereg("[^a-zA-Z0-9_\ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½-]", $Prenom)){$ErreurDonnees["Civillite"] .= "Le format du Prï¿½nom est incorrect<br/>";
 	}
 	if (($DateNaissance)&&($DateNaissance<>"JJ/MM/AAAA")&&(!ereg("[0-9]{2}/[0-9]{2}/[0-9]{4}", $DateNaissance))){
 		$ErreurDonnees["Autres"] .= "La date de naissance est incorrecte<br/>";
@@ -43,31 +99,31 @@ if (($Mode=="Modif")||($Mode=="Nouveau")) {
 	if (ereg("[0-9]{10}", $Telephone2)) $Telephones.="D".$Telephone2;
 	if (ereg("[0-9]{10}", $Mobile1)) $Telephones.="M".$Mobile1;
 	if (ereg("[0-9]{10}", $Mobile2)) $Telephones.="M".$Mobile2;
-	if (($Telephone1)&&(!ereg("[0-9]{10}", $Telephone1))){$ErreurDonnees["Contact"] .= "Le premier numéro de téléphone est incorrect<br/>";}
-	if (($Telephone2)&&(!ereg("[0-9]{10}", $Telephone2))){$ErreurDonnees["Contact"] .= "Le second numéro de téléphone est incorrect<br/>";}
-	if (($Mobile1)&&(!ereg("[0-9]{10}", $Mobile1))){$ErreurDonnees["Contact"] .= "Le premier numéro de mobile est incorrect<br/>";}
-	if (($Mobile2)&&(!ereg("[0-9]{10}", $Mobile2))){$ErreurDonnees["Contact"] .= "Le second numéro de mobile est incorrect<br/>";}
+	if (($Telephone1)&&(!ereg("[0-9]{10}", $Telephone1))){$ErreurDonnees["Contact"] .= "Le premier numï¿½ro de tï¿½lï¿½phone est incorrect<br/>";}
+	if (($Telephone2)&&(!ereg("[0-9]{10}", $Telephone2))){$ErreurDonnees["Contact"] .= "Le second numï¿½ro de tï¿½lï¿½phone est incorrect<br/>";}
+	if (($Mobile1)&&(!ereg("[0-9]{10}", $Mobile1))){$ErreurDonnees["Contact"] .= "Le premier numï¿½ro de mobile est incorrect<br/>";}
+	if (($Mobile2)&&(!ereg("[0-9]{10}", $Mobile2))){$ErreurDonnees["Contact"] .= "Le second numï¿½ro de mobile est incorrect<br/>";}
 	if (($Email)&&(!ereg("[a-zA-Z0-9\.-]+@{1}[a-zA-Z0-9\-]+\.{1}[a-zA-Z0-9]{2,3}", $Email)))
 		{$ErreurDonnees["Contact"] .= "Le format de l'email est incorrect<br/>";}
 	
-	//Test des Coordonnées
-	if (($Adresse)&&(ereg("[^a-zA-Z0-9_',\ éêèùàâûîô-]", $Adresse))){$ErreurDonnees["Coordonnees"] .= "Le format de l'adresse est incorrect<br/>";}
+	//Test des Coordonnï¿½es
+	if (($Adresse)&&(ereg("[^a-zA-Z0-9_',\ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½-]", $Adresse))){$ErreurDonnees["Coordonnees"] .= "Le format de l'adresse est incorrect<br/>";}
 	if (($CodePostal)&&(!ereg("[0-9]{5}", $CodePostal))){$ErreurDonnees["Coordonnees"] .= "Le code postal est incorrect<br/>";}
-	if (($Ville)&&(ereg("[^a-zA-Z0-9_\'\ éêèùàâûîô-]", $Ville))){$ErreurDonnees["Coordonnees"] .= "Le format de la ville est incorrect<br/>";}
+	if (($Ville)&&(ereg("[^a-zA-Z0-9_\'\ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½-]", $Ville))){$ErreurDonnees["Coordonnees"] .= "Le format de la ville est incorrect<br/>";}
 	$CPVille=$CodePostal." ".$Ville;
 	
 	//Test des Autres
-	if (($Profession)&&(ereg("[^a-zA-Z0-9_\'\ ,éêèùàâûîô\(\)-]", $Profession))){$ErreurDonnees["Autres"] .= "Le format de la profession est incorrect<br/>";}
+	if (($Profession)&&(ereg("[^a-zA-Z0-9_\'\ ,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\(\)-]", $Profession))){$ErreurDonnees["Autres"] .= "Le format de la profession est incorrect<br/>";}
 	
 	if (($PremiereAdhesion)&&($PremiereAdhesion<>"JJ/MM/AAAA")&&(!ereg("[0-9]{2}/[0-9]{2}/[0-9]{4}", $PremiereAdhesion))){
-		$ErreurDonnees["Autres"] .= "La date de première adhésion est incorrecte<br/>";
+		$ErreurDonnees["Autres"] .= "La date de premiï¿½re adhï¿½sion est incorrecte<br/>";
 		$PremiereAdhesion = "JJ/MM/AAAA";
 	}else{
 		$PremiereAdhesionMySQL = substr($PremiereAdhesion, 6, 4)."-".substr($PremiereAdhesion, 3, 2)."-".substr($PremiereAdhesion, 0, 2);
 	}
 	
 	if (($Adhesion)&&($Adhesion<>"JJ/MM/AAAA")&&(!ereg("[0-9]{2}/[0-9]{2}/[0-9]{4}", $Adhesion))){
-		$ErreurDonnees["Autres"] .= "La date de l'adhésion est incorrecte<br/>";
+		$ErreurDonnees["Autres"] .= "La date de l'adhï¿½sion est incorrecte<br/>";
 		$Adhesion = "JJ/MM/AAAA";
 	}else{
 		$AdhesionMySQL = substr($Adhesion, 6, 4)."-".substr($Adhesion, 3, 2)."-".substr($Adhesion, 0, 2);
@@ -87,7 +143,7 @@ if (($Mode=="Modif")||($Mode=="Nouveau")) {
 	}*/
 	
 	if ((!$ErreurDonnees["Pseudonyme"])&&($Mode=="Nouveau"))
-		if ($RechercheJoueur = mySql_fetch_object(mySql_query("SELECT Pseudonyme FROM NPVB_Joueurs WHERE (Pseudonyme='".$Membre."')", $sdblink))) $ErreurDonnees["Pseudonyme"] = "Le Pseudonyme ".$RechercheJoueur->Pseudonyme." est déjà utilisé";
+		if ($RechercheJoueur = mySql_fetch_object(mySql_query("SELECT Pseudonyme FROM NPVB_Joueurs WHERE (Pseudonyme='".$Membre."')", $sdblink))) $ErreurDonnees["Pseudonyme"] = "Le Pseudonyme ".$RechercheJoueur->Pseudonyme." est dï¿½jï¿½ utilisï¿½";
 	
 	//**************************************
 	//***Fin des tests du formulaire
@@ -121,15 +177,15 @@ if (($Mode=="Modif")||($Mode=="Nouveau")) {
 			
 			case "Modif":
 			
-				if (!mySql_query("UPDATE NPVB_Joueurs SET".(($MotDePasse)?" Password=OLD_PASSWORD('".$MotDePasse."'),":"")." Etat='".$Etat."', Adhesion='".$AdhesionMySQL."', Nom='".$Nom."', Prenom='".$Prenom."', Sexe='".$Sexe."', DateNaissance='".$DateNaissanceMySQL."', Profession='".$Profession."', Adresse='".$Adresse."', CPVille='".$CPVille."', Telephones='".$Telephones."', Email='".$Email."', Accord='".$Accord."', PremiereAdhesion='".$PremiereAdhesionMySQL."', License='".$LicenseMySQL."', NumeroLicence='".$NumLicence."' WHERE (Pseudonyme='".$Membre."')", $sdblink)) {
+				if (!mySql_query("UPDATE NPVB_Joueurs SET Etat='".$Etat."', Adhesion='".$AdhesionMySQL."', Nom='".$Nom."', Prenom='".$Prenom."', Sexe='".$Sexe."', DateNaissance='".$DateNaissanceMySQL."', Profession='".$Profession."', Adresse='".$Adresse."', CPVille='".$CPVille."', Telephones='".$Telephones."', Email='".$Email."', Accord='".$Accord."', PremiereAdhesion='".$PremiereAdhesionMySQL."', License='".$LicenseMySQL."', NumeroLicence='".$NumLicence."' WHERE (Pseudonyme='".$Membre."')", $sdblink)) {
 				
 				 $ErreurDonnees["Enregistrement"]="Erreur d'enregistrement: ".mySql_errno($sdblink).", ".mySql_error($sdblink);
 				 
 				 }
 				
-				if (($MotDePasse)&&($Email)&&($EnvoiMail)&&(!$ErreurDonnees)&&(!$MailCreationCompte)) if (!mail ($Email, $SujetMailModifMotDePasse, $CorpsMailModifMotDePasse)) $ErreurDonnees["Enregistrement"]="Erreur d'envoi du mail.<br/>"; 
+				// SupprimÃ©: envoi d'email de changement de mot de passe (remplacÃ© par gÃ©nÃ©ration de lien) 
 				
-				if (($MotDePasse)&&($Email)&&($EnvoiMail)&&(!$ErreurDonnees)&&($MailCreationCompte=="o")) if (!mail ($Email, $SujetMailCreationCompte, $CorpsMailCreationCompte)) $ErreurDonnees["Enregistrement"]="Erreur d'envoi du mail.<br/>"; 
+				// SupprimÃ©: envoi d'email de crÃ©ation de compte avec mot de passe (remplacÃ© par gÃ©nÃ©ration de lien) 
 				
 				break;
 				
@@ -145,12 +201,12 @@ if (($Mode=="Modif")||($Mode=="Nouveau")) {
 				
 			default:	
 		}
-		if (($EnvoiMail)&&(!$ErreurDonnees)&&(!$Email)) $ErreurDonnees["Mail"]="L'email n'a pas été envoyé:<br/>Le membre n'a pas d'email.<br/>";
-		if (($EnvoiMail)&&(!$ErreurDonnees)&&(!$MotDePasse)) $ErreurDonnees["Mail"]="L'email n'a pas été envoyé:<br/>Le nouveau mot de passe n'a pas été saisi.<br/>";
+		// SupprimÃ©: vÃ©rification d'envoi d'email (plus nÃ©cessaire)
+		// SupprimÃ©: vÃ©rification du mot de passe pour envoi email (plus nÃ©cessaire)
 
 	}else{
 		
-		$ErreurDonnees["Enregistrement"]="Erreur dans les données";
+		$ErreurDonnees["Enregistrement"]="Erreur dans les donnï¿½es";
 		
 	}
 } 
@@ -164,9 +220,9 @@ if (($Mode=="Modif")||($Mode=="Nouveau")) {
 if ($Mode=="EnlevePhoto"){
 	$Modification=true;
 	if (!is_file($RepertoirePhotos."Photo".$Membre.".jpg")) {
-		$ErreurDonnees["Photo"] .= "Aucune photo à supprimer<br/>";
+		$ErreurDonnees["Photo"] .= "Aucune photo ï¿½ supprimer<br/>";
 	}else{
-		if (!unlink($RepertoirePhotos."Photo".$Membre.".jpg")) $ErreurDonnees["Photo"] .= "N'a pas réussi à supprimer la photo<br/>";
+		if (!unlink($RepertoirePhotos."Photo".$Membre.".jpg")) $ErreurDonnees["Photo"] .= "N'a pas rï¿½ussi ï¿½ supprimer la photo<br/>";
 	}
 	if($ErreurDonnees["Photo"]) $ErreurDonnees["Enregistrement"]="Erreur de suppression de la photo:</BR>";
 	$Mode="Modif";
@@ -243,7 +299,7 @@ $CPVille = str_replace("\'","'",$CPVille);
 $Profession = str_replace("\'","'",$Profession);
 ?>
 
-<h2><?=($Mode=="Modif")?"Modification de ".$Joueurs[$Membre]->Pseudonyme:"Création d'un nouvel utilisateur";?></h2>
+<h2><?=($Mode=="Modif")?"Modification de ".$Joueurs[$Membre]->Pseudonyme:"Crï¿½ation d'un nouvel utilisateur";?></h2>
 
 <table id="Membres">
 <?
@@ -251,7 +307,7 @@ if ($Modification){
 	if ($ErreurDonnees["Enregistrement"]){
 		print("\t<tr>\n\t\t<td><p class=\"ModifError\">".$ErreurDonnees["Enregistrement"]."</p></td>\n\t</tr>\n");
 	}else{
-		print("\t<tr>\n\t\t<td><p class=\"ModifOk\">Modifications effectuées avec succès</p></td>\n\t</tr>\n");
+		print("\t<tr>\n\t\t<td><p class=\"ModifOk\">Modifications effectuï¿½es avec succï¿½s</p></td>\n\t</tr>\n");
 	}
 }
 
@@ -262,7 +318,7 @@ if ($EnvoiMail){
 	if ($ErreurDonnees["Mail"]){
 		print("\t<tr>\n\t\t<td><p class=\"ModifError\">".$ErreurDonnees["Mail"]."</p></td>\n\t</tr>\n");
 	}else{
-		print("\t<tr>\n\t\t<td><p class=\"ModifOk\">Email envoyé (si adresse correcte)</p></td>\n\t</tr>\n");
+		print("\t<tr>\n\t\t<td><p class=\"ModifOk\">Email envoyï¿½ (si adresse correcte)</p></td>\n\t</tr>\n");
 	}
 }
 
@@ -323,7 +379,7 @@ if ($ErreurDonnees["Pseudonyme"]){
 	if($Mode=="Nouveau"){
 ?>
 
-							<tr><td colspan="2">(Alphanumériqe et '_' autorisés seulement)</td></tr>
+							<tr><td colspan="2">(Alphanumï¿½riqe et '_' autorisï¿½s seulement)</td></tr>
 
 <?
 	}
@@ -336,9 +392,40 @@ if ($ErreurDonnees["Pseudonyme"]){
 		
 ?>
 
-							<tr><td class="Colonne1">Etat du compte</td><td class="Colonne2"><select name="Etat"><option value="V"<?=(($Etat=="V")?" selected=\"selected\"":"")?>>Actif</option><?if($Mode=="Modif"){?><option value="I"<?=(($Etat=="I")?" selected=\"selected\"":"").(($estDansUneEquipe)?" disabled=\"disabled\"":"")?>>Inactif</option><?}?><option value="E"<?=(($Etat=="E")?" selected=\"selected\"":"").(($estDansUneEquipe)?" disabled=\"disabled\"":"")?>>Essai</option></select><?=(($estDansUneEquipe)?"<a href=\"javascript:alert('Vous devez supprimer le joueur de toute équipe\\navant de le passer inactif');\">?</a>":"")?></td></tr>
-							<tr><td class="Colonne1"><?=(($Mode=="Modif")?"Changer le<br/>":"")?>mot de passe</td><td class="Colonne2"><input type="password" name="MotDePasse" size="30" />
-							<br/><input type="checkbox" name="EnvoiMail" value="o" />Envoyer email<?=(($Mode=="Modif")?"<br/><input type=\"checkbox\" name=\"MailCreationCompte\" value=\"o\" />(de création)":"")?></td></tr>
+							<tr><td class="Colonne1">Etat du compte</td><td class="Colonne2"><select name="Etat"><option value="V"<?=(($Etat=="V")?" selected=\"selected\"":"")?>>Actif</option><?if($Mode=="Modif"){?><option value="I"<?=(($Etat=="I")?" selected=\"selected\"":"").(($estDansUneEquipe)?" disabled=\"disabled\"":"")?>>Inactif</option><?}?><option value="E"<?=(($Etat=="E")?" selected=\"selected\"":"").(($estDansUneEquipe)?" disabled=\"disabled\"":"")?>>Essai</option></select><?=(($estDansUneEquipe)?"<a href=\"javascript:alert('Vous devez supprimer le joueur de toute ï¿½quipe\\navant de le passer inactif');\">?</a>":"")?></td></tr>
+<?php if ($Mode=="Modif") { ?>
+							<tr>
+								<td class="Colonne1">R&eacute;initialisation<br/>mot de passe</td>
+								<td class="Colonne2">
+									<form method="post" action="<?=$PHP_SELF?>?Page=adminfichemembre&Membre=<?=$Membre?>" style="margin:0;">
+										<input type="hidden" name="MembrePourReset" value="<?=$Membre?>" />
+										<input type="hidden" name="GenererLienReset" value="o" />
+
+										<?php if ($LienGenere) { ?>
+											<div style="padding:12px;background:#d4edda;border:1px solid #c3e6cb;border-radius:4px;margin-bottom:10px;">
+												<strong style="color:#155724;">OK - Lien g&eacute;n&eacute;r&eacute; avec succ&egrave;s !</strong><br/>
+												<small style="color:#155724;">Valable 24h - Copiez et envoyez au membre :</small><br/>
+												<input type="text" value="<?=$LienGenere?>"
+												       style="width:100%;margin-top:8px;padding:6px;border:1px solid #c3e6cb;font-size:11px;font-family:monospace;"
+												       readonly onclick="this.select();" />
+											</div>
+										<?php } ?>
+
+										<?php if ($ErreurGeneration) { ?>
+											<div style="padding:10px;background:#f8d7da;border:1px solid #f5c6cb;border-radius:4px;margin-bottom:10px;color:#721c24;">
+												<strong>ERREUR :</strong> <?=$ErreurGeneration?>
+											</div>
+										<?php } ?>
+
+										<input type="submit" value="G&eacute;n&eacute;rer un lien de r&eacute;initialisation" class="PetitBouton Action"
+										       style="background:#ff9800;border-color:#f57c00;" />
+										<br/><small style="color:#666;">Le membre recevra le lien par email (Ã  copier/coller depuis ici)</small>
+									</form>
+								</td>
+							</tr>
+<?php } else { ?>
+							<tr><td class="Colonne1">Mot de passe<br/>initial</td><td class="Colonne2"><input type="password" name="MotDePasse" size="30" /><br/><small style="color:#666;">Obligatoire pour crÃ©er le compte</small></td></tr>
+<?php } ?>
 							<tr><td class="Colonne1">Accord pour<br/>diffusion</td><td class="Colonne2"><input type="radio" name="Accord" value="o"<?=($Accord=="o")?" checked=\"checked\"":""?>/>oui / <input type="radio" name="Accord" value="n"<?=($Accord=="n")?" checked=\"checked\"":""?>/>non</td></tr>
 					</table>
 					</fieldset>
@@ -353,11 +440,11 @@ if ($ErreurDonnees["Civillite"]){
 ?>
 		
 				<fieldset>
-					<legend>Civilité</legend>
+					<legend>Civilitï¿½</legend>
 					<table>
 						<tr><td class="Colonne1">Nom</td><td class="Colonne2"><input type="text" name="Nom" size="30" value="<?=$Nom?>" /></td></tr>
-						<tr><td class="Colonne1">Prénom</td><td class="Colonne2"><input type="text" name="Prenom" size="30" value="<?=$Prenom?>" /></td></tr>
-						<tr><td class="Colonne1">Né<?=($Sexe=="f")?"e":""?> le</td><td class="Colonne2"><input type="text" name="DateNaissance" size="30" value="<?=$DateNaissance?>" /></td></tr>
+						<tr><td class="Colonne1">Prï¿½nom</td><td class="Colonne2"><input type="text" name="Prenom" size="30" value="<?=$Prenom?>" /></td></tr>
+						<tr><td class="Colonne1">Nï¿½<?=($Sexe=="f")?"e":""?> le</td><td class="Colonne2"><input type="text" name="DateNaissance" size="30" value="<?=$DateNaissance?>" /></td></tr>
 						<tr><td class="Colonne1">Sexe</td><td class="Colonne2"> <input type="radio" name="Sexe" value="m"<?=($Sexe=="m")?" checked=\"checked\"":""?> /> Homme / <input type="radio" name="Sexe" value="f"<?=($Sexe=="f")?" checked=\"checked\"":""?> /> Femme </td></tr>
 					</table>
 				</fieldset>
@@ -374,7 +461,7 @@ if ($ErreurDonnees["Contact"]){
 				<fieldset>
 					<legend>Contact</legend>
 					<table>
-						<tr><td class="Colonne1">Téléphone</td><td class="Colonne2"><input type="text" name="Telephone1" size="11" value="<?=$Telephone1?>" /> ou <input type="text" name="Telephone2" size="11" value="<?=$Telephone2?>" /></td></tr>
+						<tr><td class="Colonne1">Tï¿½lï¿½phone</td><td class="Colonne2"><input type="text" name="Telephone1" size="11" value="<?=$Telephone1?>" /> ou <input type="text" name="Telephone2" size="11" value="<?=$Telephone2?>" /></td></tr>
 						<tr><td class="Colonne1">Portable</td><td class="Colonne2"><input type="text" name="Mobile1" size="11" value="<?=$Mobile1?>" /> ou <input type="text" name="Mobile2" size="11" value="<?=$Mobile2?>" /></td></tr>
 						<tr><td class="Colonne1">Email</td><td class="Colonne2"><input type="text" name="Email" size="30" value="<?=$Email?>" /></td></tr>
 					</table>
@@ -386,7 +473,7 @@ if ($ErreurDonnees["Coordonnees"]){
 ?>
 
 				<fieldset>
-					<legend>Coordonées</legend>
+					<legend>Coordonï¿½es</legend>
 					<table>
 						<tr><td class="Colonne1">Adresse</td><td class="Colonne2"><input type="text" name="Adresse" size="30" value="<?=$Adresse?>" /></td></tr>
 						<tr><td class="Colonne1">CodePostal</td><td class="Colonne2"><input type="text" name="CodePostal" size="6" value="<?=$CodePostal?>" /></td></tr>
@@ -403,15 +490,15 @@ if ($ErreurDonnees["Autres"]){
 					<legend>Autres</legend>
 					<table>
 						<tr><td class="Colonne1">Profession</td><td class="Colonne2"><input type="text" name="Profession" size="30" value="<?=$Profession?>" /></td></tr>
-						<tr><td class="Colonne1">Première adhésion le</td><td class="Colonne2"><input type="text" name="PremiereAdhesion" size="30" value="<?=$PremiereAdhesion?>" /></td></tr>
-						<tr><td class="Colonne1">Adhésion jusqu'au</td><td class="Colonne2"><input type="text" name="Adhesion" size="30" value="<?=$Adhesion?>" /></td></tr>
+						<tr><td class="Colonne1">Premiï¿½re adhï¿½sion le</td><td class="Colonne2"><input type="text" name="PremiereAdhesion" size="30" value="<?=$PremiereAdhesion?>" /></td></tr>
+						<tr><td class="Colonne1">Adhï¿½sion jusqu'au</td><td class="Colonne2"><input type="text" name="Adhesion" size="30" value="<?=$Adhesion?>" /></td></tr>
 						<tr>
 							<td class="Colonne1">Licence jusqu'au<br/>(laisser vide si pas de licence)</td>
 							<td class="Colonne2"><input type="text" name="License" size="30" value="<?=$License?>" />
 							</td>
 						</tr>
 						<tr>
-							<td class="Colonne1">N° licence</td>
+							<td class="Colonne1">Nï¿½ licence</td>
 							<td class="Colonne2"><input type="text" name="NumLicence" size="30" value="<?=$NumLicence?>" />
 							</td>
 						</tr>
