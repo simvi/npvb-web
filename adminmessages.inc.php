@@ -15,7 +15,7 @@ if ($Joueur->DieuToutPuissant != "o") { header('Location: index2.php?Page=accuei
 $message_success = "";
 $message_error = "";
 
-// Action: Créer un nouveau message
+// Action: CrÃ©er un nouveau message
 if (isset($_POST['action']) && $_POST['action'] == 'create') {
     $title = isset($_POST['title']) ? trim($_POST['title']) : '';
     $content = isset($_POST['content']) ? trim($_POST['content']) : '';
@@ -34,14 +34,14 @@ if (isset($_POST['action']) && $_POST['action'] == 'create') {
                   VALUES ('$title', '$content', $is_active, NOW(), '$created_by')";
 
         if (mysql_query($query, $sdblink)) {
-            $message_success = "Message créé avec succès.";
+            $message_success = "Message crÃ©Ã© avec succÃ¨s.";
         } else {
-            $message_error = "Erreur lors de la création du message: " . mysql_error($sdblink);
+            $message_error = "Erreur lors de la crÃ©ation du message: " . mysql_error($sdblink);
         }
     }
 }
 
-// Action: Mettre à jour un message existant
+// Action: Mettre Ã  jour un message existant
 if (isset($_POST['action']) && $_POST['action'] == 'update') {
     $id = (int)$_POST['id'];
     $title = isset($_POST['title']) ? trim($_POST['title']) : '';
@@ -64,7 +64,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'update') {
                   WHERE id = $id";
 
         if (mysql_query($query, $sdblink)) {
-            $message_success = "Message modifié avec succès.";
+            $message_success = "Message modifiÃ© avec succÃ¨s.";
         } else {
             $message_error = "Erreur lors de la modification du message: " . mysql_error($sdblink);
         }
@@ -78,7 +78,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'delete') {
     $query = "DELETE FROM NPVB_Messages WHERE id = $id";
 
     if (mysql_query($query, $sdblink)) {
-        $message_success = "Message supprimé avec succès.";
+        $message_success = "Message supprimÃ© avec succÃ¨s.";
     } else {
         $message_error = "Erreur lors de la suppression du message: " . mysql_error($sdblink);
     }
@@ -93,17 +93,17 @@ if (isset($_POST['action']) && $_POST['action'] == 'toggle') {
     $query = "UPDATE NPVB_Messages SET is_active = $new_status WHERE id = $id";
 
     if (mysql_query($query, $sdblink)) {
-        $message_success = "Statut du message modifié.";
+        $message_success = "Statut du message modifiÃ©.";
     } else {
         $message_error = "Erreur lors de la modification du statut: " . mysql_error($sdblink);
     }
 }
 
 // ============================================================
-// RÉCUPÉRATION DES DONNÉES
+// RÃ‰CUPÃ‰RATION DES DONNÃ‰ES
 // ============================================================
 
-// Récupérer le message en cours d'édition
+// RÃ©cupÃ©rer le message en cours d'Ã©dition
 $edit_message = null;
 if (isset($_GET['edit'])) {
     $edit_id = (int)$_GET['edit'];
@@ -114,7 +114,7 @@ if (isset($_GET['edit'])) {
     }
 }
 
-// Récupérer tous les messages (triés par date décroissante)
+// RÃ©cupÃ©rer tous les messages (triÃ©s par date dÃ©croissante)
 $messages = array();
 $query = "SELECT * FROM NPVB_Messages ORDER BY created_at DESC";
 $result = mysql_query($query, $sdblink);
@@ -127,7 +127,7 @@ if ($result) {
 ?>
 
 <style>
-/* Styles spécifiques pour la gestion des messages */
+/* Styles spÃ©cifiques pour la gestion des messages */
 .admin-messages {
     padding: 20px;
 }
@@ -353,9 +353,9 @@ if ($result) {
         </div>
     <?php endif; ?>
 
-    <!-- Formulaire de création/édition -->
+    <!-- Formulaire de crÃ©ation/Ã©dition -->
     <div class="message-form">
-        <h3><?php echo $edit_message ? 'Modifier le message' : 'Créer un nouveau message'; ?></h3>
+        <h3><?php echo $edit_message ? 'Modifier le message' : 'CrÃ©er un nouveau message'; ?></h3>
 
         <form method="post" action="<?php echo htmlspecialchars($_SERVER['SCRIPT_NAME'], ENT_QUOTES); ?>">
             <input type="hidden" name="Page" value="adminmessages" />
@@ -371,7 +371,7 @@ if ($result) {
                     id="title"
                     name="title"
                     value="<?php echo $edit_message ? htmlspecialchars($edit_message->title, ENT_QUOTES, 'ISO-8859-1') : ''; ?>"
-                    placeholder="Ex: Information importante, Nouveauté, etc."
+                    placeholder="Ex: Information importante, NouveautÃ©, etc."
                     maxlength="255"
                 />
             </div>
@@ -401,7 +401,7 @@ if ($result) {
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">
-                    <?php echo $edit_message ? 'Mettre à jour' : 'Créer le message'; ?>
+                    <?php echo $edit_message ? 'Mettre Ã  jour' : 'CrÃ©er le message'; ?>
                 </button>
 
                 <?php if ($edit_message): ?>
@@ -419,7 +419,7 @@ if ($result) {
 
         <?php if (empty($messages)): ?>
             <div class="no-messages">
-                Aucun message n'a encore été créé. Utilisez le formulaire ci-dessus pour créer votre premier message.
+                Aucun message n'a encore Ã©tÃ© crÃ©Ã©. Utilisez le formulaire ci-dessus pour crÃ©er votre premier message.
             </div>
         <?php else: ?>
             <?php foreach ($messages as $msg): ?>
@@ -445,7 +445,7 @@ if ($result) {
 
                     <div class="message-content">
                         <?php
-                        // Afficher les 200 premiers caractères
+                        // Afficher les 200 premiers caractÃ¨res
                         $preview = strip_tags($msg->content);
                         if (strlen($preview) > 200) {
                             echo htmlspecialchars(substr($preview, 0, 200), ENT_QUOTES, 'ISO-8859-1') . '...';
@@ -456,34 +456,34 @@ if ($result) {
                     </div>
 
                     <div class="message-meta">
-                        Créé le <?php echo date('d/m/Y à H:i', strtotime($msg->created_at)); ?>
+                        CrÃ©Ã© le <?php echo date('d/m/Y Ã  H:i', strtotime($msg->created_at)); ?>
                         <?php if ($msg->created_by): ?>
                             par <?php echo htmlspecialchars($msg->created_by, ENT_QUOTES, 'ISO-8859-1'); ?>
                         <?php endif; ?>
                         <?php if ($msg->updated_at): ?>
-                            <br/>Modifié le <?php echo date('d/m/Y à H:i', strtotime($msg->updated_at)); ?>
+                            <br/>ModifiÃ© le <?php echo date('d/m/Y Ã  H:i', strtotime($msg->updated_at)); ?>
                         <?php endif; ?>
                     </div>
 
                     <div class="message-actions">
-                        <!-- Bouton Éditer -->
+                        <!-- Bouton Ã‰diter -->
                         <a href="<?php echo htmlspecialchars($_SERVER['SCRIPT_NAME'], ENT_QUOTES); ?>?Page=adminmessages&amp;edit=<?php echo $msg->id; ?>" class="btn btn-sm btn-info">
-                            Éditer
+                            Ã‰diter
                         </a>
 
-                        <!-- Bouton Activer/Désactiver -->
+                        <!-- Bouton Activer/DÃ©sactiver -->
                         <form method="post" action="<?php echo htmlspecialchars($_SERVER['SCRIPT_NAME'], ENT_QUOTES); ?>" style="display: inline;">
                             <input type="hidden" name="Page" value="adminmessages" />
                             <input type="hidden" name="action" value="toggle" />
                             <input type="hidden" name="id" value="<?php echo $msg->id; ?>" />
                             <input type="hidden" name="is_active" value="<?php echo $msg->is_active; ?>" />
                             <button type="submit" class="btn btn-sm btn-warning">
-                                <?php echo $msg->is_active ? 'Désactiver' : 'Activer'; ?>
+                                <?php echo $msg->is_active ? 'DÃ©sactiver' : 'Activer'; ?>
                             </button>
                         </form>
 
                         <!-- Bouton Supprimer -->
-                        <form method="post" action="<?php echo htmlspecialchars($_SERVER['SCRIPT_NAME'], ENT_QUOTES); ?>" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce message ? Cette action est irréversible.');">
+                        <form method="post" action="<?php echo htmlspecialchars($_SERVER['SCRIPT_NAME'], ENT_QUOTES); ?>" style="display: inline;" onsubmit="return confirm('ÃŠtes-vous sÃ»r de vouloir supprimer ce message ? Cette action est irrÃ©versible.');">
                             <input type="hidden" name="Page" value="adminmessages" />
                             <input type="hidden" name="action" value="delete" />
                             <input type="hidden" name="id" value="<?php echo $msg->id; ?>" />

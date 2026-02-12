@@ -37,7 +37,7 @@ if ($Modification){
 	if ($ErreurDonnees["Enregistrement"]){
 		print("			<tr><td><p class=\"ModifError\">".$ErreurDonnees["Enregistrement"]."</p></td></tr>");
 	}else{
-		print("			<tr><td><p class=\"ModifOk\">Modifications effectuées avec succès</p></td></tr>");
+		print("			<tr><td><p class=\"ModifOk\">Modifications effectuÃ©es avec succÃ¨s</p></td></tr>");
 	}
 }	
 ?>
@@ -72,7 +72,7 @@ foreach($Equipes as $UneEquipe){
 ?>				
 
 					<tr>
-						<td colspan="3" class="SousTitreEquipe">Liste des membres composant l'équipe (<?=count($UneEquipe->Joueurs)?>)</td>
+						<td colspan="3" class="SousTitreEquipe">Liste des membres composant l'Ã©quipe (<?=count($UneEquipe->Joueurs)?>)</td>
 					</tr>
 <?
 		foreach ($Joueurs as $UnJoueur){
@@ -119,7 +119,7 @@ foreach($Equipes as $UneEquipe){
 	}
 ?>				
 					<tr>
-						<td colspan="3" class="SousTitreEquipe">Présence et responsables</td>
+						<td colspan="3" class="SousTitreEquipe">PrÃ©sence et responsables</td>
 					</tr>
 					<tr>
 						<td>Responsable</td>
@@ -134,10 +134,10 @@ foreach($Equipes as $UneEquipe){
 
 							</select>
 						</td>
-						<td class="PresenceParDefaut">Présence par défaut <input type="checkbox" name="PresenceDefaut"<?=(($UneEquipe->PresenceDefaut=="o")?" checked=\"checked\"":"")?> /></td>
+						<td class="PresenceParDefaut">PrÃ©sence par dÃ©faut <input type="checkbox" name="PresenceDefaut"<?=(($UneEquipe->PresenceDefaut=="o")?" checked=\"checked\"":"")?> /></td>
 					</tr>
 					<tr>
-						<td>Suppléant</td>
+						<td>SupplÃ©ant</td>
 						<td>
 							<select name="Supleant">
 <?

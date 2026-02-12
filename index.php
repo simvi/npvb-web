@@ -105,7 +105,7 @@ function escape_html($string) {
 // Variable sécurisée pour les liens
 $script_name = escape_html($_SERVER['SCRIPT_NAME']);
 
-print ("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");
+print ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 ?>
 
 <!DOCTYPE html
@@ -115,7 +115,7 @@ print ("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");
            xml:lang="FR" lang="French">
 <head>
 	<title>Nantes Plaisir du Volley Ball - LE SITE OFFICIEL</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta http-equiv="Content-Language" content="fr" />
 	<meta name="Description" content="Calendrier de Nantes Plaisir du Volley Ball" />
 	<meta name="Keywords" content="nantes, volley, ball, sport, plaisir, detente, loisir, club, association, 44, Noe Lambert, gymnase, site, web, calendrier" />

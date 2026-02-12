@@ -27,7 +27,14 @@ if (!function_exists('json_encode')) {
             case 'float':
                 return $data;
             case 'string':
-                return '"' . addslashes($data) . '"';
+                // Échapper correctement les caractères spéciaux pour JSON
+                // Important: échapper les backslashes en premier!
+                $data = str_replace('\\', '\\\\', $data);
+                $data = str_replace('"', '\\"', $data);
+                $data = str_replace("\r", "\\r", $data);
+                $data = str_replace("\n", "\\n", $data);
+                $data = str_replace("\t", "\\t", $data);
+                return '"' . $data . '"';
             case 'object':
                 $data = get_object_vars($data);
             case 'array':
@@ -232,10 +239,20 @@ if ($resource == 'events') {
     $dateHeure = isset($segments[1]) ? $segments[1] : null;
 
     if ($dateHeure && isset($segments[2]) && $segments[2] == 'presences') {
-        // GET /events/{date}/presences
+        // GET /events/{date}/presences?libelle=SENIOR1 (optionnel)
         $dateHeure = mysql_real_escape_string($dateHeure);
-        $query = "SELECT Joueur, Libelle, DateHeure, Prevue FROM NPVB_Presence
-                  WHERE DateHeure='$dateHeure' ORDER BY Joueur";
+        $libelle = isset($_GET['libelle']) ? mysql_real_escape_string($_GET['libelle']) : null;
+
+        if ($libelle) {
+            // Filtrer par événement spécifique
+            $query = "SELECT Joueur, Libelle, DateHeure, Prevue FROM NPVB_Presence
+                      WHERE DateHeure='$dateHeure' AND Libelle='$libelle' ORDER BY Joueur";
+        } else {
+            // Tous les événements du jour (rétrocompat pour anciennes versions)
+            $query = "SELECT Joueur, Libelle, DateHeure, Prevue FROM NPVB_Presence
+                      WHERE DateHeure='$dateHeure' ORDER BY Joueur";
+        }
+
         $result = mysql_query($query);
         $data = array();
         while ($row = mysql_fetch_assoc($result)) $data[] = $row;
@@ -284,6 +301,42 @@ if ($resource == 'presences' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     $joueur = isset($joueur_match[1]) ? mysql_real_escape_string($joueur_match[1]) : '';
     $libelle = isset($libelle_match[1]) ? mysql_real_escape_string($libelle_match[1]) : '';
     $presence = isset($pres_match[1]) ? $pres_match[1] : '';
+
+    // Validation des champs requis pour rétrocompatibilité
+    if (empty($dateHeure) || empty($joueur) || empty($presence)) {
+        echo json_encode(array(
+            'success' => false,
+            'error' => array(
+                'code' => 'MISSING_FIELDS',
+                'message' => 'Champs requis manquants: dateHeure, joueur, presence'
+            )
+        ));
+        mysql_close($dblink);
+        exit;
+    }
+
+    // Si le libelle est manquant, essayer de le récupérer du premier événement de ce jour
+    // (pour rétrocompatibilité avec anciennes versions de l'app)
+    if (empty($libelle)) {
+        $fallbackQuery = "SELECT Libelle FROM NPVB_Evenements
+                          WHERE DateHeure='$dateHeure'
+                          ORDER BY Libelle ASC LIMIT 1";
+        $fallbackResult = mysql_query($fallbackQuery);
+        if ($fallbackResult && mysql_num_rows($fallbackResult) > 0) {
+            $fallbackRow = mysql_fetch_assoc($fallbackResult);
+            $libelle = $fallbackRow['Libelle'];
+        } else {
+            echo json_encode(array(
+                'success' => false,
+                'error' => array(
+                    'code' => 'MISSING_LIBELLE',
+                    'message' => 'Le champ libelle est requis et aucun événement trouvé pour cette date'
+                )
+            ));
+            mysql_close($dblink);
+            exit;
+        }
+    }
 
     // Vérifier existence
     $checkQuery = "SELECT * FROM NPVB_Presence WHERE Joueur='$joueur' AND DateHeure='$dateHeure' AND Libelle='$libelle'";

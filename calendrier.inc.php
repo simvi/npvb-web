@@ -16,7 +16,7 @@ if ($Mode<>"Admin"){
 ?>
 
 		<div class="Explications">
-			<?=($Mode=="Saisie")?"Survolez un ÈvÈnement pour l'afficher. Cliquez sur les flËches pour changer de mois. ":"Survolez un ÈvÈnement pour l'afficher. Cliquez sur les flËches pour changer de mois. "?>
+			<?=($Mode=="Saisie")?"Survolez un √©v√©nement pour l'afficher. Cliquez sur les fl√®ches pour changer de mois. ":"Survolez un √©v√©nement pour l'afficher. Cliquez sur les fl√®ches pour changer de mois. "?>
 			Vous cherchez <strong>un plan, une adresse</strong> ? C'est par ici : <a href="https://www.google.com/maps/d/u/2/edit?mid=1beBtdHzJw2FiLivhUvttzyMPtulFTew6&usp=sharing" target="_blank">Carte des gymnases</a>
 		</div>
     
@@ -30,7 +30,7 @@ if ($Mode<>"Admin"){
 		<tr class="TitreJourSemaine">
 			<td>Lundi</td> <td>Mardi</td> <td>Mercredi</td> <td>Jeudi</td> <td>Vendredi</td> <td>Samedi</td> <td>Dimanche</td>
 		</tr>
-<?//Recuperation des donnÈes du mois
+<?//Recuperation des donn√©es du mois
 $PremierJourDuMois = getDate(mkTime(12, 0, 0, $Mois, 1, $Annee));
 $Jour = 2-$PremierJourDuMois["wday"];
 $Jour = ($Jour==2)?-5:$Jour;
@@ -51,10 +51,10 @@ do{
 		print("\t\t\t<td class=\"".$StyleJour."\"".(((($Evenements[$DateDuJourMySQL])&&($Mode=="Saisie"))||($Mode=="Admin"))?" onclick=\"window.location.href='".$PHP_SELF."?Page=".(($Mode=="Admin")?"adminfichejour":"jour")."&amp;Jour=".$DateDuJourMySQL."&amp;Mois=".$Mois."&amp;Annee=".$Annee."'\"":"").">");
 		//if (($Evenements[$DateDuJourMySQL])&&(($Mode=="Saisie")||($Mode=="Admin"))) print("<a href=\"".$PHP_SELF."?Page=jour&Jour=".$DateDuJourMySQL."&Mois=".$Mois."&Annee=".$Annee."\">");
 		print("<em>".$DateDuJour["mday"]."</em>");
-		//if (($Evenements[$DateDuJourMySQL])&&(($Mode=="Saisie")||($Mode=="Admin"))) print(" (DÈtails) </a>");
+		//if (($Evenements[$DateDuJourMySQL])&&(($Mode=="Saisie")||($Mode=="Admin"))) print(" (D√©tails) </a>");
 		
 		//*************************************
-		// *********** Affichage des ÈvÈnements pour ce jour
+		// *********** Affichage des √©v√©nements pour ce jour
 		//*************************************
 		
 		if ($Evenements[$DateDuJourMySQL]){
@@ -66,7 +66,7 @@ do{
 					if (substr($Event->Etat, 0 ,1) == "A"){
 						$Style="Annule";
 						$MessageBulle = "&lt;p&gt;".$Event->Intitule."&lt;/p&gt;&lt;ul&gt;";  
-						$MessageBulle .= "&lt;li&gt;AnnulÈ !&lt;/li&gt;&lt;/ul&gt;"; 
+						$MessageBulle .= "&lt;li&gt;Annul√© !&lt;/li&gt;&lt;/ul&gt;"; 
 					}else{
 						if (($Mode=="Saisie")&&((((($Event->Etat=="O")||($Event->Etat=="F"))&&($Event->seraPresent($Joueur->Pseudonyme))))||((($Event->Etat=="T")&&($Event->etaitPresent($Joueur->Pseudonyme)))))) {
 							$Presence = " <img src=\"".$RepertoireImages."presence.gif\" alt=\"\" /> ";
@@ -82,30 +82,30 @@ do{
 
 						}else if(($Key=="SEANCE")||($Key=="ASSO")){
 							
-							//C'est une sÈance de progrËs ou un evËnement de l'asso
+							//C'est une s√©ance de progr√®s ou un ev√®nement de l'asso
 							$Style=ucFirst(strToLower($Key));
 							
 						}else if ($Equipes[$Key]){
 							
-							//C'est une rencontre d'une Èquipe
+							//C'est une rencontre d'une √©quipe
 							$nombreJoueursPresents = (($Event->Etat=="O")||($Event->Etat=="F"))?$Event->nombreJoueursPresents():$Event->NombreJoueursEtaientPresents;
 							$Style = ($nombreJoueursPresents >= $EquipeComplete)?"RencontreComplet":"RencontreIncomplet";
-							$MessageBulle .= "&lt;li&gt;Rencontre ‡ ".(($Event->Domicile == "o")?"domicile":"l'extÈrieur")."&lt;/li&gt;";
-							if ($Event->Resultat) $MessageBulle .= "&lt;li&gt;RÈsultat: ".substr($Event->Resultat, 0, 1)." / ".substr($Event->Resultat, 1, 1)."&lt;/li&gt;";
+							$MessageBulle .= "&lt;li&gt;Rencontre √† ".(($Event->Domicile == "o")?"domicile":"l'ext√©rieur")."&lt;/li&gt;";
+							if ($Event->Resultat) $MessageBulle .= "&lt;li&gt;R√©sultat: ".substr($Event->Resultat, 0, 1)." / ".substr($Event->Resultat, 1, 1)."&lt;/li&gt;";
 							
-						} else continue;//Ce n'est pas une evËnement reconnu
+						} else continue;//Ce n'est pas une ev√®nement reconnu
 						
 						if (($Joueur) && (($Event->Etat=="O")||($Event->Etat=="F")) ) $MessageBulle .= "&lt;li&gt;".$Event->nombreJoueursPresents()." inscrit".(($Event->nombreJoueursPresents() > 1)?"s":"")."&lt;/li&gt;";
-						if (($Joueur) && ($Event->Etat=="T") ) $MessageBulle .= "&lt;li&gt;".$Event->NombreJoueursEtaientPresents." ".(($Event->NombreJoueursEtaientPresents > 1)?"membres Ètaient prÈsents":"membre Ètait prÈsent")."&lt;/li&gt;";
+						if (($Joueur) && ($Event->Etat=="T") ) $MessageBulle .= "&lt;li&gt;".$Event->NombreJoueursEtaientPresents." ".(($Event->NombreJoueursEtaientPresents > 1)?"membres √©taient pr√©sents":"membre √©tait pr√©sent")."&lt;/li&gt;";
 						$MessageBulle .= "&lt;/ul&gt;";
-						if ($Joueur) $MessageBulle .= "&lt;em&gt;(Cliquez pour voir plus de dÈtails)&lt;/em&gt;";
+						if ($Joueur) $MessageBulle .= "&lt;em&gt;(Cliquez pour voir plus de d√©tails)&lt;/em&gt;";
 					}
 					$MessageBulle=str_replace("'", "\'", $MessageBulle);
 					print("<p class=\"".$Style."\" onmouseover=\"bulle('".$MessageBulle."', event, 3)\" onmouseout=\"couic()\"> ".$Presence.$Event->Titre.$Presence." </p>");
 				}
 			}
 		}
-		// *********** Fin affichage des des ÈvÈnements pour une journÈe
+		// *********** Fin affichage des des √©v√©nements pour une journ√©e
 		print("</td>");
 		$Jour++;
 		// *********** Passage au jour suivant
@@ -116,36 +116,36 @@ do{
 ?>
 
 		<tr class="Legende">
-			<td>LÈgende:<br/>&nbsp;</td>
+			<td>L√©gende:<br/>&nbsp;</td>
 			<td colspan="2">
 			<table>
 				<tr>
-					<td><div class="RectangleLegende Seance"></div></td><td>SÈance de progrËs</td>
+					<td><div class="RectangleLegende Seance"></div></td><td>S√©ance de progr√®s</td>
 				</tr>
 				<tr>
-					<td><div class="RectangleLegende Asso"></div></td><td>EvÈnement divers</td>
+					<td><div class="RectangleLegende Asso"></div></td><td>Ev√©nement divers</td>
 				</tr>
 			</table>
 			</td>
 			<td colspan="2">
 			<table>
 				<tr>
-					<td><div class="RectangleLegende RencontreComplet"></div></td><td>Rencontre, Èquipe complËte</td>
+					<td><div class="RectangleLegende RencontreComplet"></div></td><td>Rencontre, √©quipe compl√®te</td>
 				</tr>
 				<tr>
-					<td><div class="RectangleLegende RencontreIncomplet"></div></td><td>Rencontre, Èquipe incomplËte</td>
+					<td><div class="RectangleLegende RencontreIncomplet"></div></td><td>Rencontre, √©quipe incompl√®te</td>
 				</tr>
 			</table>
 			</td>
 			<td colspan="2">
 			<table>
 				<tr>
-					<td><div class="RectangleLegende Annule"></div></td><td>EvÈnement annulÈ</td>
+					<td><div class="RectangleLegende Annule"></div></td><td>Ev√©nement annul√©</td>
 				</tr>
 				<tr>
 <?
 if($Mode=="Visu"){?>					<td>&nbsp;</td><td>&nbsp;</td>
-<?}else if ($Mode=="Saisie"){?>					<td><img src="<?=$RepertoireImages?>presence.gif" alt="" /> <img src="<?=$RepertoireImages?>presence.gif" alt="" /></td><td>PrÈsence</td>
+<?}else if ($Mode=="Saisie"){?>					<td><img src="<?=$RepertoireImages?>presence.gif" alt="" /> <img src="<?=$RepertoireImages?>presence.gif" alt="" /></td><td>Pr√©sence</td>
 <?}else if ($Mode=="Admin"){?>					<td><div class="RectangleLegende Initialise"></div></td><td>Evenement seulement initialise</td>
 <?}?>
 				</tr>

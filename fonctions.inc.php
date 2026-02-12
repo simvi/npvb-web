@@ -126,6 +126,7 @@ function ChargeEvenements($Annee, $Mois, $Jour){
 	}
 	while ($Event = mySql_fetch_object($DBEvenements)){
 		$serontPresents = array();
+		$serontIndisponibles = array();
 		$etaientPresents = array();
 		$TMPJoueurs = array();
 		$DBJoueurs = mySql_query("SELECT * FROM NPVB_Presence WHERE (DateHeure = '".$Event->DateHeure."' AND Libelle = '".$Event->Libelle."')", $sdblink);
@@ -137,6 +138,7 @@ function ChargeEvenements($Annee, $Mois, $Jour){
 			//Pour chaque joueur, on regarde si son absence n'est pas renseign�e et on l'ajoute
 			foreach($LocalJoueurs as $Joueur){
 				if (($TMPJoueurs[$Joueur->Pseudonyme]->Prevue=="o")||(($TMPJoueurs[$Joueur->Pseudonyme]->Prevue<>"n")&&($LocalEquipes[$Event->Libelle]->faisPartie($Joueur->Pseudonyme)))) $serontPresents[$Joueur->Pseudonyme]="o";
+				if ($TMPJoueurs[$Joueur->Pseudonyme]->Prevue=="n") $serontIndisponibles[$Joueur->Pseudonyme]="n";
 				if ($TMPJoueurs[$Joueur->Pseudonyme]->Effective<>"") $etaientPresents[$Joueur->Pseudonyme]=$TMPJoueurs[$Joueur->Pseudonyme]->Effective;
 			}
 		}else{
@@ -144,10 +146,11 @@ function ChargeEvenements($Annee, $Mois, $Jour){
 			//on ajoute le joueur si sa pr�sence est saisie
 			foreach($TMPJoueurs as $PresenceJoueur){
 				if ($PresenceJoueur->Prevue=="o") $serontPresents[$PresenceJoueur->Joueur]="o";
+				if ($PresenceJoueur->Prevue=="n") $serontIndisponibles[$PresenceJoueur->Joueur]="n";
 				if ($PresenceJoueur->Effective<>"") $etaientPresents[$PresenceJoueur->Joueur]=$PresenceJoueur->Effective;
 			}
 		}
-		$Evenements[substr($Event->DateHeure, 0, 8)][substr($Event->DateHeure, 8, 4)][$Event->Libelle] = new Evenement($Event->DateHeure, $Event->Libelle, $Event->Etat, $Event->Titre, $Event->Intitule, $Event->Lieu, $Event->Adresse, $Event->Adversaire, $Event->Domicile, $Event->Resultat, $Event->Analyse, $Event->InscritsMax,$serontPresents, $etaientPresents);
+		$Evenements[substr($Event->DateHeure, 0, 8)][substr($Event->DateHeure, 8, 4)][$Event->Libelle] = new Evenement($Event->DateHeure, $Event->Libelle, $Event->Etat, $Event->Titre, $Event->Intitule, $Event->Lieu, $Event->Adresse, $Event->Adversaire, $Event->Domicile, $Event->Resultat, $Event->Analyse, $Event->InscritsMax,$serontPresents, $serontIndisponibles, $etaientPresents);
 		}
 	return $Evenements;
 	}
@@ -262,7 +265,7 @@ function EmailValide($email) {
 	if (!$email) return false;
 
 	// Regex simple mais efficace pour PHP 4
-	return ereg("^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$", $email);
+	return preg_match("/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/", $email);
 }
 
 // Recherche un membre par pseudonyme OU email

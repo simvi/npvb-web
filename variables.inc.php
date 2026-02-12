@@ -2,9 +2,11 @@
 if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
 
 //**********************************VARIABLES GLOBALES A PARAMETRABLES************************************************//
-//+++++++++expressions r�guli�res: caract�res autoris�s (voir doc avant de changer)
-$EregTexteSeulement="[^a-zA-Z0-9_\ ',�@������������������������-]";
-$EregTexteComplet="[$<>]";
+//+++++++++expressions régulières: caractères autorisés (voir doc avant de changer)
+// Ancienne regex (ereg déprécié): $EregTexteSeulement="[^a-zA-Z0-9_\ ',é@àèùâêîôûëïüÿçÀÈÙÂÊÎÔÛËÏÜŸÇÉ-]";
+// Nouvelle regex UTF-8 compatible avec preg_match: interdit seulement les caractères dangereux
+$EregTexteSeulement="/[<>$]/u"; // Interdit < > $ pour éviter les injections
+$EregTexteComplet="/[<>$]/u"; // Interdit < > $ pour éviter les injections
 
 //++++++++++++++Dur�es
 $FermetureEvenementAvant=4*24;//nombre d'heures avant l'event pour permettre sa fermeture
@@ -46,8 +48,8 @@ $RepertoireImages = "Images/";
 $RepertoireRelevesFNP = "RelevesFNP/";
 
 $SupportePNG = false;
-foreach ($NavigateursSupportentPNG as $Navigateur){ 
-	if (ereg($Navigateur, getenv("HTTP_USER_AGENT"))) $SupportePNG = true;
+foreach ($NavigateursSupportentPNG as $Navigateur){
+	if (strpos(getenv("HTTP_USER_AGENT"), $Navigateur) !== false) $SupportePNG = true;
 }
 
 

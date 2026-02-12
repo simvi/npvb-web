@@ -11,7 +11,7 @@ if ($Joueur->DieuToutPuissant=="n"){ require("accueil.inc.php"); return;}
 <table id="Accueil">
 	<tr>
 		<td>
-		Partie à venir plus tard, à définir!!		
+		Partie Ã  venir plus tard, Ã  dÃ©finir!!		
 		</td>
 	</tr>
 </table>

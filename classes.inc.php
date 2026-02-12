@@ -47,10 +47,11 @@ class Evenement{
 	var $Analyse;
 	var $InscritsMax;
 	var $serontPresents;//tableau
+	var $serontIndisponibles;//tableau
 	var $etaientPresents;//tableau
 	var $NombreJoueursEtaientPresents;
-	
-	function Evenement($DateHeure, $Libelle, $Etat, $Titre, $Intitule, $Lieu, $Adresse, $Adversaire, $Domicile, $Resultat, $Analyse, $InscritsMax, $serontPresents, $etaientPresents){
+
+	function Evenement($DateHeure, $Libelle, $Etat, $Titre, $Intitule, $Lieu, $Adresse, $Adversaire, $Domicile, $Resultat, $Analyse, $InscritsMax, $serontPresents, $serontIndisponibles, $etaientPresents){
 		
 		$this->DateHeure = $DateHeure;
 		$this->Libelle = $Libelle;
@@ -65,6 +66,7 @@ class Evenement{
 		$this->Analyse = $Analyse;
 		$this->InscritsMax = $InscritsMax;
 		$this->serontPresents = $serontPresents;
+		$this->serontIndisponibles = $serontIndisponibles;
 		$this->etaientPresents = $etaientPresents;
 		$NombreJoueursEtaientPresents = 0;
 		

@@ -9,7 +9,7 @@ if ($Joueur->DieuToutPuissant=="n"){ require("accueil.inc.php"); return;}
 
 		
 //******************************************************************
-//************ Effectue les modifications demandées
+//************ Effectue les modifications demandÃ©es
 //******************************************************************
 //$Joueurs = ChargeJoueurs("V", "Nom, Prenom");
 $Equipes = ChargeEquipes();
@@ -21,7 +21,7 @@ if ($ModeModif){
 	
 	//reconstitue la dateheure et la teste
 	$NouvelleDateHeure=substr($Date, 6, 4).substr($Date, 3, 2).substr($Date, 0, 2).substr($Heure, 0, 2).substr($Heure, 3, 2)."00";
-	if (!ereg("[0-9]{14}", $NouvelleDateHeure)) $ErreurDonnees["DateHeure"] .= "La format de la date est invalide<br/>";
+	if (!preg_match("/^[0-9]{14}$/", $NouvelleDateHeure)) $ErreurDonnees["DateHeure"] .= "La format de la date est invalide<br/>";
 	if (!$ErreurDonnees["DateHeure"]){
 		if (!checkDate(substr($NouvelleDateHeure, 4, 2), substr($NouvelleDateHeure, 6, 2), substr($NouvelleDateHeure, 0, 4))) $ErreurDonnees["DateHeure"] .= "La date est invalide<br/>";
 		if (((int)substr($NouvelleDateHeure, 8, 2) > 23)||((int)substr($NouvelleDateHeure, 8, 2) < 0)||((int)substr($NouvelleDateHeure, 10, 2) > 59)||((int)substr($NouvelleDateHeure, 10, 2) < 0)) $ErreurDonnees["DateHeure"] .= "L'heure est invalide<br/>";
@@ -30,7 +30,7 @@ if ($ModeModif){
 	switch ($ModeModif){
 		case "Nouveau":
 			if ($ErreurDonnees["DateHeure"]) $ErreurDonnees["Nouveau"] = $ErreurDonnees["DateHeure"];
-			if (!$Equipes[$Equipe]) $ErreurDonnees["Nouveau"] .= "Le Type/Equipe est nécéssaire à la création d'un événement<br/>";
+			if (!$Equipes[$Equipe]) $ErreurDonnees["Nouveau"] .= "Le Type/Equipe est nÃ©cÃ©ssaire Ã  la crÃ©ation d'un Ã©vÃ©nement<br/>";
 			if ($ErreurDonnees["Nouveau"]) break;
 			$Modification=true;
 			
@@ -41,19 +41,19 @@ if ($ModeModif){
 			if ($ErreurDonnees["DateHeure"]) $ErreurDonnees["Modif"] = $ErreurDonnees["DateHeure"];
 			if (!$Equipes[$Equipe]) $ErreurDonnees["Modif"] .= "Le Type/Equipe obligatoire<br/>";
 			if (!$Titre){$ErreurDonnees["Modif"] .= "Le Titre est obligatoire<br/>";
-			}else if (ereg($EregTexteSeulement, $Titre)){$ErreurDonnees["Modif"] .= "Le format du Titre est incorrect<br/>";
+			}else if (preg_match($EregTexteSeulement, $Titre)){$ErreurDonnees["Modif"] .= "Le format du Titre est incorrect<br/>";
 			}
 			if (!$Intitule){$ErreurDonnees["Modif"] .= "L'intitule est obligatoire<br/>";
-			}else if (ereg($EregTexteSeulement, $Intitule)){$ErreurDonnees["Modif"] .= "Le format de l'intitule est incorrect<br/>";
+			}else if (preg_match($EregTexteSeulement, $Intitule)){$ErreurDonnees["Modif"] .= "Le format de l'intitule est incorrect<br/>";
 			}
-			if (ereg($EregTexteComplet, $MotifAnnulation)) $ErreurDonnees["Modif"] .= "Le format du motif d'annulation est incorrect<br/>";
-			if (ereg($EregTexteComplet, $Lieu)) $ErreurDonnees["Modif"] .= "Le format du Lieu est incorrect<br/>";
-			if (ereg($EregTexteComplet, $Adresse)) $ErreurDonnees["Modif"] .= "Le format de l'adresse est incorrect<br/>";
-			if (ereg($EregTexteSeulement, $Adversaire)) $ErreurDonnees["Modif"] .= "Le format de l'adversaire est incorrect<br/>";
+			if (preg_match($EregTexteComplet, $MotifAnnulation)) $ErreurDonnees["Modif"] .= "Le format du motif d'annulation est incorrect<br/>";
+			if (preg_match($EregTexteComplet, $Lieu)) $ErreurDonnees["Modif"] .= "Le format du Lieu est incorrect<br/>";
+			if (preg_match($EregTexteComplet, $Adresse)) $ErreurDonnees["Modif"] .= "Le format de l'adresse est incorrect<br/>";
+			if (preg_match($EregTexteSeulement, $Adversaire)) $ErreurDonnees["Modif"] .= "Le format de l'adversaire est incorrect<br/>";
 			if (($Domicile)&&($Domicile<>"n")&&($Domicile<>"o")) $ErreurDonnees["Modif"] .= "Le format du Domicile est incorrect<br/>";
-			if (!ereg("([0-9]{1,2}/[0-9]{1,2}\|?)*", $Resultat)) $ErreurDonnees["Modif"] .= "Le format du Résultat est incorrect<br/>";
+			if (!preg_match("/^([0-9]{1,2}\/[0-9]{1,2}\|?)*$/", $Resultat)) $ErreurDonnees["Modif"] .= "Le format du RÃ©sultat est incorrect<br/>";
 			$Analyse = str_replace(array("<", ">"), array("&lt;", "&gt;"), $Analyse);
-			if (ereg($EregTexteComplet, $Analyse)) $ErreurDonnees["Modif"] .= "Le format de l'analyse est incorrect<br/>";
+			if (preg_match($EregTexteComplet, $Analyse)) $ErreurDonnees["Modif"] .= "Le format de l'analyse est incorrect<br/>";
 			if ($ErreurDonnees["Modif"]) break;
 			$Modification=true;
 			
@@ -81,10 +81,10 @@ if ($ModeModif){
 				{
 					$ErreurDonnees["Enregistrement"] = "Le fichier n'est pas un fichier .xls <br/>(extension en minuscule obligatoire)<br/>";
 				}else{
-					if(!move_uploaded_file($ReleveFNP, $RepertoireRelevesFNP."FNP_".$NouvelleDateHeure."_".$Equipe.".xls")) $ErreurDonnees["Enregistrement"] = "Impossible de copier le relevé FNP<br/>";
+					if(!move_uploaded_file($ReleveFNP, $RepertoireRelevesFNP."FNP_".$NouvelleDateHeure."_".$Equipe.".xls")) $ErreurDonnees["Enregistrement"] = "Impossible de copier le relevÃ© FNP<br/>";
 				}
 			}else if ($SupprimeReleveFNP=="o")			{
-				if (!unlink($RepertoireRelevesFNP."FNP_".$NouvelleDateHeure."_".$Equipe.".xls")) $ErreurDonnees["Enregistrement"] = "Impossible de supprimer le relevé FNP<br/>";
+				if (!unlink($RepertoireRelevesFNP."FNP_".$NouvelleDateHeure."_".$Equipe.".xls")) $ErreurDonnees["Enregistrement"] = "Impossible de supprimer le relevÃ© FNP<br/>";
 			}
 			break;
 		case "Supprime":
@@ -102,7 +102,7 @@ if ($ModeModif){
 
 
 //******************************************************************
-//************ Charge les données et affiche la page
+//************ Charge les donnÃ©es et affiche la page
 //******************************************************************
 $Evenements = ChargeEvenements(null, null, $Jour);
 
@@ -124,7 +124,7 @@ function ConfirmSupprime(NomFormulaire, Evenement){
 	<input type="hidden" name="Mois" value="<?=$Mois?>" />
 	<input type="hidden" name="Annee" value="<?=$Annee?>" />
 	<input type="hidden" name="ModeModif" value="Nouveau" />
-	<b>Ajout d'un événement</b><select name="Equipe"><option value=""></option><?foreach ($Equipes as $Equipe){?><option value="<?=$Equipe->Nom?>"><?=$Equipe->Nom?></option><?}?></select>
+	<b>Ajout d'un Ã©vÃ©nement</b><select name="Equipe"><option value=""></option><?foreach ($Equipes as $Equipe){?><option value="<?=$Equipe->Nom?>"><?=$Equipe->Nom?></option><?}?></select>
 	Date <input type="text" value="<?=substr($Jour, 6, 2)."/".substr($Jour, 4, 2)."/".substr($Jour, 0, 4)?>" size="10"  maxlength="10" disabled="disabled" /><input type="hidden" name="Date" value="<?=substr($Jour, 6, 2)."/".substr($Jour, 4, 2)."/".substr($Jour, 0, 4)?>"/>
 	Heure <input type="text" name="Heure" value="20:00" size="5"  maxlength="5" />
 	<input type="submit" value="Ajouter" class="Action" />
@@ -136,7 +136,7 @@ if ($Modification){
 	if ($ErreurDonnees["Enregistrement"]){
 		print("\t<tr>\n\t\t<td class=\"ModifError\">".$ErreurDonnees["Enregistrement"]."</td>\n\t</tr>\n");
 	}else{
-		print("\t<tr>\n\t\t<td class=\"ModifOk\">Modifications effectuées avec succès</td>\n\t</tr>\n");
+		print("\t<tr>\n\t\t<td class=\"ModifOk\">Modifications effectuÃ©es avec succÃ¨s</td>\n\t</tr>\n");
 	}
 }	
 if ($ErreurDonnees["Nouveau"]){
@@ -149,9 +149,9 @@ if ($ErreurDonnees["Modif"]){
 <?
 if ($Evenements[$Jour]){
 
-	/********************** Il y a bien au moins un evènement ce jour **********************/
+	/********************** Il y a bien au moins un evÃ¨nement ce jour **********************/
 
-	$EtatsEvent = array("I"=>"Initialise", "O"=>"Ouvert", "F"=>"Fermé", "T"=>"Terminé", "A"=>"Annule");
+	$EtatsEvent = array("I"=>"Initialise", "O"=>"Ouvert", "F"=>"FermÃ©", "T"=>"TerminÃ©", "A"=>"Annule");
 
 	foreach ($Evenements[$Jour] as $HeureKey=>$HeureEvent){
 		foreach ($Evenements[$Jour][$HeureKey] as $Key=>$Event){
@@ -198,7 +198,7 @@ if ($Evenements[$Jour]){
 		Date <input type="text" value="<?=$Date?>" size="10"  maxlength="10"<?=(($Event->Etat<>"I")?" disabled=\"disabled\"":" name=\"Date\"")?> />
 		Heure <input type="text" value="<?=$Heure?>" size="5"  maxlength="5"<?=(($Event->Etat<>"I")?" disabled=\"disabled\"":"  name=\"Heure\"")?> />
 		Etat <select name="Etat"><?foreach ($EtatsEvent as $ValEtatEvent=>$EtatEvent){{?><option value="<?=$ValEtatEvent?>"<?=((substr($Event->Etat, 0, 1)==$ValEtatEvent)?" selected=\"selected\"":"")?><?=((($ValEtatEvent=="I")&&($Event->Etat<>"I"))?" disabled=\"disabled\"":"")?>><?=$EtatEvent?></option><?}}?></select>
-		<input type="button" value="Supprimer" onclick="ConfirmSupprime('<?=$Event->DateHeure?><?=$Event->Libelle?>', 'de type <?=$Titre?> le <?=$Date?> à <?=$Heure?>')" class="Bouton Annule" />
+		<input type="button" value="Supprimer" onclick="ConfirmSupprime('<?=$Event->DateHeure?><?=$Event->Libelle?>', 'de type <?=$Titre?> le <?=$Date?> Ã  <?=$Heure?>')" class="Bouton Annule" />
 		<input type="submit" value="Modifier" class="Bouton Action" />
 		<?if($Event->Etat<>"I"){?>		<input type="hidden" name="Equipe" value="<?=$Event->Libelle?>" /><input type="hidden" name="Date" value="<?=$Date?>" /><input type="hidden" name="Heure" value="<?=$Heure?>" /><?}?>
 		</p>
@@ -220,7 +220,7 @@ if ($Evenements[$Jour]){
 			if (($Event->Libelle<>"ASSO")&&($Event->Libelle<>"SEANCE")){
 ?>
 			<tr><td>Adversaire</td><td><input type="text" name="Adversaire" value="<?=$Adversaire?>" size="30" maxlength="30" /></td></tr>
-			<tr><td>Rencontre à</td><td><input type="radio" name="Domicile" value="o"<?=(($Domicile=="o")?" checked=\"checked\"":"")?> /> Domicile<br/><input type="radio" name="Domicile" value="n"<?=(($Domicile=="n")?" checked=\"checked\"":"")?> /> L'extérieur</td></tr>
+			<tr><td>Rencontre Ã </td><td><input type="radio" name="Domicile" value="o"<?=(($Domicile=="o")?" checked=\"checked\"":"")?> /> Domicile<br/><input type="radio" name="Domicile" value="n"<?=(($Domicile=="n")?" checked=\"checked\"":"")?> /> L'extÃ©rieur</td></tr>
 <?
 			}
 ?>
@@ -242,9 +242,9 @@ if ($Evenements[$Jour]){
 			{
 				if (!is_file($RepertoireRelevesFNP."FNP_".$Event->DateHeure."_".$Event->Libelle.".xls"))
 				{				
-					print("<td>Relevé FNP</td><td><input type=\"file\" name=\"ReleveFNP\" size=\"15\" /></td>");
+					print("<td>RelevÃ© FNP</td><td><input type=\"file\" name=\"ReleveFNP\" size=\"15\" /></td>");
 			 	}else{
-				 	print("<td>Supprimer le relevé FNP</td><td><input type=\"checkbox\" name=\"SupprimeReleveFNP\" value=\"o\" /></td>");
+				 	print("<td>Supprimer le relevÃ© FNP</td><td><input type=\"checkbox\" name=\"SupprimeReleveFNP\" value=\"o\" /></td>");
 			 	}
 			}
 ?>
@@ -260,10 +260,10 @@ if ($Evenements[$Jour]){
 		}
 	}
 }else{
-	/********************** Aucun événement ce jour **********************/
+	/********************** Aucun Ã©vÃ©nement ce jour **********************/
 ?>
 	<tr>
-		<td class="AucunEvenement">Pas d'événement ce jour</td>
+		<td class="AucunEvenement">Pas d'Ã©vÃ©nement ce jour</td>
 	</tr>
 <?
 }

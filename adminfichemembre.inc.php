@@ -67,25 +67,25 @@ if ((($Mode=="Modif")||($Mode=="Nouveau")) && !isset($_POST['GenererLienReset'])
 	
 	//Test du pseudonyme
 	if (!$Membre){$ErreurDonnees["Pseudonyme"] .= "Le pseudonyme est obligatoire";
-	}else if (ereg("[^a-zA-Z0-9_]", $Membre)){$ErreurDonnees["Pseudonyme"] .= "Le format du pseudonyme est incorrect";
+	}else if (preg_match("/[^a-zA-Z0-9_]/", $Membre)){$ErreurDonnees["Pseudonyme"] .= "Le format du pseudonyme est incorrect";
 	}
 	// Validation du mot de passe uniquement pour la création de compte
 	if ($Mode=="Nouveau") {
 		if (!$MotDePasse){
 			$ErreurDonnees["Pseudonyme"] .= "Le mot de passe est obligatoire<br/>pour la cr�ation d'un compte";
-		}else if (ereg("[^a-zA-Z0-9_\*\+���������\(\)\[\]=-]", $MotDePasse)){
+		}else if (preg_match("/[^a-zA-Z0-9_*+àèéùâêîôûëïüÿçÀÈÉÙÂÊÎÔÛËÏÜŸÇ()\[\]=-]/u", $MotDePasse)){
 			$ErreurDonnees["Pseudonyme"] .= "Le format du mot de passe est incorrect";
 		}
 	}
 	
 	//Test de la Civilit�
 	if (!$Nom){$ErreurDonnees["Civillite"] .= "Le Nom est obligatoire<br/>";
-	}else if (ereg("[^a-zA-Z0-9_\ ���������-]", $Nom)){$ErreurDonnees["Civillite"] .= "Le format du Nom est incorrect<br/>";
+	}else if (preg_match("/[^a-zA-Z0-9_ àèéùâêîôûëïüÿçÀÈÉÙÂÊÎÔÛËÏÜŸÇ-]/u", $Nom)){$ErreurDonnees["Civillite"] .= "Le format du Nom est incorrect<br/>";
 	}
 	if (!$Prenom){$ErreurDonnees["Civillite"] .= "Le Pr�nom est obligatoire<br/>";
-	}else if (ereg("[^a-zA-Z0-9_\ ���������-]", $Prenom)){$ErreurDonnees["Civillite"] .= "Le format du Pr�nom est incorrect<br/>";
+	}else if (preg_match("/[^a-zA-Z0-9_ àèéùâêîôûëïüÿçÀÈÉÙÂÊÎÔÛËÏÜŸÇ-]/u", $Prenom)){$ErreurDonnees["Civillite"] .= "Le format du Pr�nom est incorrect<br/>";
 	}
-	if (($DateNaissance)&&($DateNaissance<>"JJ/MM/AAAA")&&(!ereg("[0-9]{2}/[0-9]{2}/[0-9]{4}", $DateNaissance))){
+	if (($DateNaissance)&&($DateNaissance<>"JJ/MM/AAAA")&&(!preg_match("/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/", $DateNaissance))){
 		$ErreurDonnees["Autres"] .= "La date de naissance est incorrecte<br/>";
 		$DateNaissance = "JJ/MM/AAAA";
 	}else{
@@ -95,41 +95,41 @@ if ((($Mode=="Modif")||($Mode=="Nouveau")) && !isset($_POST['GenererLienReset'])
 	
 	//Test du contact
 	$Telephones="";
-	if (ereg("[0-9]{10}", $Telephone1)) $Telephones.="D".$Telephone1;
-	if (ereg("[0-9]{10}", $Telephone2)) $Telephones.="D".$Telephone2;
-	if (ereg("[0-9]{10}", $Mobile1)) $Telephones.="M".$Mobile1;
-	if (ereg("[0-9]{10}", $Mobile2)) $Telephones.="M".$Mobile2;
-	if (($Telephone1)&&(!ereg("[0-9]{10}", $Telephone1))){$ErreurDonnees["Contact"] .= "Le premier num�ro de t�l�phone est incorrect<br/>";}
-	if (($Telephone2)&&(!ereg("[0-9]{10}", $Telephone2))){$ErreurDonnees["Contact"] .= "Le second num�ro de t�l�phone est incorrect<br/>";}
-	if (($Mobile1)&&(!ereg("[0-9]{10}", $Mobile1))){$ErreurDonnees["Contact"] .= "Le premier num�ro de mobile est incorrect<br/>";}
-	if (($Mobile2)&&(!ereg("[0-9]{10}", $Mobile2))){$ErreurDonnees["Contact"] .= "Le second num�ro de mobile est incorrect<br/>";}
-	if (($Email)&&(!ereg("[a-zA-Z0-9\.-]+@{1}[a-zA-Z0-9\-]+\.{1}[a-zA-Z0-9]{2,3}", $Email)))
+	if (preg_match("/^[0-9]{10}$/", $Telephone1)) $Telephones.="D".$Telephone1;
+	if (preg_match("/^[0-9]{10}$/", $Telephone2)) $Telephones.="D".$Telephone2;
+	if (preg_match("/^[0-9]{10}$/", $Mobile1)) $Telephones.="M".$Mobile1;
+	if (preg_match("/^[0-9]{10}$/", $Mobile2)) $Telephones.="M".$Mobile2;
+	if (($Telephone1)&&(!preg_match("/^[0-9]{10}$/", $Telephone1))){$ErreurDonnees["Contact"] .= "Le premier num�ro de t�l�phone est incorrect<br/>";}
+	if (($Telephone2)&&(!preg_match("/^[0-9]{10}$/", $Telephone2))){$ErreurDonnees["Contact"] .= "Le second num�ro de t�l�phone est incorrect<br/>";}
+	if (($Mobile1)&&(!preg_match("/^[0-9]{10}$/", $Mobile1))){$ErreurDonnees["Contact"] .= "Le premier num�ro de mobile est incorrect<br/>";}
+	if (($Mobile2)&&(!preg_match("/^[0-9]{10}$/", $Mobile2))){$ErreurDonnees["Contact"] .= "Le second num�ro de mobile est incorrect<br/>";}
+	if (($Email)&&(!preg_match("/^[a-zA-Z0-9.-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9]{2,}$/", $Email)))
 		{$ErreurDonnees["Contact"] .= "Le format de l'email est incorrect<br/>";}
 	
 	//Test des Coordonn�es
-	if (($Adresse)&&(ereg("[^a-zA-Z0-9_',\ ���������-]", $Adresse))){$ErreurDonnees["Coordonnees"] .= "Le format de l'adresse est incorrect<br/>";}
-	if (($CodePostal)&&(!ereg("[0-9]{5}", $CodePostal))){$ErreurDonnees["Coordonnees"] .= "Le code postal est incorrect<br/>";}
-	if (($Ville)&&(ereg("[^a-zA-Z0-9_\'\ ���������-]", $Ville))){$ErreurDonnees["Coordonnees"] .= "Le format de la ville est incorrect<br/>";}
+	if (($Adresse)&&(preg_match("/[^a-zA-Z0-9_', àèéùâêîôûëïüÿçÀÈÉÙÂÊÎÔÛËÏÜŸÇ-]/u", $Adresse))){$ErreurDonnees["Coordonnees"] .= "Le format de l'adresse est incorrect<br/>";}
+	if (($CodePostal)&&(!preg_match("/^[0-9]{5}$/", $CodePostal))){$ErreurDonnees["Coordonnees"] .= "Le code postal est incorrect<br/>";}
+	if (($Ville)&&(preg_match("/[^a-zA-Z0-9_' àèéùâêîôûëïüÿçÀÈÉÙÂÊÎÔÛËÏÜŸÇ-]/u", $Ville))){$ErreurDonnees["Coordonnees"] .= "Le format de la ville est incorrect<br/>";}
 	$CPVille=$CodePostal." ".$Ville;
 	
 	//Test des Autres
-	if (($Profession)&&(ereg("[^a-zA-Z0-9_\'\ ,���������\(\)-]", $Profession))){$ErreurDonnees["Autres"] .= "Le format de la profession est incorrect<br/>";}
+	if (($Profession)&&(preg_match("/[^a-zA-Z0-9_' ,àèéùâêîôûëïüÿçÀÈÉÙÂÊÎÔÛËÏÜŸÇ()-]/u", $Profession))){$ErreurDonnees["Autres"] .= "Le format de la profession est incorrect<br/>";}
 	
-	if (($PremiereAdhesion)&&($PremiereAdhesion<>"JJ/MM/AAAA")&&(!ereg("[0-9]{2}/[0-9]{2}/[0-9]{4}", $PremiereAdhesion))){
+	if (($PremiereAdhesion)&&($PremiereAdhesion<>"JJ/MM/AAAA")&&(!preg_match("/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/", $PremiereAdhesion))){
 		$ErreurDonnees["Autres"] .= "La date de premi�re adh�sion est incorrecte<br/>";
 		$PremiereAdhesion = "JJ/MM/AAAA";
 	}else{
 		$PremiereAdhesionMySQL = substr($PremiereAdhesion, 6, 4)."-".substr($PremiereAdhesion, 3, 2)."-".substr($PremiereAdhesion, 0, 2);
 	}
 	
-	if (($Adhesion)&&($Adhesion<>"JJ/MM/AAAA")&&(!ereg("[0-9]{2}/[0-9]{2}/[0-9]{4}", $Adhesion))){
+	if (($Adhesion)&&($Adhesion<>"JJ/MM/AAAA")&&(!preg_match("/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/", $Adhesion))){
 		$ErreurDonnees["Autres"] .= "La date de l'adh�sion est incorrecte<br/>";
 		$Adhesion = "JJ/MM/AAAA";
 	}else{
 		$AdhesionMySQL = substr($Adhesion, 6, 4)."-".substr($Adhesion, 3, 2)."-".substr($Adhesion, 0, 2);
 	}
 	
-	if (($License)&&($License<>"JJ/MM/AAAA")&&(!ereg("[0-9]{2}/[0-9]{2}/[0-9]{4}", $License))){
+	if (($License)&&($License<>"JJ/MM/AAAA")&&(!preg_match("/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/", $License))){
 		$ErreurDonnees["Autres"] .= "La date de la license est incorrecte<br/>";
 		$License = "JJ/MM/AAAA";
 	}else{
@@ -137,7 +137,7 @@ if ((($Mode=="Modif")||($Mode=="Nouveau")) && !isset($_POST['GenererLienReset'])
 	}
 	
 	/*
-	if (($NumLicence)&&(!ereg("[a-z][A-Z][0-9]", $NumLicence))){
+	if (($NumLicence)&&(!preg_match("/[a-z][A-Z][0-9]/", $NumLicence))){
 		$ErreurDonnees["Autres"] .= "Le numero de licence est incorrect<br/>";
 		$NumLicence = "";
 	}*/
@@ -443,8 +443,8 @@ if ($ErreurDonnees["Civillite"]){
 					<legend>Civilit�</legend>
 					<table>
 						<tr><td class="Colonne1">Nom</td><td class="Colonne2"><input type="text" name="Nom" size="30" value="<?=$Nom?>" /></td></tr>
-						<tr><td class="Colonne1">Pr�nom</td><td class="Colonne2"><input type="text" name="Prenom" size="30" value="<?=$Prenom?>" /></td></tr>
-						<tr><td class="Colonne1">N�<?=($Sexe=="f")?"e":""?> le</td><td class="Colonne2"><input type="text" name="DateNaissance" size="30" value="<?=$DateNaissance?>" /></td></tr>
+						<tr><td class="Colonne1">Prénom</td><td class="Colonne2"><input type="text" name="Prenom" size="30" value="<?=$Prenom?>" /></td></tr>
+						<tr><td class="Colonne1">Né<?=($Sexe=="f")?"e":""?> le</td><td class="Colonne2"><input type="text" name="DateNaissance" size="30" value="<?=$DateNaissance?>" /></td></tr>
 						<tr><td class="Colonne1">Sexe</td><td class="Colonne2"> <input type="radio" name="Sexe" value="m"<?=($Sexe=="m")?" checked=\"checked\"":""?> /> Homme / <input type="radio" name="Sexe" value="f"<?=($Sexe=="f")?" checked=\"checked\"":""?> /> Femme </td></tr>
 					</table>
 				</fieldset>

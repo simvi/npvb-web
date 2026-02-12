@@ -14,7 +14,7 @@ if (($Mode=="Modif")||($Mode=="Nouveau")) {
 	//***Tests du formulaire
 	//**************************************
 	
-	// if (($Profession)&&(ereg("[^a-zA-Z0-9_\'\ ,éêèùàâûîô\(\)-]", $Profession))){$ErreurDonnees["Autres"] .= "Le format de la profession est incorrect<br/>";}
+	// if (($Profession)&&(ereg("[^a-zA-Z0-9_\'\ ,Ã©ÃªÃ¨Ã¹Ã Ã¢Ã»Ã®Ã´\(\)-]", $Profession))){$ErreurDonnees["Autres"] .= "Le format de la profession est incorrect<br/>";}
 
 	//**************************************
 	//***Fin des tests du formulaire
@@ -63,7 +63,7 @@ if (($Mode=="Modif")||($Mode=="Nouveau")) {
 		
 	}else{
 		
-		$ErreurDonnees["Enregistrement"]="Erreur dans les données";
+		$ErreurDonnees["Enregistrement"]="Erreur dans les donnÃ©es";
 		
 	}
 } 
@@ -121,7 +121,7 @@ $message = str_replace("\'","'",$message);
 
 ?>
 
-<h2><?=($Mode=="Modif")?"Modification de ".$News[$Id]->Pseudonyme:"Création d'un nouveau message";?></h2>
+<h2><?=($Mode=="Modif")?"Modification de ".$News[$Id]->Pseudonyme:"CrÃ©ation d'un nouveau message";?></h2>
 
 <table id="News">
 <?
@@ -129,7 +129,7 @@ if ($Modification){
 	if ($ErreurDonnees["Enregistrement"]){
 		print("\t<tr>\n\t\t<td><p class=\"ModifError\">".$ErreurDonnees["Enregistrement"]."</p></td>\n\t</tr>\n");
 	}else{
-		print("\t<tr>\n\t\t<td><p class=\"ModifOk\">Modifications effectuées avec succès</p></td>\n\t</tr>\n");
+		print("\t<tr>\n\t\t<td><p class=\"ModifOk\">Modifications effectuÃ©es avec succÃ¨s</p></td>\n\t</tr>\n");
 	}
 }
 
@@ -159,7 +159,7 @@ if ($ErreurDonnees["Pseudonyme"]){
 	if($Mode=="Nouveau"){
 ?>
 
-							<tr><td colspan="2">(Alphanumériqe et '_' autorisés seulement)</td></tr>
+							<tr><td colspan="2">(AlphanumÃ©riqe et '_' autorisÃ©s seulement)</td></tr>
 
 <?
 	}
@@ -172,9 +172,9 @@ if ($ErreurDonnees["Pseudonyme"]){
 		
 ?>
 
-							<tr><td class="Colonne1">Etat du compte</td><td class="Colonne2"><select name="Etat"><option value="V"<?=(($Etat=="V")?" selected=\"selected\"":"")?>>Actif</option><?if($Mode=="Modif"){?><option value="I"<?=(($Etat=="I")?" selected=\"selected\"":"").(($estDansUneEquipe)?" disabled=\"disabled\"":"")?>>Inactif</option><?}?><option value="E"<?=(($Etat=="E")?" selected=\"selected\"":"").(($estDansUneEquipe)?" disabled=\"disabled\"":"")?>>Essai</option></select><?=(($estDansUneEquipe)?"<a href=\"javascript:alert('Vous devez supprimer le joueur de toute équipe\\navant de le passer inactif');\">?</a>":"")?></td></tr>
+							<tr><td class="Colonne1">Etat du compte</td><td class="Colonne2"><select name="Etat"><option value="V"<?=(($Etat=="V")?" selected=\"selected\"":"")?>>Actif</option><?if($Mode=="Modif"){?><option value="I"<?=(($Etat=="I")?" selected=\"selected\"":"").(($estDansUneEquipe)?" disabled=\"disabled\"":"")?>>Inactif</option><?}?><option value="E"<?=(($Etat=="E")?" selected=\"selected\"":"").(($estDansUneEquipe)?" disabled=\"disabled\"":"")?>>Essai</option></select><?=(($estDansUneEquipe)?"<a href=\"javascript:alert('Vous devez supprimer le joueur de toute Ã©quipe\\navant de le passer inactif');\">?</a>":"")?></td></tr>
 							<tr><td class="Colonne1"><?=(($Mode=="Modif")?"Changer le<br/>":"")?>mot de passe</td><td class="Colonne2"><input type="password" name="MotDePasse" size="30" />
-							<br/><input type="checkbox" name="EnvoiMail" value="o" />Envoyer email<?=(($Mode=="Modif")?"<br/><input type=\"checkbox\" name=\"MailCreationCompte\" value=\"o\" />(de création)":"")?></td></tr>
+							<br/><input type="checkbox" name="EnvoiMail" value="o" />Envoyer email<?=(($Mode=="Modif")?"<br/><input type=\"checkbox\" name=\"MailCreationCompte\" value=\"o\" />(de crÃ©ation)":"")?></td></tr>
 							<tr><td class="Colonne1">Accord pour<br/>diffusion</td><td class="Colonne2"><input type="radio" name="Accord" value="o"<?=($Accord=="o")?" checked=\"checked\"":""?>/>oui / <input type="radio" name="Accord" value="n"<?=($Accord=="n")?" checked=\"checked\"":""?>/>non</td></tr>
 					</table>
 					</fieldset>
@@ -189,11 +189,11 @@ if ($ErreurDonnees["Civillite"]){
 ?>
 		
 				<fieldset>
-					<legend>Civilité</legend>
+					<legend>CivilitÃ©</legend>
 					<table>
 						<tr><td class="Colonne1">Nom</td><td class="Colonne2"><input type="text" name="Nom" size="30" value="<?=$Nom?>" /></td></tr>
-						<tr><td class="Colonne1">Prénom</td><td class="Colonne2"><input type="text" name="Prenom" size="30" value="<?=$Prenom?>" /></td></tr>
-						<tr><td class="Colonne1">Né<?=($Sexe=="f")?"e":""?> le</td><td class="Colonne2"><input type="text" name="DateNaissance" size="30" value="<?=$DateNaissance?>" /></td></tr>
+						<tr><td class="Colonne1">PrÃ©nom</td><td class="Colonne2"><input type="text" name="Prenom" size="30" value="<?=$Prenom?>" /></td></tr>
+						<tr><td class="Colonne1">NÃ©<?=($Sexe=="f")?"e":""?> le</td><td class="Colonne2"><input type="text" name="DateNaissance" size="30" value="<?=$DateNaissance?>" /></td></tr>
 						<tr><td class="Colonne1">Sexe</td><td class="Colonne2"> <input type="radio" name="Sexe" value="m"<?=($Sexe=="m")?" checked=\"checked\"":""?> /> Homme / <input type="radio" name="Sexe" value="f"<?=($Sexe=="f")?" checked=\"checked\"":""?> /> Femme </td></tr>
 					</table>
 				</fieldset>
@@ -210,7 +210,7 @@ if ($ErreurDonnees["Contact"]){
 				<fieldset>
 					<legend>Contact</legend>
 					<table>
-						<tr><td class="Colonne1">Téléphone</td><td class="Colonne2"><input type="text" name="Telephone1" size="11" value="<?=$Telephone1?>" /> ou <input type="text" name="Telephone2" size="11" value="<?=$Telephone2?>" /></td></tr>
+						<tr><td class="Colonne1">TÃ©lÃ©phone</td><td class="Colonne2"><input type="text" name="Telephone1" size="11" value="<?=$Telephone1?>" /> ou <input type="text" name="Telephone2" size="11" value="<?=$Telephone2?>" /></td></tr>
 						<tr><td class="Colonne1">Portable</td><td class="Colonne2"><input type="text" name="Mobile1" size="11" value="<?=$Mobile1?>" /> ou <input type="text" name="Mobile2" size="11" value="<?=$Mobile2?>" /></td></tr>
 						<tr><td class="Colonne1">Email</td><td class="Colonne2"><input type="text" name="Email" size="30" value="<?=$Email?>" /></td></tr>
 					</table>
@@ -222,7 +222,7 @@ if ($ErreurDonnees["Coordonnees"]){
 ?>
 
 				<fieldset>
-					<legend>Coordonées</legend>
+					<legend>CoordonÃ©es</legend>
 					<table>
 						<tr><td class="Colonne1">Adresse</td><td class="Colonne2"><input type="text" name="Adresse" size="30" value="<?=$Adresse?>" /></td></tr>
 						<tr><td class="Colonne1">CodePostal</td><td class="Colonne2"><input type="text" name="CodePostal" size="6" value="<?=$CodePostal?>" /></td></tr>
@@ -239,15 +239,15 @@ if ($ErreurDonnees["Autres"]){
 					<legend>Autres</legend>
 					<table>
 						<tr><td class="Colonne1">Profession</td><td class="Colonne2"><input type="text" name="Profession" size="30" value="<?=$Profession?>" /></td></tr>
-						<tr><td class="Colonne1">Première adhésion le</td><td class="Colonne2"><input type="text" name="PremiereAdhesion" size="30" value="<?=$PremiereAdhesion?>" /></td></tr>
-						<tr><td class="Colonne1">Adhésion jusqu'au</td><td class="Colonne2"><input type="text" name="Adhesion" size="30" value="<?=$Adhesion?>" /></td></tr>
+						<tr><td class="Colonne1">PremiÃ¨re adhÃ©sion le</td><td class="Colonne2"><input type="text" name="PremiereAdhesion" size="30" value="<?=$PremiereAdhesion?>" /></td></tr>
+						<tr><td class="Colonne1">AdhÃ©sion jusqu'au</td><td class="Colonne2"><input type="text" name="Adhesion" size="30" value="<?=$Adhesion?>" /></td></tr>
 						<tr>
 							<td class="Colonne1">Licence jusqu'au<br/>(laisser vide si pas de licence)</td>
 							<td class="Colonne2"><input type="text" name="License" size="30" value="<?=$License?>" />
 							</td>
 						</tr>
 						<tr>
-							<td class="Colonne1">N° licence</td>
+							<td class="Colonne1">NÂ° licence</td>
 							<td class="Colonne2"><input type="text" name="NumLicence" size="30" value="<?=$NumLicence?>" />
 							</td>
 						</tr>

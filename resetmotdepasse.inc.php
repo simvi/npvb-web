@@ -34,7 +34,7 @@ if ($TokenValide && isset($_POST['ChangerMotDePasse']) && $_POST['ChangerMotDePa
 		$MessageErreur = "Le nouveau mot de passe est obligatoire.";
 	} elseif (strlen($NouveauMotDePasse) < 4) {
 		$MessageErreur = "Le mot de passe doit contenir au moins 4 caracteres.";
-	} elseif (ereg("[^a-zA-Z0-9_\*\+\(\)\[\]=-]", $NouveauMotDePasse)) {
+	} elseif (preg_match("/[^a-zA-Z0-9_*+()[\]=-]/", $NouveauMotDePasse)) {
 		$MessageErreur = "Le format du mot de passe est incorrect. Caracteres autorises : lettres, chiffres, _ * + - = ( ) [ ]";
 	} elseif ($NouveauMotDePasse !== $ConfirmationMotDePasse) {
 		$MessageErreur = "Les deux mots de passe ne correspondent pas.";

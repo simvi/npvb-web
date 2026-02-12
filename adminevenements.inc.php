@@ -8,7 +8,7 @@ $Joueurs = ChargeJoueurs("V", "Nom, Prenom");
 
 
 //******************
-//** RecupËre et teste les infos de tout le fichier
+//** R√©cup√®re et teste les infos de tout le fichier
 //******************
 if ($Import=="oui"){
 	$EvenementsImportes=array();
@@ -21,38 +21,38 @@ if ($Import=="oui"){
 			while (!feof($FichierImportEvenements)){
 				for ($index=0; $index<count($EvenementsImportesTMP); $index++){
 					if ($Ligne==-1){
-						$TitresAtributs[$index] = trim(ereg_replace("\([^\(\)]*\)", "", $EvenementsImportesTMP[$index]));
+						$TitresAtributs[$index] = trim(preg_replace("/\([^\(\)]*\)/", "", $EvenementsImportesTMP[$index]));
 					}else{
-						$EvenementsImportes[$Ligne][$TitresAtributs[$index]] = trim(ereg_replace("ñ", "-", $EvenementsImportesTMP[$index]));
+						$EvenementsImportes[$Ligne][$TitresAtributs[$index]] = trim(str_replace("ÔøΩ", "-", $EvenementsImportesTMP[$index]));
 					}
 				}
 				if ($Ligne>=0){
 					$Date = $EvenementsImportes[$Ligne]["Date"];
 					$Heure = $EvenementsImportes[$Ligne]["Heure"];
 					$DateHeure=substr($Date, 6, 4).substr($Date, 3, 2).substr($Date, 0, 2).substr($Heure, 0, 2).substr($Heure, 3, 2)."00";
-					if (!ereg("[0-9]{14}", $DateHeure)) $ErreurDonnees["Donnees"] .= "La format de la date ou de l'heure ‡ la ligne ".($Ligne+1)." est invalide<br/>".$DateHeure;
+					if (!preg_match("/^[0-9]{14}$/", $DateHeure)) $ErreurDonnees["Donnees"] .= "La format de la date ou de l'heure √† la ligne ".($Ligne+1)." est invalide<br/>".$DateHeure;
 					if (!$ErreurDonnees["Donnees"]){
-						if (!checkDate(substr($DateHeure, 4, 2), substr($DateHeure, 6, 2), substr($DateHeure, 0, 4))) $ErreurDonnees["Donnees"] .= "La date ‡ la ligne ".($Ligne+1)." est invalide<br/>";
-						if (((int)substr($DateHeure, 8, 2) > 23)||((int)substr($DateHeure, 8, 2) < 0)||((int)substr($DateHeure, 10, 2) > 59)||((int)substr($DateHeure, 10, 2) < 0)) $ErreurDonnees["Donnees"] .= "L'heure ‡ la ligne ".($Ligne+1)." est invalide<br/>";
+						if (!checkDate(substr($DateHeure, 4, 2), substr($DateHeure, 6, 2), substr($DateHeure, 0, 4))) $ErreurDonnees["Donnees"] .= "La date √† la ligne ".($Ligne+1)." est invalide<br/>";
+						if (((int)substr($DateHeure, 8, 2) > 23)||((int)substr($DateHeure, 8, 2) < 0)||((int)substr($DateHeure, 10, 2) > 59)||((int)substr($DateHeure, 10, 2) < 0)) $ErreurDonnees["Donnees"] .= "L'heure √† la ligne ".($Ligne+1)." est invalide<br/>";
 					}
 					
 					
 					if (!$EvenementsImportes[$Ligne]["Type/Equipe"]) {$ErreurDonnees["Donnees"] .= "Le Type/Equipe obligatoire (ligne ".($Ligne+1).")<br/>";
 					}else if (!$Equipes[$EvenementsImportes[$Ligne]["Type/Equipe"]]){ $ErreurDonnees["Donnees"] .= "Le Type/Equipe n'est pas reconnu (ligne ".($Ligne+1).")<br/>";}
 					if (!$EvenementsImportes[$Ligne]["Titre"]){$ErreurDonnees["Donnees"] .= "Le Titre est obligatoire (ligne ".($Ligne+1).")<br/>";
-					}else if (ereg($EregTexteSeulement, $EvenementsImportes[$Ligne]["Titre"])){$ErreurDonnees["Donnees"] .= "Le format du Titre est incorrect (ligne ".($Ligne+1).")<br/>";
+					}else if (preg_match($EregTexteSeulement, $EvenementsImportes[$Ligne]["Titre"])){$ErreurDonnees["Donnees"] .= "Le format du Titre est incorrect (ligne ".($Ligne+1).")<br/>";
 					}
 					if (!$EvenementsImportes[$Ligne]["Intitule"]){$ErreurDonnees["Donnees"] .= "L'intitule est obligatoire (ligne ".($Ligne+1).")<br/>";
-					}else if (ereg($EregTexteSeulement, $EvenementsImportes[$Ligne]["Intitule"])){$ErreurDonnees["Donnees"] .= "Le format de l'intitule est incorrect (ligne ".($Ligne+1).")<br/>";
+					}else if (preg_match($EregTexteSeulement, $EvenementsImportes[$Ligne]["Intitule"])){$ErreurDonnees["Donnees"] .= "Le format de l'intitule est incorrect (ligne ".($Ligne+1).")<br/>";
 					}
-					if (ereg($EregTexteComplet, $EvenementsImportes[$Ligne]["Lieu"])) $ErreurDonnees["Donnees"] .= "Le format du Lieu est incorrect (ligne ".($Ligne+1).")<br/>";
-					if (ereg($EregTexteComplet, $EvenementsImportes[$Ligne]["Adresse"])) $ErreurDonnees["Donnees"] .= "Le format de l'adresse est incorrect (ligne ".($Ligne+1).")<br/>";
-					if (ereg($EregTexteSeulement, $EvenementsImportes[$Ligne]["Adversaire"])) $ErreurDonnees["Donnees"] .= "Le format de l'adversaire est incorrect (ligne ".($Ligne+1).")<br/>";
+					if (preg_match($EregTexteComplet, $EvenementsImportes[$Ligne]["Lieu"])) $ErreurDonnees["Donnees"] .= "Le format du Lieu est incorrect (ligne ".($Ligne+1).")<br/>";
+					if (preg_match($EregTexteComplet, $EvenementsImportes[$Ligne]["Adresse"])) $ErreurDonnees["Donnees"] .= "Le format de l'adresse est incorrect (ligne ".($Ligne+1).")<br/>";
+					if (preg_match($EregTexteSeulement, $EvenementsImportes[$Ligne]["Adversaire"])) $ErreurDonnees["Donnees"] .= "Le format de l'adversaire est incorrect (ligne ".($Ligne+1).")<br/>";
 					$EvenementsImportes[$Ligne]["Domicile"] = strToLower($EvenementsImportes[$Ligne]["Domicile"]);
 					if (($EvenementsImportes[$Ligne]["Domicile"])&&($EvenementsImportes[$Ligne]["Domicile"]<>"n")&&($EvenementsImportes[$Ligne]["Domicile"]<>"o")) $ErreurDonnees["Donnees"] .= "Le format du Domicile est incorrect (ligne ".($Ligne+1).")<br/>";
 										
 					
-					if ($Evenements[substr($DateHeure, 0, 8)][$EvenementsImportes[$Ligne]["Type/Equipe"]]) $ErreurDonnees["Donnees"] .= "L'ÈvÈnement de la ligne ".($Ligne+1)." existe dÈj‡<br/>";
+					if ($Evenements[substr($DateHeure, 0, 8)][$EvenementsImportes[$Ligne]["Type/Equipe"]]) $ErreurDonnees["Donnees"] .= "L'√©v√©nement de la ligne ".($Ligne+1)." existe d√©j√†<br/>";
 					if (!$ErreurDonnees["Donnees"]) $EvenementsImportes[$Ligne]["DateHeure"] = $DateHeure;
 				}
 				$Ligne++;
@@ -64,12 +64,12 @@ if ($Import=="oui"){
 	}else{$ErreurDonnees["UPLOAD"] .= "Aucun fichier uploade<br/>";}
 }
 //******************
-//** FinRecupËre et teste les infos de tout le fichier
+//** FinR√©cup√®re et teste les infos de tout le fichier
 //******************
 
 
 //******************
-//** S'il n'y a pas d'erreur dans le fichier, enregistrer les evËnements
+//** S'il n'y a pas d'erreur dans le fichier, enregistrer les √©v√©nements
 //******************
 
 if (($Import=="oui")&&(!$ErreurDonnees)){
@@ -81,7 +81,7 @@ if (($Import=="oui")&&(!$ErreurDonnees)){
 $Mode="Admin";
 ?>
 <div class="Explications">
-	Cliquez sur un jour pour Èditer ses ÈvÈnements
+	Cliquez sur un jour pour √©diter ses √©v√©nements
 </div>
 
 	
@@ -93,10 +93,10 @@ $Mode="Admin";
 <?
 if ($Import=="oui"){
 	if ($ErreurDonnees){
-		print("\t<tr>\n\t\t<td class=\"ModifError\">Aucun ÈvÈnement n'a ÈtÈ importÈ</td>\n\t</tr>\n");
+		print("\t<tr>\n\t\t<td class=\"ModifError\">Aucun √©v√©nement n'a √©t√© import√©</td>\n\t</tr>\n");
 	}else{
 		$NombreEvent=count($EvenementsImportes);
-		print("\t<tr>\n\t\t<td class=\"ModifOk\">".$NombreEvent." ÈvÈnement".(($NombreEvent>1)?"s ont ÈtÈ importÈs":" a ÈtÈ importÈ")." </td>\n\t</tr>\n");
+		print("\t<tr>\n\t\t<td class=\"ModifOk\">".$NombreEvent." √©v√©nement".(($NombreEvent>1)?"s ont √©t√© import√©s":" a √©t√© import√©")." </td>\n\t</tr>\n");
 	}
 }	
 if ($ErreurDonnees) print("</table>\n");
@@ -108,9 +108,9 @@ require("calendrier.inc.php");
 	<form id="formulaireImport" enctype="multipart/form-data" action="<?=$PHP_SELF?>" method="post">
 		<input type="hidden" name="Page" value="adminevenements" />
 		<input type="hidden" name="Import" value="oui" />
-		<p>Importer plusieurs ÈvÈnements par un fichier externe</p>
-		<a href="javascript:alert('TÈlÈchargez le document fourni et remplissez le\navec les ÈvÈnements ‡ ajouter (un par ligne).\n\nVous pouver ouvrir le document avec un simple tableur(excel, OpenOffice)\nen prÈcisant que le caractËre d\'Èchapement est le point-virgule.\n\nEnregistrez vos modifications et importez ensuite le fichier renseignÈ.')">Comment faire?</a>
-		<a href="Documents/Evenements.Import.csv">Le ModËle</a>
+		<p>Importer plusieurs √©v√©nements par un fichier externe</p>
+		<a href="javascript:alert('T√©l√©chargez le document fourni et remplissez le\navec les √©v√©nements √† ajouter (un par ligne).\n\nVous pouvez ouvrir le document avec un simple tableur(excel, OpenOffice)\nen pr√©cisant que le caract√®re d\'√©chappement est le point-virgule.\n\nEnregistrez vos modifications et importez ensuite le fichier renseign√©.')">Comment faire?</a>
+		<a href="Documents/Evenements.Import.csv">Le Mod√®le</a>
 		<input type="hidden" name="MAX_FILE_SIZE" value="30000" />
 		<input type="file" name="ImportEvenements" />
 		<input type="submit" value="Importer" class="Action"/>
