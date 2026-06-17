@@ -50,7 +50,7 @@ do{
 		if ((($Evenements[$DateDuJourMySQL])&&($Mode=="Saisie"))||($Mode=="Admin")) $StyleJour .= " JourAvecEvent";
 		print("\t\t\t<td class=\"".$StyleJour."\"".(((($Evenements[$DateDuJourMySQL])&&($Mode=="Saisie"))||($Mode=="Admin"))?" onclick=\"window.location.href='".$PHP_SELF."?Page=".(($Mode=="Admin")?"adminfichejour":"jour")."&amp;Jour=".$DateDuJourMySQL."&amp;Mois=".$Mois."&amp;Annee=".$Annee."'\"":"").">");
 		//if (($Evenements[$DateDuJourMySQL])&&(($Mode=="Saisie")||($Mode=="Admin"))) print("<a href=\"".$PHP_SELF."?Page=jour&Jour=".$DateDuJourMySQL."&Mois=".$Mois."&Annee=".$Annee."\">");
-		print("<em>".$DateDuJour["mday"]."</em>");
+		print("<div class=\"JourContenu\"><em>".$DateDuJour["mday"]."</em>");
 		//if (($Evenements[$DateDuJourMySQL])&&(($Mode=="Saisie")||($Mode=="Admin"))) print(" (Détails) </a>");
 		
 		//*************************************
@@ -106,7 +106,7 @@ do{
 			}
 		}
 		// *********** Fin affichage des des événements pour une journée
-		print("</td>");
+		print("</div></td>");
 		$Jour++;
 		// *********** Passage au jour suivant
 	}while($DateDuJour["wday"] > 0);
@@ -115,44 +115,19 @@ do{
 }while ($DateDuJour["mon"] == $Mois);
 ?>
 
-		<tr class="Legende">
-			<td>Légende:<br/>&nbsp;</td>
-			<td colspan="2">
-			<table>
-				<tr>
-					<td><div class="RectangleLegende Seance"></div></td><td>Séance de progrès</td>
-				</tr>
-				<tr>
-					<td><div class="RectangleLegende Asso"></div></td><td>Evénement divers</td>
-				</tr>
-			</table>
-			</td>
-			<td colspan="2">
-			<table>
-				<tr>
-					<td><div class="RectangleLegende RencontreComplet"></div></td><td>Rencontre, équipe complète</td>
-				</tr>
-				<tr>
-					<td><div class="RectangleLegende RencontreIncomplet"></div></td><td>Rencontre, équipe incomplète</td>
-				</tr>
-			</table>
-			</td>
-			<td colspan="2">
-			<table>
-				<tr>
-					<td><div class="RectangleLegende Annule"></div></td><td>Evénement annulé</td>
-				</tr>
-				<tr>
-<?
-if($Mode=="Visu"){?>					<td>&nbsp;</td><td>&nbsp;</td>
-<?}else if ($Mode=="Saisie"){?>					<td><img src="<?=$RepertoireImages?>presence.gif" alt="" /> <img src="<?=$RepertoireImages?>presence.gif" alt="" /></td><td>Présence</td>
-<?}else if ($Mode=="Admin"){?>					<td><div class="RectangleLegende Initialise"></div></td><td>Evenement seulement initialise</td>
-<?}?>
-				</tr>
-			</table>
-			</td>
-		</tr>
 	</table>
+
+	<div class="LegendeCalendrier">
+		<span class="LegendeTitre">Légende :</span>
+		<span class="LegendeItem"><span class="RectangleLegende Seance"></span>Séance de progrès</span>
+		<span class="LegendeItem"><span class="RectangleLegende Asso"></span>Événement divers</span>
+		<span class="LegendeItem"><span class="RectangleLegende RencontreComplet"></span>Rencontre, équipe complète</span>
+		<span class="LegendeItem"><span class="RectangleLegende RencontreIncomplet"></span>Rencontre, équipe incomplète</span>
+		<span class="LegendeItem"><span class="RectangleLegende Annule"></span>Événement annulé</span>
+<?if ($Mode=="Saisie"){?>		<span class="LegendeItem"><img src="<?=$RepertoireImages?>presence.gif" alt="" />Présence</span>
+<?}else if ($Mode=="Admin"){?>		<span class="LegendeItem"><span class="RectangleLegende Initialise"></span>Événement seulement initialisé</span>
+<?}?>
+	</div>
     
       <?
 if ($Mode<>"Admin"){

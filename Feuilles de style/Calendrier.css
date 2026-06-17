@@ -11,6 +11,14 @@
 	width: 100px;
 	height: 92px;
 }
+
+/* Contenu d'une cellule jour : hauteur fixe + masquage du débordement
+   → toutes les cellules gardent la même hauteur, quel que soit le nombre
+   d'événements (le détail complet reste accessible au survol / au clic) */
+#Calendrier .JourContenu {
+	height: 76px;
+	overflow: hidden;
+}
 	
 #Calendrier .JourMois p {
 	font-size: 12px;
@@ -129,14 +137,45 @@
     text-overflow: ellipsis;
 }
 	
-#Calendrier .Legende  td{
-	font-size: 12px;
+/* Légende sous le calendrier : disposition en flex qui s'adapte */
+.LegendeCalendrier {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+	gap: 8px 18px;
+	max-width: 800px;
+	margin: 18px auto 0;
+	padding: 12px;
+	border: 1px solid #d8d8d8;
+	border-radius: 6px;
+	background: #fafafa;
+	font-size: 13px;
 }
 
-#Calendrier .RectangleLegende {
-	width: 30px;
-	height: 12px;
-	font-size: 10px;
+.LegendeCalendrier .LegendeTitre {
+	font-weight: bold;
+	color: #172446;
+}
+
+.LegendeCalendrier .LegendeItem {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	white-space: nowrap;
+}
+
+.RectangleLegende {
+	display: inline-block;
+	width: 26px;
+	height: 14px;
+	border-radius: 3px;
+	flex-shrink: 0;
+}
+
+.LegendeCalendrier .LegendeItem img {
+	height: 14px;
+	vertical-align: middle;
 }
 
 /* Abréviation des jours masquée sur grand écran */
@@ -177,12 +216,15 @@
 		padding: 6px 0;
 	}
 
-	/* Cellules des jours : numéro lisible, hauteur auto */
+	/* Cellules des jours : largeur égale, numéro lisible */
 	#Calendrier .JourMois td {
-		width: auto;
-		height: auto;
-		min-height: 40px;
+		width: 14.28%;
 		padding: 3px 0 0 !important;
+	}
+
+	/* Hauteur fixe et identique pour toutes les cellules sur mobile */
+	#Calendrier .JourContenu {
+		height: 52px;
 	}
 
 	#Calendrier .BonMois em,
@@ -195,7 +237,7 @@
 	#Calendrier .JourMois p {
 		font-size: 9px;
 		line-height: 1.1;
-		padding: 2px 1px;
+		padding: 1px;
 		white-space: normal;
 		word-break: break-word;
 	}
@@ -204,16 +246,10 @@
 		height: auto;
 	}
 
-	/* Légende en colonne, lisible */
-	#Calendrier .Legende > td:first-child {
-		display: none;
-	}
-
-	#Calendrier .Legende > td {
-		display: block;
-	}
-
-	#Calendrier .Legende td {
-		font-size: 13px;
+	/* Légende : items compacts, centrés, sur plusieurs lignes */
+	.LegendeCalendrier {
+		gap: 6px 12px;
+		padding: 10px;
+		font-size: 12px;
 	}
 }
