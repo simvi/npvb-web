@@ -176,8 +176,8 @@ if (($Evenements[$Jour])&&($Joueur)){
             //On met tous les événements
             $Resultat="";
             $Responsable = (($Joueur->Pseudonyme==$Equipes[$Event->Libelle]->Responsable)||($Joueur->Pseudonyme==$Equipes[$Event->Libelle]->Supleant));
-            $EvenementDémarré = (ConvertisDate($Event->DateHeure, "PHP") < mkTime());
-            $EvenementTerminé = (ConvertisDate($Event->DateHeure, "PHP") < mkTime()-($DureeEvenement*3600));
+            $EvenementDémarré = (ConvertisDate($Event->DateHeure, "PHP") < time());
+            $EvenementTerminé = (ConvertisDate($Event->DateHeure, "PHP") < time()-($DureeEvenement*3600));
             $RaisonBloque="";
             
             if (substr($Event->Etat, 0, 1) == "A"){
@@ -357,7 +357,7 @@ if (($Evenements[$Jour])&&($Joueur)){
                     ?>
                     
                     </div>
-                    <?if (($Event->Etat=="O")&&(ConvertisDate($Event->DateHeure, "PHP") < mkTime()+($FermetureEvenementAvant*3600))){?>			<br/><br/><input type="checkbox" name="FermeEvenement<?=$Event->Libelle.$Event->DateHeure?>" />Fermer l'événement<a href="javascript:alert('Cette action empèchera toute saisie des absences prévues\npar quelqu\'un d\'autre que l\'administrateur pour cet événement!!!')">-&gt; a savoir! &lt;-</a><?}?>
+                    <?if (($Event->Etat=="O")&&(ConvertisDate($Event->DateHeure, "PHP") < time()+($FermetureEvenementAvant*3600))){?>			<br/><br/><input type="checkbox" name="FermeEvenement<?=$Event->Libelle.$Event->DateHeure?>" />Fermer l'événement<a href="javascript:alert('Cette action empèchera toute saisie des absences prévues\npar quelqu\'un d\'autre que l\'administrateur pour cet événement!!!')">-&gt; a savoir! &lt;-</a><?}?>
                         <br/><br/>Remarque: Les changements ne seront pris en compte que si ce menu est déroulé!
                         <p>Saisissez la présence de chaque membre et validez (en bas)</p>
                         </div>
