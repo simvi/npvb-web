@@ -10,7 +10,7 @@ class Equipe{
 	var $PresenceDefaut;
 	var $Joueurs;//Tableau
 	
-	function Equipe($Nom, $Responsable, $Supleant, $TousJoueurs, $PresenceDefaut, $Joueurs){
+	function __construct($Nom, $Responsable, $Supleant, $TousJoueurs, $PresenceDefaut, $Joueurs){
 		$this->Nom = $Nom;
 		$this->Responsable = $Responsable;
 		$this->Supleant = $Supleant;
@@ -51,7 +51,7 @@ class Evenement{
 	var $etaientPresents;//tableau
 	var $NombreJoueursEtaientPresents;
 
-	function Evenement($DateHeure, $Libelle, $Etat, $Titre, $Intitule, $Lieu, $Adresse, $Adversaire, $Domicile, $Resultat, $Analyse, $InscritsMax, $serontPresents, $serontIndisponibles, $etaientPresents){
+	function __construct($DateHeure, $Libelle, $Etat, $Titre, $Intitule, $Lieu, $Adresse, $Adversaire, $Domicile, $Resultat, $Analyse, $InscritsMax, $serontPresents, $serontIndisponibles, $etaientPresents){
 		
 		$this->DateHeure = $DateHeure;
 		$this->Libelle = $Libelle;

@@ -82,7 +82,7 @@ foreach($Equipes as $UneEquipe){
 
 
 					<tr>
-						<?if (($UnJoueur->NumeroLicence).length > 0) {?>
+						<?if (strlen($UnJoueur->NumeroLicence) > 0) {?>
 							<td><?=$UnJoueur->Prenom." ".$UnJoueur->Nom." (".$UnJoueur->NumeroLicence.")"?></td>
 						<?}
 						else {?>
