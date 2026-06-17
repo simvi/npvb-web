@@ -16,16 +16,12 @@ header("X-Content-Type-Options: nosniff");
 
 $PasseParIndex=true;
 
-include("classes.inc.php");
-include("variables.inc.php");
-include("fonctions.inc.php");
-include("_entete.inc.php");
-
-if (!$ConnectDB) $Page="maintenance";
-
 // CORRECTIF SÉCURITÉ #1 (PHP 8) : register_globals étant supprimé, on recrée les
 // variables depuis $_GET/$_POST (comportement attendu par le code legacy, y compris
 // les champs au nom dynamique type seraPresent<Equipe><Date>).
+// IMPORTANT : cette extraction doit avoir lieu AVANT les includes, car
+// variables.inc.php calcule des valeurs dérivées ($MoisAvant...) à partir des
+// variables de requête et _entete.inc.php utilise $Action (déconnexion).
 // - Liste NOIRE des variables internes critiques : interdites à l'écrasement
 //   (sinon contournement d'authentification via $Joueur, $sdblink, etc.).
 // - Les valeurs tableau sont ignorées (anti variable-injection).
@@ -60,6 +56,13 @@ if (isset($_FILES) && is_array($_FILES)) {
 		$$key = $infos['tmp_name'];
 	}
 }
+
+include("classes.inc.php");
+include("variables.inc.php");
+include("fonctions.inc.php");
+include("_entete.inc.php");
+
+if (!$ConnectDB) $Page="maintenance";
 
 // Initialisation par défaut si Page non définie
 if (!isset($Page) || empty($Page)) {
