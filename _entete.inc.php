@@ -24,7 +24,9 @@ function old_password_hash($password) {
 
 //Tentative de connexion a la base de donnees
 $ConnectDB=true;
-$motdepassesqlok=$motdepassesql{4}.$motdepassesql{1}.$motdepassesql{7}.$motdepassesql{0}.$motdepassesql{9}.$motdepassesql{12}.$motdepassesql{14}.$motdepassesql{6};
+// PHP 8 : le mot de passe est désormais stocké directement dans _passwrds.inc.php
+// (ancienne obfuscation par index de caractères supprimée — syntaxe {} invalide en PHP 8)
+$motdepassesqlok=$motdepassesql;
 
 if (!($sdblink = mySql_connect($basesql, $utilisateursql, $motdepassesqlok))){
 	$ConnectDB=false;
@@ -49,7 +51,7 @@ if ($ConnectDB){
 			if ($DBJoueur->Etat=="V"){
 				//Demarre la session et y enregistre le pseudonyme
 				session_start();
-				session_register("Pseudonyme");
+				$_SESSION['Pseudonyme'] = $Pseudonyme;
 				//recupere toutes les infos du joueur
 				$Joueur = $DBJoueur;
 			}else{

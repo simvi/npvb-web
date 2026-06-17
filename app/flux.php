@@ -59,10 +59,11 @@ mysql_close();
 */
 
 	// datas connexion bdd
-	$server = "ftpperso.free.fr";
-	$database = "nantespvb";
-	$username = "nantespvb";
-	$pwd = "wozd7pdo";
+	include(__DIR__ . "/../PASSWD/_passwrds.inc.php");
+	$server   = $basesql;
+	$database = $labasededonnees;
+	$username = $utilisateursql;
+	$pwd      = $motdepassesql;
 
 		$mySql = mysql_connect($server, $username, $pwd);
 		

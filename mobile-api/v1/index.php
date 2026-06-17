@@ -76,11 +76,12 @@ if (!function_exists('json_encode')) {
     }
 }
 
-// Configuration DB
-$DB_HOST = 'ftpperso.free.fr';
-$DB_NAME = 'nantespvb';
-$DB_USER = 'nantespvb';
-$DB_PASS = 'wozd7pdo';
+// Configuration DB — identifiants centralisés (hors dépôt)
+include(__DIR__ . "/../../PASSWD/_passwrds.inc.php");
+$DB_HOST = $basesql;
+$DB_NAME = $labasededonnees;
+$DB_USER = $utilisateursql;
+$DB_PASS = $motdepassesql;
 $TOKEN_SECRET = 'npvb_secret_2025_CHANGEZ_MOI';
 
 // Connexion DB
