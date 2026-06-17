@@ -145,23 +145,28 @@ print ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 	<meta name='viewport' content='width=device-width, initial-scale=1.0' >
 
 	<?php
+		// Lien CSS avec version automatique (date de modif) → contourne le cache navigateur
+		function lienCSS($fichier) {
+			$v = @filemtime("Feuilles de style/".$fichier);
+			return "\n\t<link rel=\"StyleSheet\" href=\"Feuilles de style/".rawurlencode($fichier)."?v=".$v."\" type=\"text/css\" />";
+		}
 		switch ($Page){
-			case "adminequipes": print("\n\t<link rel=\"StyleSheet\" href=\"Feuilles de style/AdminEquipes.css\" type=\"text/css\" />"); break;
+			case "adminequipes": print(lienCSS("AdminEquipes.css")); break;
 			case "adminfichemembre":
 			case "adminnewmessage":
 			case "adminnewmessage":
 			case "adminmembres":
-			case "membres": print("\n\t<link rel=\"StyleSheet\" href=\"Feuilles de style/Membres.css\" type=\"text/css\" />"); break;
-			case "adminfichejour": print("\n\t<link rel=\"StyleSheet\" href=\"Feuilles de style/AdminFicheJour.css\" type=\"text/css\" />"); break;
-			case "jour": print("\n\t<link rel=\"StyleSheet\" href=\"Feuilles de style/Jour.css\" type=\"text/css\" />"); break;
+			case "membres": print(lienCSS("Membres.css")); break;
+			case "adminfichejour": print(lienCSS("AdminFicheJour.css")); break;
+			case "jour": print(lienCSS("Jour.css")); break;
 			case "adminevenements":
-			case "calendrier": 	print("\n\t<link rel=\"StyleSheet\" href=\"Feuilles de style/Bulle.css\" type=\"text/css\" />");
-						print("\n\t<link rel=\"StyleSheet\" href=\"Feuilles de style/Calendrier.css\" type=\"text/css\" />"); break;
+			case "calendrier": 	print(lienCSS("Bulle.css"));
+						print(lienCSS("Calendrier.css")); break;
 			default: break;
 		}
 	?>
 
-	<link rel="StyleSheet" href="Feuilles de style/style.css" type="text/css" />
+	<?php print(lienCSS("style.css")); ?>
 
 	<script src="libGene.js" type="text/javascript"></script>
 
