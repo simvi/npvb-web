@@ -389,3 +389,54 @@ textarea:focus, input:focus {
 		text-align: center;
 	}
 }
+
+/* ============================================================
+   Responsive page d'accueil
+   ============================================================ */
+@media (max-width: 600px) {
+
+	/* Confort de lecture + pas de débordement horizontal */
+	#Accueil {
+		font-size: 15px;
+		line-height: 1.5;
+		overflow-wrap: break-word;
+		word-break: break-word;
+	}
+
+	#Accueil h3 {
+		font-size: 1.15em;
+	}
+
+	/* Images, iframes (widget HelloAsso) et badges ne débordent jamais */
+	#Accueil img,
+	#Accueil iframe {
+		max-width: 100%;
+		height: auto;
+	}
+
+	/* Boîtes d'actualités : marges internes réduites */
+	#Accueil [style*="padding: 15px"] {
+		padding: 12px !important;
+	}
+
+	/* Listes un peu moins indentées */
+	#Accueil ul {
+		padding-left: 22px;
+	}
+
+	/* Badges App Store / Google Play : centrés, repliables, taille adaptée */
+	.applications {
+		flex-wrap: wrap;
+		gap: 12px;
+	}
+	.applications a {
+		margin: 0;
+	}
+	.applications a:hover {
+		transform: scale(1.05);
+	}
+	.applications img {
+		width: 160px;
+		max-width: 42vw;
+	}
+}
