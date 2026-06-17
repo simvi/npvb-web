@@ -318,6 +318,14 @@ if (!$Joueur){
 		
 <?php
 	$defautMembre = ob_get_clean();
+	if ($estAdminAccueil) {
+?>
+		<br />
+		<hr />
+		<h3>Texte de la page d'accueil pour les membres (connectés)</h3>
+		<p class="Remarque">Ce texte est visible uniquement par les membres connectés. Cliquez sur le crayon pour le modifier.</p>
+<?php
+	}
 	rendreZoneAccueil('accueil_membre', getContenuAccueil('accueil_membre', $defautMembre, $sdblink), $estAdminAccueil);
 
 	if ($Anniversaires = mySql_query("SELECT * FROM NPVB_Joueurs WHERE (DateNaissance LIKE '%-".date("m-d")."')", $sdblink))

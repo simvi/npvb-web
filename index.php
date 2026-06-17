@@ -70,8 +70,12 @@ if (!isset($Page) || empty($Page)) {
 $pages_api = array('adminaccueilimage');
 $is_api_endpoint = in_array($Page, $pages_api);
 
-if (!$is_api_endpoint) {
-	include("_entete.inc.php"); // établit la connexion DB et définit $ConnectDB
+if ($is_api_endpoint) {
+	ob_start();
+	include("_entete.inc.php"); // charge session + $Joueur sans envoyer le HTML
+	ob_end_clean();
+} else {
+	include("_entete.inc.php");
 	if (!$ConnectDB) $Page="maintenance";
 }
 
