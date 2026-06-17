@@ -60,13 +60,20 @@ if (isset($_FILES) && is_array($_FILES)) {
 include("classes.inc.php");
 include("variables.inc.php");
 include("fonctions.inc.php");
-include("_entete.inc.php");
 
-if (!$ConnectDB) $Page="maintenance";
-
-// Initialisation par défaut si Page non définie
+// Déterminer la page AVANT d'inclure _entete
 if (!isset($Page) || empty($Page)) {
 	$Page = "accueil";
+}
+
+// Ne pas générer le HTML pour les endpoints AJAX/API (résistent même si DB down)
+$pages_api = array('adminaccueilimage');
+$is_api_endpoint = in_array($Page, $pages_api);
+
+if (!$is_api_endpoint && !$ConnectDB) $Page="maintenance";
+
+if (!$is_api_endpoint) {
+	include("_entete.inc.php");
 }
 
 // CORRECTIF SÉCURITÉ #2: Whitelist stricte des pages autorisées
@@ -110,6 +117,12 @@ if (!file_exists($Contenu)) {
 	if (!file_exists($Contenu)) {
 		die("Erreur: Page introuvable");
 	}
+}
+
+// Endpoints API : inclure et exit avant de générer le HTML
+if ($is_api_endpoint) {
+	require($Contenu);
+	exit;
 }
 
 // Fonction helper pour échapper les sorties (compatible PHP 4)
