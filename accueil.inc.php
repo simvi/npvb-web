@@ -25,13 +25,26 @@ if (!function_exists('rendreZoneAccueil')) {
 		echo '<div class="zone-accueil">';
 		if ($estAdmin) {
 			echo '<button type="button" class="crayon-accueil" onclick="editerAccueil(\''.$id.'\')" title="Modifier ce texte">&#9998;</button>';
-		}
-		echo '<div class="contenu-accueil" id="contenu_'.$id.'">'.$contenu.'</div>';
-		if ($estAdmin) {
 			echo '<div class="editeur-accueil" id="editeur_'.$id.'" style="display:none">'
 				.'<div class="editeur-toolbar">'
 				.'<button type="button" onmousedown="return false" onclick="cmdAccueil(\'bold\')" title="Gras"><b>G</b></button>'
 				.'<button type="button" onmousedown="return false" onclick="cmdAccueil(\'italic\')" title="Italique"><i>I</i></button>'
+				.'<button type="button" onmousedown="return false" onclick="cmdAccueil(\'underline\')" title="Souligné"><u>S</u></button>'
+				.'<span class="tb-sep"></span>'
+				.'<button type="button" onmousedown="return false" onclick="cmdAccueil(\'justifyLeft\')" title="Aligner à gauche">&#8676;</button>'
+				.'<button type="button" onmousedown="return false" onclick="cmdAccueil(\'justifyCenter\')" title="Centrer">&#8803;</button>'
+				.'<button type="button" onmousedown="return false" onclick="cmdAccueil(\'justifyRight\')" title="Aligner à droite">&#8677;</button>'
+				.'<span class="tb-sep"></span>'
+				.'<button type="button" class="tb-swatch" style="background:#000000" onmousedown="return false" onclick="cmdAccueil(\'foreColor\',\'#000000\')" title="Noir"></button>'
+				.'<button type="button" class="tb-swatch" style="background:#172446" onmousedown="return false" onclick="cmdAccueil(\'foreColor\',\'#172446\')" title="Marine"></button>'
+				.'<button type="button" class="tb-swatch" style="background:#0066cc" onmousedown="return false" onclick="cmdAccueil(\'foreColor\',\'#0066cc\')" title="Bleu"></button>'
+				.'<button type="button" class="tb-swatch" style="background:#dc3545" onmousedown="return false" onclick="cmdAccueil(\'foreColor\',\'#dc3545\')" title="Rouge"></button>'
+				.'<button type="button" class="tb-swatch" style="background:#28a745" onmousedown="return false" onclick="cmdAccueil(\'foreColor\',\'#28a745\')" title="Vert"></button>'
+				.'<button type="button" class="tb-swatch" style="background:#ff956c" onmousedown="return false" onclick="cmdAccueil(\'foreColor\',\'#ff956c\')" title="Orange"></button>'
+				.'<button type="button" class="tb-swatch" style="background:#e5c10d" onmousedown="return false" onclick="cmdAccueil(\'foreColor\',\'#e5c10d\')" title="Or"></button>'
+				.'<button type="button" class="tb-swatch" style="background:#4c4c4c" onmousedown="return false" onclick="cmdAccueil(\'foreColor\',\'#4c4c4c\')" title="Gris"></button>'
+				.'<button type="button" class="tb-swatch tb-swatch-reset" onmousedown="return false" onclick="document.execCommand(\'removeFormat\',false,null)" title="Supprimer la couleur">&#10006;</button>'
+				.'<span class="tb-sep"></span>'
 				.'<button type="button" onmousedown="return false" onclick="cmdAccueil(\'formatBlock\',\'h3\')" title="Titre">Titre</button>'
 				.'<button type="button" onmousedown="return false" onclick="cmdAccueil(\'formatBlock\',\'p\')" title="Paragraphe">Texte</button>'
 				.'<button type="button" onmousedown="return false" onclick="cmdAccueil(\'insertUnorderedList\')" title="Liste">&bull; Liste</button>'
@@ -47,6 +60,7 @@ if (!function_exists('rendreZoneAccueil')) {
 				.'</form>'
 				.'</div>';
 		}
+		echo '<div class="contenu-accueil" id="contenu_'.$id.'">'.$contenu.'</div>';
 		echo '</div>';
 	}
 }
