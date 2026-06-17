@@ -51,6 +51,16 @@ foreach (array($_GET, $_POST) as $__source) {
 	}
 }
 
+// Fichiers uploadés : en register_globals (PHP 4), $champ contenait le chemin
+// temporaire du fichier. On reproduit ce comportement à partir de $_FILES,
+// attendu par is_uploaded_file()/move_uploaded_file()/getImageSize().
+if (isset($_FILES) && is_array($_FILES)) {
+	foreach ($_FILES as $key => $infos) {
+		if (in_array($key, $protected_vars)) continue;
+		$$key = $infos['tmp_name'];
+	}
+}
+
 // Initialisation par défaut si Page non définie
 if (!isset($Page) || empty($Page)) {
 	$Page = "accueil";
