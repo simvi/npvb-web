@@ -23,25 +23,27 @@ include("_entete.inc.php");
 
 if (!$ConnectDB) $Page="maintenance";
 
-// CORRECTIF SÉCURITÉ #1: Suppression eval() - Whitelist des variables autorisées
-// Compatible PHP 4 - Pas d'utilisation de filter_input()
-$allowed_vars = array('Page', 'Pseudonyme', 'Password', 'Action', 'Equipe', 'Jour', 'Mois', 'Annee', 'DateHeure', 'Libelle', 'PageMsg', 'Token', 'Identifiant', 'DemandeReset', 'NouveauMotDePasse', 'ConfirmationMotDePasse', 'ChangerMotDePasse');
+// CORRECTIF SÉCURITÉ #1 (PHP 8) : register_globals étant supprimé, on recrée les
+// variables depuis $_GET/$_POST (comportement attendu par le code legacy, y compris
+// les champs au nom dynamique type seraPresent<Equipe><Date>).
+// - Liste NOIRE des variables internes critiques : interdites à l'écrasement
+//   (sinon contournement d'authentification via $Joueur, $sdblink, etc.).
+// - Les valeurs tableau sont ignorées (anti variable-injection).
+// - Sanitization : suppression des caractères dangereux (anti-injection SQL/XSS),
+//   les requêtes interpolant directement ces valeurs.
+$protected_vars = array(
+	'Joueur', 'sdblink', 'ConnectDB', 'ConnectionBD', 'PasseParIndex',
+	'Equipes', 'Joueurs', 'Evenements', 'ListeJoueurs', 'LocalEquipes', 'LocalJoueurs',
+	'protected_vars', 'pages_autorisees', 'je_suis_deja_connecte_connard',
+	'GLOBALS', '_GET', '_POST', '_SESSION', '_SERVER', '_COOKIE', '_FILES', '_ENV', '_REQUEST'
+);
 
-if(isset($_POST) && is_array($_POST)) {
-	foreach($_POST as $key => $val) {
-		if (in_array($key, $allowed_vars)) {
-			// Sanitization basique compatible PHP 4
-			$val = stripslashes($val);
-			$val = str_replace(array('<', '>', '"', "'", "\0"), '', $val);
-			$$key = $val;
-		}
-	}
-}
-
-if(isset($_GET) && is_array($_GET)) {
-	foreach($_GET as $key => $val) {
-		if (in_array($key, $allowed_vars)) {
-			// Sanitization basique compatible PHP 4
+foreach (array($_GET, $_POST) as $__source) {
+	if (isset($__source) && is_array($__source)) {
+		foreach ($__source as $key => $val) {
+			if (in_array($key, $protected_vars)) continue;
+			if (is_array($val)) continue;
+			// Sanitization basique compatible legacy
 			$val = stripslashes($val);
 			$val = str_replace(array('<', '>', '"', "'", "\0"), '', $val);
 			$$key = $val;

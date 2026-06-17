@@ -34,6 +34,9 @@ if (!function_exists('mysql_connect')) {
         if ($link) {
             $GLOBALS['__mysql_compat_link'] = $link;
             @mysqli_set_charset($link, 'utf8mb4');
+            // Mode non-strict : reproduit le comportement permissif de l'ancien MySQL
+            // (Free), p.ex. '' → 0 pour les colonnes INT, dates 0000-00-00 acceptées.
+            @mysqli_query($link, "SET SESSION sql_mode=''");
         }
         return $link ?: false;
     }
