@@ -294,3 +294,98 @@ textarea:focus, input:focus {
 		margin: 5px;
 	}
 }
+/* ============================================================
+   Menu hamburger mobile (CSS pur, sans JS)
+   ============================================================ */
+
+/* Masqués sur grand écran */
+.menu-toggle-checkbox { display: none; }
+.menu-burger { display: none; }
+
+@media (max-width: 768px) {
+
+	/* Entête : nom de l'utilisateur centré sous le logo */
+	#Entete {
+		margin: 20px 10px;
+		text-align: center;
+	}
+	#NomJoueur {
+		text-align: center;
+		display: block;
+		padding-top: 12px;
+		font-weight: bold;
+	}
+
+	/* Bouton hamburger */
+	#Menu { text-align: center; }
+
+	.menu-burger {
+		display: inline-flex;
+		align-items: center;
+		gap: 12px;
+		margin: 10px auto 0;
+		padding: 13px 22px;
+		background: #172446;
+		color: #fff;
+		font-weight: bold;
+		font-size: 16px;
+		border-radius: 4px;
+		cursor: pointer;
+		user-select: none;
+	}
+
+	/* Icône 3 barres */
+	.burger-icon {
+		position: relative;
+		display: inline-block;
+		width: 22px;
+		height: 2px;
+		background: #fff;
+	}
+	.burger-icon::before,
+	.burger-icon::after {
+		content: "";
+		position: absolute;
+		left: 0;
+		width: 22px;
+		height: 2px;
+		background: #fff;
+		transition: transform .2s ease;
+	}
+	.burger-icon::before { top: -7px; }
+	.burger-icon::after  { top: 7px; }
+
+	/* Croix quand le menu est ouvert */
+	#menu-toggle:checked ~ .menu-burger .burger-icon { background: transparent; }
+	#menu-toggle:checked ~ .menu-burger .burger-icon::before { top: 0; transform: rotate(45deg); }
+	#menu-toggle:checked ~ .menu-burger .burger-icon::after  { top: 0; transform: rotate(-45deg); }
+
+	/* Menus repliés par défaut, dépliés au clic */
+	#menu-toggle:not(:checked) ~ ul { display: none; }
+
+	#menu-toggle:checked ~ ul {
+		display: flex;
+		flex-direction: column;
+		flex-wrap: nowrap;
+		margin: 12px auto 0;
+		border-bottom: 0;
+		max-width: 320px;
+	}
+	#menu-toggle:checked ~ ul:nth-of-type(2) { margin-top: 0; }
+
+	#menu-toggle:checked ~ ul li {
+		margin: 0;
+		display: block;
+		border-bottom: 1px solid #d8d8d8;
+	}
+
+	#menu-toggle:checked ~ ul a {
+		display: block;
+		width: 100%;
+		min-width: 0;
+		box-sizing: border-box;
+		padding: 15px 12px;
+		border-radius: 0;
+		text-align: center;
+	}
+}

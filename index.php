@@ -139,7 +139,7 @@ print ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 	<meta name="Rating" content="General" />
     	<meta name="verify-v1" content="FSYeF8Wwa0ABLnMB8SFSvXigw4CQ/JX3wf7yEIGOfsw=" />
 	<meta name="apple-itunes-app" content="app-id=793137223, app-argument=http%3A%2F%2Fyousite.com%2Fsomepath%3Fquery%3Da%2Cb" />
-	<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0' >
+	<meta name='viewport' content='width=device-width, initial-scale=1.0' >
 
 	<?php
 		switch ($Page){
@@ -184,6 +184,10 @@ print ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		<?php } ?>
 	</div>
 	<div id="Menu">
+<?php if (isset($Joueur) && is_object($Joueur)) { ?>
+	<input type="checkbox" id="menu-toggle" class="menu-toggle-checkbox" />
+	<label for="menu-toggle" class="menu-burger" aria-label="Ouvrir le menu"><span class="burger-icon"></span>Menu</label>
+<?php } ?>
 	<ul>
 <?php
 if ((!isset($Joueur) || !is_object($Joueur)) && ($Page=="accueil")){
