@@ -16,7 +16,7 @@
    → toutes les cellules gardent la même hauteur, quel que soit le nombre
    d'événements (le détail complet reste accessible au survol / au clic) */
 #Calendrier .JourContenu {
-	height: 76px;
+	height: 84px;
 	overflow: hidden;
 }
 	
@@ -25,7 +25,8 @@
 	margin: 0;
 	font-weight: bold;
 	text-align: center;
-	padding: 5px;
+	padding: 7px 5px;
+	line-height: 1.4;
 	border-top: 1px dashed black;
 	white-space: nowrap;
 }
@@ -171,7 +172,16 @@
 	height: 14px;
 	border-radius: 3px;
 	flex-shrink: 0;
+	border: 1px solid rgba(0,0,0,0.15);
 }
+
+/* Couleurs des pastilles de légende (la légende est hors de #Calendrier) */
+.RectangleLegende.Seance            { background-color: #30d5ff; }
+.RectangleLegende.Asso              { background-color: #cfc2f5; }
+.RectangleLegende.RencontreComplet  { background-color: #00f2b2; }
+.RectangleLegende.RencontreIncomplet{ background-color: #ff956c; }
+.RectangleLegende.Annule            { background-color: #fd707e; }
+.RectangleLegende.Initialise        { background-color: #0fd; }
 
 .LegendeCalendrier .LegendeItem img {
 	height: 14px;
@@ -224,7 +234,7 @@
 
 	/* Hauteur fixe et identique pour toutes les cellules sur mobile */
 	#Calendrier .JourContenu {
-		height: 52px;
+		height: 64px;
 	}
 
 	#Calendrier .BonMois em,
@@ -236,8 +246,8 @@
 	/* Événements : texte court qui peut passer à la ligne (plus de débordement) */
 	#Calendrier .JourMois p {
 		font-size: 9px;
-		line-height: 1.1;
-		padding: 1px;
+		line-height: 1.35;
+		padding: 3px 1px;
 		white-space: normal;
 		word-break: break-word;
 	}
