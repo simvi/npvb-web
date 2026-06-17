@@ -49,6 +49,8 @@ if (!function_exists('rendreZoneAccueil')) {
 				.'<button type="button" onmousedown="return false" onclick="cmdAccueil(\'formatBlock\',\'p\')" title="Paragraphe">Texte</button>'
 				.'<button type="button" onmousedown="return false" onclick="cmdAccueil(\'insertUnorderedList\')" title="Liste">&bull; Liste</button>'
 				.'<button type="button" onmousedown="return false" onclick="lienAccueil()" title="Insérer un lien">Lien</button>'
+				.'<button type="button" onmousedown="return false" onclick="imageAccueil()" title="Insérer une image">&#128247;</button>'
+				.'<input type="file" id="tb-file-img" accept="image/*" style="display:none" onchange="uploadImageAccueil(this)">'
 				.'</div>'
 				.'<form method="post" action="" onsubmit="return avantSauvegardeAccueil(\''.$id.'\')">'
 				.'<input type="hidden" name="Page" value="accueil" />'
@@ -374,6 +376,27 @@ function cmdAccueil(cmd, val){
 function lienAccueil(){
 	var url = prompt('Adresse du lien (https://...) :', 'https://');
 	if (url) document.execCommand('createLink', false, url);
+}
+function imageAccueil(){
+	document.getElementById('tb-file-img').click();
+}
+function uploadImageAccueil(input){
+	var file = input.files[0];
+	if (!file) return;
+	var fd = new FormData();
+	fd.append('image', file);
+	fd.append('Page', 'adminaccueilimage');
+	fetch('index.php', { method: 'POST', body: fd })
+		.then(function(r){ return r.json(); })
+		.then(function(data){
+			if (data.ok) {
+				document.execCommand('insertImage', false, data.url);
+			} else {
+				alert('Erreur upload : ' + data.err);
+			}
+		})
+		.catch(function(){ alert('Erreur réseau lors de l\'upload.'); });
+	input.value = '';
 }
 function avantSauvegardeAccueil(cle){
 	document.getElementById('hidden_'+cle).value = document.getElementById('contenu_'+cle).innerHTML;
