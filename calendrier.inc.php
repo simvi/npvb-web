@@ -28,7 +28,7 @@ if ($Mode<>"Admin"){
 			<td><a href="<?=$PHP_SELF?>?Page=<?=(($Mode=="Admin")?"adminevenements":"calendrier")?>&amp;Annee=<?=$AnneeAvant?>&amp;Mois=<?=$MoisAvant?>">&lt;</a></td> <td colspan="5"><?=$montharray[(int)$Mois]?> <?=$Annee?></td> <td><a href="<?=$PHP_SELF?>?Page=<?=(($Mode=="Admin")?"adminevenements":"calendrier")?>&amp;Annee=<?=$AnneeApres?>&amp;Mois=<?=$MoisApres?>">&gt;</a></td>
 		</tr>
 		<tr class="TitreJourSemaine">
-			<td>Lundi</td> <td>Mardi</td> <td>Mercredi</td> <td>Jeudi</td> <td>Vendredi</td> <td>Samedi</td> <td>Dimanche</td>
+			<td><span class="jour-long">Lundi</span><span class="jour-court">Lun</span></td> <td><span class="jour-long">Mardi</span><span class="jour-court">Mar</span></td> <td><span class="jour-long">Mercredi</span><span class="jour-court">Mer</span></td> <td><span class="jour-long">Jeudi</span><span class="jour-court">Jeu</span></td> <td><span class="jour-long">Vendredi</span><span class="jour-court">Ven</span></td> <td><span class="jour-long">Samedi</span><span class="jour-court">Sam</span></td> <td><span class="jour-long">Dimanche</span><span class="jour-court">Dim</span></td>
 		</tr>
 <?//Recuperation des données du mois
 $PremierJourDuMois = getDate(mkTime(12, 0, 0, $Mois, 1, $Annee));

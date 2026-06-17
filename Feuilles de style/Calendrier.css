@@ -139,6 +139,9 @@
 	font-size: 10px;
 }
 
+/* Abréviation des jours masquée sur grand écran */
+.jour-court { display: none; }
+
 @media (max-width: 1000px) {
 	#Calendrier .TitreJourSemaine td {
 		font-size: 13px;
@@ -154,26 +157,63 @@
 		padding: 0 2px !important;
 	}
 
+	/* Jours de la semaine abrégés (Lun, Mar...) */
+	.jour-long  { display: none; }
+	.jour-court { display: inline; }
+
 	#Calendrier {
-		min-width: 350px;
-		border-spacing: 1px;
+		min-width: 0;
+		width: 100%;
+		border-spacing: 2px;
 	}
 
+	#Calendrier .TitreMois td {
+		font-size: 22px;
+	}
+
+	#Calendrier .TitreJourSemaine td {
+		font-size: 13px;
+		width: auto;
+		padding: 6px 0;
+	}
+
+	/* Cellules des jours : numéro lisible, hauteur auto */
+	#Calendrier .JourMois td {
+		width: auto;
+		height: auto;
+		min-height: 40px;
+		padding: 3px 0 0 !important;
+	}
+
+	#Calendrier .BonMois em,
+	#Calendrier .AutreMois em,
+	#Calendrier .Aujourdhui em {
+		font-size: 14px;
+	}
+
+	/* Événements : texte court qui peut passer à la ligne (plus de débordement) */
 	#Calendrier .JourMois p {
 		font-size: 9px;
+		line-height: 1.1;
+		padding: 2px 1px;
+		white-space: normal;
+		word-break: break-word;
+	}
+	#Calendrier .JourMois p img {
+		max-width: 10px;
+		height: auto;
 	}
 
+	/* Légende en colonne, lisible */
 	#Calendrier .Legende > td:first-child {
 		display: none;
 	}
 
 	#Calendrier .Legende > td {
-		display: flex;
-		flex-direction: column;
+		display: block;
 	}
 
-	#Calendrier .Legende > td tr {
-		margin: 5px;
-		display: block;
+	#Calendrier .Legende td {
+		font-size: 13px;
 	}
 }
