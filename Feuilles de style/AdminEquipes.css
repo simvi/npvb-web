@@ -55,3 +55,60 @@
 #Equipes .SousTitreEquipe {
 	font-weight: bold;
 }
+/* ============================================================
+   Responsive admin équipes (mobile)
+   ============================================================ */
+@media (max-width: 600px) {
+
+	#Equipes .FicheEquipe {
+		margin: 12px 0;
+	}
+
+	/* Titre de l'équipe : nom + option "Tous joueurs" */
+	#Equipes .TitreFicheEquipe td {
+		font-size: 15px;
+		padding: 8px;
+	}
+	#Equipes .TousJoueurs {
+		font-size: 12px;
+		white-space: nowrap;
+	}
+
+	/* Contenu : chaque cellule devient un bloc pleine largeur
+	   → labels au-dessus, contrôles larges et faciles à toucher */
+	#Equipes .ContenuFicheEquipe,
+	#Equipes .ContenuFicheEquipe tbody,
+	#Equipes .ContenuFicheEquipe tr,
+	#Equipes .ContenuFicheEquipe td {
+		display: block;
+		width: 100% !important;
+		box-sizing: border-box;
+	}
+
+	#Equipes .ContenuFicheEquipe td {
+		text-align: left;
+		padding: 4px 8px;
+	}
+
+	/* Séparateur visuel entre membres */
+	#Equipes .ContenuFicheEquipe tr {
+		padding: 2px 0;
+	}
+
+	#Equipes .PresenceParDefaut {
+		text-align: left;
+		color: inherit;
+		font-style: italic;
+	}
+
+	/* Sélecteurs et bouton en pleine largeur */
+	#Equipes .ContenuFicheEquipe select {
+		width: 100%;
+		margin: 4px 0;
+		box-sizing: border-box;
+	}
+	#Equipes .ContenuFicheEquipe input[type=submit] {
+		width: 100%;
+		margin-top: 6px;
+	}
+}
