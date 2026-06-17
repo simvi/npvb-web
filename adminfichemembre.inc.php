@@ -229,17 +229,50 @@ if ($Mode=="EnlevePhoto"){
 }
 if ($Mode=="ModifPhoto"){
 	$Modification=true;
-	if (is_uploaded_file($PhotoMembre)){
-		//print("<br/>".$Fichier);
-		$imageValide=true;
-		$paramPhoto=getImageSize($PhotoMembre);
-		if ($paramPhoto[0]<>100) $ErreurDonnees["Photo"] .=	"La largeur de la photo fait ".$paramPhoto[0]." pixels<br/>";//Largeur 
-		if ($paramPhoto[1]<>100) $ErreurDonnees["Photo"] .=	"La hauteur de la photo fait ".$paramPhoto[1]." pixels<br/>";	//Hauteur
-		if ($paramPhoto[2]<>2) $ErreurDonnees["Photo"] .= "La photo n'est pas au format jpg<br/>";	//Type -> jpg=2
-		if (!$ErreurDonnees["Photo"]){
-			if(!move_uploaded_file($PhotoMembre, $RepertoirePhotos."Photo".$Membre.".jpg"))$ErreurDonnees["Photo"] = "Impossible d'enregistrer la photo<br/>";
+	// Infos upload (depuis $_FILES) + log de diagnostic
+	$InfosPhoto = isset($_FILES['PhotoMembre']) ? $_FILES['PhotoMembre'] : null;
+	$CodeErreurUpload = $InfosPhoto ? $InfosPhoto['error'] : UPLOAD_ERR_NO_FILE;
+	error_log("[NPVB] Upload photo membre=".$Membre." error=".$CodeErreurUpload." size=".($InfosPhoto ? $InfosPhoto['size'] : 0)." name=".($InfosPhoto ? $InfosPhoto['name'] : '')." tmp=".($InfosPhoto ? $InfosPhoto['tmp_name'] : ''));
+
+	if (($CodeErreurUpload == UPLOAD_ERR_OK) && is_uploaded_file($PhotoMembre)){
+		$paramPhoto = @getImageSize($PhotoMembre);
+		if (!$paramPhoto){
+			$ErreurDonnees["Photo"] .= "Le fichier n'est pas une image valide<br/>";
+		}else{
+			// Charge l'image selon son type (jpg, png ou gif)
+			$src = null;
+			switch ($paramPhoto[2]){
+				case IMAGETYPE_JPEG: $src = @imageCreateFromJpeg($PhotoMembre); break;
+				case IMAGETYPE_PNG:  $src = @imageCreateFromPng($PhotoMembre); break;
+				case IMAGETYPE_GIF:  $src = @imageCreateFromGif($PhotoMembre); break;
+				default: $ErreurDonnees["Photo"] .= "Format non supporté (jpg, png ou gif)<br/>";
+			}
+			if ($src){
+				// Recadrage carré centré puis redimensionnement en 100x100 jpg
+				$Largeur = $paramPhoto[0]; $Hauteur = $paramPhoto[1];
+				$Cote = min($Largeur, $Hauteur);
+				$OffsetX = (int)(($Largeur - $Cote) / 2);
+				$OffsetY = (int)(($Hauteur - $Cote) / 2);
+				$dest = imageCreateTrueColor(100, 100);
+				imageCopyResampled($dest, $src, 0, 0, $OffsetX, $OffsetY, 100, 100, $Cote, $Cote);
+				if (!imageJpeg($dest, $RepertoirePhotos."Photo".$Membre.".jpg", 90)){
+					$ErreurDonnees["Photo"] = "Impossible d'enregistrer la photo<br/>";
+				}
+				imageDestroy($dest); imageDestroy($src);
+			}else if (!$ErreurDonnees["Photo"]){
+				$ErreurDonnees["Photo"] .= "Impossible de lire l'image<br/>";
+			}
 		}
-	}else{$ErreurDonnees["Photo"] = "Photo non uploadee<br/>";}
+	}else{
+		// Message précis selon le code d'erreur d'upload
+		switch ($CodeErreurUpload){
+			case UPLOAD_ERR_INI_SIZE:
+			case UPLOAD_ERR_FORM_SIZE: $ErreurDonnees["Photo"] = "La photo est trop volumineuse<br/>"; break;
+			case UPLOAD_ERR_NO_FILE:   $ErreurDonnees["Photo"] = "Aucune photo sélectionnée<br/>"; break;
+			case UPLOAD_ERR_PARTIAL:   $ErreurDonnees["Photo"] = "L'envoi de la photo a été interrompu<br/>"; break;
+			default:                   $ErreurDonnees["Photo"] = "Photo non uploadee (code ".$CodeErreurUpload.")<br/>";
+		}
+	}
 	if($ErreurDonnees["Photo"]) $ErreurDonnees["Enregistrement"]="Erreur d'envoi de la photo:</BR>";
 	$Mode="Modif";
 }
@@ -343,7 +376,7 @@ if ($EnvoiMail){
 						<input type="hidden" name="Page" value="adminfichemembre" />
 						<input type="hidden" name="Mode" value="ModifPhoto" />
 						<input type="hidden" name="Membre" value="<?=$Membre?>" />
-						<input type="hidden" name="MAX_FILE_SIZE" value="30000" />
+						<input type="hidden" name="MAX_FILE_SIZE" value="8000000" />
 						<table>
 							<tr><td colspan="2"><input type="file" name="PhotoMembre" size="15" /></td></tr>
 							<tr><td><ul><li>Format .jpg</li><li>Taille 100*100px</li></ul></td><td><input type="submit" value="Changer" class="PetitBouton Action" /><br/><input type="button" value="Enlever" onclick="javascript:document.forms['formulairePhoto'].Mode.value='EnlevePhoto';document.forms['formulairePhoto'].submit()" class="PetitBouton Annule" /></td></tr>
