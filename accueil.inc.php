@@ -1,5 +1,72 @@
 <?
 if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
+
+// ============================================================
+// Contenu éditable de la page d'accueil (admins DieuToutPuissant)
+// ============================================================
+$estAdminAccueil = (isset($Joueur) && is_object($Joueur) && $Joueur->DieuToutPuissant == "o");
+
+// Charge le contenu enregistré pour une clé, sinon retourne le texte par défaut
+if (!function_exists('getContenuAccueil')) {
+	function getContenuAccueil($cle, $defaut, $sdblink) {
+		$res = mysql_query("SELECT contenu FROM NPVB_Contenu WHERE cle='".mysql_real_escape_string($cle, $sdblink)."'", $sdblink);
+		if ($res && mysql_num_rows($res) > 0) {
+			$row = mysql_fetch_object($res);
+			return $row->contenu;
+		}
+		return $defaut;
+	}
+}
+
+// Affiche une zone de texte, avec crayon + éditeur visuel si admin
+if (!function_exists('rendreZoneAccueil')) {
+	function rendreZoneAccueil($cle, $contenu, $estAdmin) {
+		$id = htmlspecialchars($cle, ENT_QUOTES);
+		echo '<div class="zone-accueil">';
+		if ($estAdmin) {
+			echo '<button type="button" class="crayon-accueil" onclick="editerAccueil(\''.$id.'\')" title="Modifier ce texte">&#9998;</button>';
+		}
+		echo '<div class="contenu-accueil" id="contenu_'.$id.'">'.$contenu.'</div>';
+		if ($estAdmin) {
+			echo '<div class="editeur-accueil" id="editeur_'.$id.'" style="display:none">'
+				.'<div class="editeur-toolbar">'
+				.'<button type="button" onmousedown="return false" onclick="cmdAccueil(\'bold\')" title="Gras"><b>G</b></button>'
+				.'<button type="button" onmousedown="return false" onclick="cmdAccueil(\'italic\')" title="Italique"><i>I</i></button>'
+				.'<button type="button" onmousedown="return false" onclick="cmdAccueil(\'formatBlock\',\'h3\')" title="Titre">Titre</button>'
+				.'<button type="button" onmousedown="return false" onclick="cmdAccueil(\'formatBlock\',\'p\')" title="Paragraphe">Texte</button>'
+				.'<button type="button" onmousedown="return false" onclick="cmdAccueil(\'insertUnorderedList\')" title="Liste">&bull; Liste</button>'
+				.'<button type="button" onmousedown="return false" onclick="lienAccueil()" title="Insérer un lien">Lien</button>'
+				.'</div>'
+				.'<form method="post" action="" onsubmit="return avantSauvegardeAccueil(\''.$id.'\')">'
+				.'<input type="hidden" name="Page" value="accueil" />'
+				.'<input type="hidden" name="Action" value="SauvegardeAccueil" />'
+				.'<input type="hidden" name="CleContenu" value="'.$id.'" />'
+				.'<input type="hidden" name="ContenuAccueil" id="hidden_'.$id.'" />'
+				.'<button type="submit" class="Action">Sauvegarder</button> '
+				.'<button type="button" class="Bouton Annule" onclick="location.reload()">Annuler</button>'
+				.'</form>'
+				.'</div>';
+		}
+		echo '</div>';
+	}
+}
+
+// Traitement de la sauvegarde (réservé aux admins)
+if ($estAdminAccueil && isset($_POST['Action']) && $_POST['Action'] == 'SauvegardeAccueil') {
+	$clesValides = array('accueil_visiteur', 'accueil_membre');
+	$cleMaj = isset($_POST['CleContenu']) ? $_POST['CleContenu'] : '';
+	// Contenu HTML BRUT depuis $_POST (et non la variable extraite, qui est filtrée)
+	$contenuMaj = isset($_POST['ContenuAccueil']) ? $_POST['ContenuAccueil'] : '';
+	// Sécurité : on retire les balises script et les gestionnaires d'évènements onX=
+	$contenuMaj = preg_replace('#<script.*?>.*?</script>#is', '', $contenuMaj);
+	$contenuMaj = preg_replace('#\son\w+\s*=\s*("[^"]*"|\'[^\']*\')#i', '', $contenuMaj);
+	if (in_array($cleMaj, $clesValides) && trim(strip_tags($contenuMaj)) !== '') {
+		$cSql = mysql_real_escape_string($contenuMaj, $sdblink);
+		$kSql = mysql_real_escape_string($cleMaj, $sdblink);
+		$par  = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
+		mysql_query("INSERT INTO NPVB_Contenu (cle, contenu, updated_at, updated_by) VALUES ('$kSql', '$cSql', NOW(), '$par') ON DUPLICATE KEY UPDATE contenu='$cSql', updated_at=NOW(), updated_by='$par'", $sdblink);
+	}
+}
 ?>
 
 <table id="Accueil">
@@ -111,6 +178,7 @@ if (!$Joueur){
 	
 ?>
 		
+<?php ob_start(); ?>
 		<p><em>Mise à jour : 1er Mai 2026</em></p>
 		<p align="center">Bienvenue à tous les sportifs !<br>
 		<p align="center"><em>Le NPVB est un club de volley loisirs dont les mots d'ordre principaux sont</em>
@@ -168,7 +236,9 @@ if (!$Joueur){
 		
 
 				
-<?
+<?php
+	$defautVisiteur = ob_get_clean();
+	rendreZoneAccueil('accueil_visiteur', getContenuAccueil('accueil_visiteur', $defautVisiteur, $sdblink), $estAdminAccueil);
 }else{
 	//******************************************************//
 	// Ici la page d'accueil pour les utilisateurs identifiés //
@@ -176,6 +246,7 @@ if (!$Joueur){
 
 ?>
 		
+<?php ob_start(); ?>
 		<br />
 		<h3>Inscription aux séances</h3>
 
@@ -227,7 +298,10 @@ if (!$Joueur){
 		</ul>
 		<br />
 		
-<?
+<?php
+	$defautMembre = ob_get_clean();
+	rendreZoneAccueil('accueil_membre', getContenuAccueil('accueil_membre', $defautMembre, $sdblink), $estAdminAccueil);
+
 	if ($Anniversaires = mySql_query("SELECT * FROM NPVB_Joueurs WHERE (DateNaissance LIKE '%-".date("m-d")."')", $sdblink))
 	{
 		$ListeAnniversaires="";
@@ -257,5 +331,35 @@ if($Joueur->DieuToutPuissant=="o"){
 		</td>
   </tr>
 </table>
+
+<?php if ($estAdminAccueil) { ?>
+<script>
+// Éditeur visuel inline de la page d'accueil (admins)
+var __zoneAccueil = null;
+function editerAccueil(cle){
+	__zoneAccueil = cle;
+	var c = document.getElementById('contenu_'+cle);
+	c.setAttribute('contenteditable','true');
+	c.classList.add('en-edition');
+	document.getElementById('editeur_'+cle).style.display='block';
+	var cr = c.parentNode.querySelector('.crayon-accueil');
+	if (cr) cr.style.display='none';
+	c.focus();
+	window.scrollTo({ top: c.getBoundingClientRect().top + window.pageYOffset - 90, behavior:'smooth' });
+}
+function cmdAccueil(cmd, val){
+	if (__zoneAccueil) document.getElementById('contenu_'+__zoneAccueil).focus();
+	document.execCommand(cmd, false, val || null);
+}
+function lienAccueil(){
+	var url = prompt('Adresse du lien (https://...) :', 'https://');
+	if (url) document.execCommand('createLink', false, url);
+}
+function avantSauvegardeAccueil(cle){
+	document.getElementById('hidden_'+cle).value = document.getElementById('contenu_'+cle).innerHTML;
+	return true;
+}
+</script>
+<?php } ?>
 
 
