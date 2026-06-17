@@ -66,14 +66,13 @@ if (!isset($Page) || empty($Page)) {
 	$Page = "accueil";
 }
 
-// Ne pas générer le HTML pour les endpoints AJAX/API (résistent même si DB down)
+// Ne pas générer le HTML pour les endpoints AJAX/API
 $pages_api = array('adminaccueilimage');
 $is_api_endpoint = in_array($Page, $pages_api);
 
-if (!$is_api_endpoint && !$ConnectDB) $Page="maintenance";
-
 if (!$is_api_endpoint) {
-	include("_entete.inc.php");
+	include("_entete.inc.php"); // établit la connexion DB et définit $ConnectDB
+	if (!$ConnectDB) $Page="maintenance";
 }
 
 // CORRECTIF SÉCURITÉ #2: Whitelist stricte des pages autorisées
