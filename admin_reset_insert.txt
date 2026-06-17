@@ -1,0 +1,59 @@
+<?
+	// Afficher bouton reset si demande en attente
+	if (isset($demandesReset[$Joueurs[$Membre]->Pseudonyme])) {
+		$resetData = $demandesReset[$Joueurs[$Membre]->Pseudonyme];
+?>
+					<button type="button" class="PetitBouton Action" style="background:#ff9800;border-color:#f57c00;" onclick="afficherLienReset<?=$resetData['Id']?>();">
+						Envoyer lien reset
+					</button>
+
+					<div id="lienReset<?=$resetData['Id']?>" style="display:none;margin-top:10px;background:#e7f3ff;border:1px solid #2196f3;padding:15px;border-radius:4px;">
+						<strong>Lien de reinitialisation :</strong><br/>
+						<input type="text" value="http://<?=$_SERVER['HTTP_HOST']?>/index.php?Page=resetmotdepasse&Token=<?=$resetData['Token']?>"
+						       style="width:100%;padding:5px;margin:5px 0;font-family:monospace;font-size:11px;"
+						       onclick="this.select();" readonly />
+						<br/>
+						<strong>Email a :</strong> <?=htmlspecialchars($resetData['Email'])?><br/>
+						<strong>Expire le :</strong> <?=date('d/m/Y H:i', strtotime($resetData['DateExpiration']))?><br/>
+						<br/>
+						<strong>Template email :</strong><br/>
+						<textarea style="width:100%;height:200px;padding:5px;font-family:Arial;font-size:12px;" onclick="this.select();" readonly>Objet : Reinitialisation de votre mot de passe NPVB
+
+Bonjour <?=$resetData['Prenom']?>,
+
+Vous avez demande la reinitialisation de votre mot de passe sur le site NPVB.
+
+Pour definir un nouveau mot de passe, cliquez sur le lien ci-dessous :
+
+http://<?=$_SERVER['HTTP_HOST']?>/index.php?Page=resetmotdepasse&Token=<?=$resetData['Token']?>
+
+Ce lien est valable jusqu'au <?=date('d/m/Y H:i', strtotime($resetData['DateExpiration']))?>.
+
+Si vous n'etes pas a l'origine de cette demande, ignorez simplement cet email.
+
+Cordialement,
+L'equipe NPVB</textarea>
+						<br/>
+						<form method="post" action="<?=$PHP_SELF?>?Page=adminmembres&Etat=<?=$Etat?>" style="margin-top:10px;">
+							<input type="hidden" name="MarquerEnvoyeReset" value="o" />
+							<input type="hidden" name="TokenId" value="<?=$resetData['Id']?>" />
+							<input type="submit" value="Marquer comme envoye" class="PetitBouton Action"
+							       style="background:#4caf50;border-color:#388e3c;"
+							       onclick="return confirm('Email envoye manuellement ?');" />
+						</form>
+						<button type="button" class="PetitBouton" onclick="document.getElementById('lienReset<?=$resetData['Id']?>').style.display='none';">Fermer</button>
+					</div>
+
+					<script type="text/javascript">
+					function afficherLienReset<?=$resetData['Id']?>() {
+						var div = document.getElementById('lienReset<?=$resetData['Id']?>');
+						if (div.style.display === 'none') {
+							div.style.display = 'block';
+						} else {
+							div.style.display = 'none';
+						}
+					}
+					</script>
+<?
+	}
+?>

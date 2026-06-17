@@ -1,0 +1,147 @@
+#Membres { 
+	border-collapse: separate;
+	border-spacing: 9px;
+	border: 0;
+	margin: 15px auto;
+	text-align: left;
+	table-layout: fixed;
+    width: 100%;
+}
+
+#Membres td{
+	vertical-align: top;
+	position: relative;
+	margin: 0;
+    padding: 0;
+}
+
+#Membres .TitreListe{
+	font-size: 20px;
+	font-weight: bold;
+	padding-bottom: 10px;
+}
+
+#Membres ul{
+	text-align: left;
+	margin: 0;
+	padding: 0;
+	text-indent: 0;
+	list-style-type: none;
+}
+
+#Membres ul li {
+	padding: 10px;
+}
+
+#Membres ul li img {
+    margin-right: 10px;
+	width: 20px;
+	height: 20px;
+}
+
+#Membres .UnMembre{
+	position: relative;
+	text-align: center;
+	font-size: 14px;
+	padding: 5px;
+	font-weight: bold;
+	cursor: pointer;
+}
+
+#Membres .Icone{
+	vertical-align: middle;
+}
+
+#Membres .Photo, #Membres .PhotoMembre {
+	vertical-align: top;
+	height: 70px;
+	width: 70px;
+	margin-bottom:5px;
+	border: 0;
+	border-radius: 50px;
+	border: 1px solid #4c4c4c;
+}
+
+#Membres .PhotoMembre {
+    width: 100px;
+    height: 100px;
+}
+
+#Membres .CadrePhoto{
+	display: none;
+}
+
+#Membres .Rouleau {
+	text-align: center;
+	width: 400px;
+	display: none;
+}
+	
+#Membres .DerouleRouleau {
+	text-align: center;
+	width: 400px;
+	display: block;
+}
+
+#Membres .Colonne{
+	width: 400px;
+}
+
+#Membres td.Colonne1 {
+	width: 100px;
+}
+
+
+#Membres .ModifTitre {
+	text-align: center;
+	font-weight: bold;
+	font-size: 18px;
+	color: #11a;
+	background-color: white;
+	border: none;
+	}
+
+#Membres .UnMembre{
+	position: relative;
+}
+
+#Membres .Inactif{
+	background-image: url("../Images/Inactif.jpg");
+	background-repeat: repeat;
+	}
+	
+#Membres .Filtre, #Membres .LiensLettres{
+	margin: 15px;
+	padding: 5px;
+	text-align: center;
+	font-family: arial, sans-serif;
+	font-weight: bold;
+}
+
+@media (max-width: 1000px) {
+	#Membres .PhotoMembre {
+		width: 70px;
+		height: 70px;
+	}
+}
+
+@media (max-width: 600px) {
+
+	.Filtre form {
+		font-size: 10px;
+	}
+
+	#Membres .PhotoMembre {
+		width: 40px;
+		height: 40px;
+	}
+
+	#Membres .UnMembre {
+		font-size: 10px;
+		padding: 2px;
+	}
+
+	#Corps {
+		padding: 0 2px !important;
+	}
+}

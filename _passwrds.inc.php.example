@@ -1,0 +1,7 @@
+<?php
+// Copier vers PASSWD/_passwrds.inc.php et remplir avec vos identifiants
+$labasededonnees = "nantespvb_dev";
+$basesql         = "localhost";
+$utilisateursql  = "nantespvb_user";
+$motdepassesql   = "VOTRE_MOT_DE_PASSE_ICI";
+?>

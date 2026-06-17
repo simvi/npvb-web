@@ -1,0 +1,170 @@
+@page{
+	size: portrait ;
+}
+		
+@media print {
+	
+	.FicheDePresence{
+		page-break-inside: avoid;
+		table-layout: fixed;
+	}
+
+	.Ligne, .Ligne1{
+		font-size: 12pt;
+	}
+
+	.LigneTitres, .LigneTotal{
+		font-size: 14pt;
+	}
+	
+	.EnteteEvent, .EnteteDate{
+		font-size: 12pt;
+	}
+
+	.EnteteTitre{
+		font-size: 18pt;
+	}
+	
+	.LogoNPVB{
+		height: 2.0cm;
+	}
+
+	.BoutonsAction, .LiensW3C{
+		display: none;
+	}
+}
+
+
+
+@media screen {
+	
+	.Ligne, .Ligne1{
+		font-size: 13pt;
+	}
+
+	.LigneTitres, .LigneTotal{
+		font-size: 16pt;
+	}
+
+	.EnteteEvent, .EnteteDate{
+		font-size: 14pt;
+	}
+
+	.EnteteTitre{
+		font-size: 20pt;
+	}
+
+	.Logo{
+		display: none;
+	}
+
+	.BoutonsAction{
+		display: block;
+	}
+	
+	.BoutonAction{
+		margin-left: 10px;
+		margin-right: 10px;
+		padding:0px;
+		font-weight: bold;
+		text-align: center;
+		width: 100px;
+		height: 27px;
+		border-color: #182;
+		color: #182;
+	}
+
+	.LiensW3C img{
+		border: none;
+	}
+}
+
+
+
+@media screen, print {
+
+	.FicheDePresence{
+		width: 17cm;
+		height: 25.5cm;
+		margin: 0;
+		padding: 0;
+		border-collapse: collapse;
+		border-spacing: 0;
+		color: black;
+		background-color: white;
+		border: medium solid black;
+	}
+	
+	
+	.MembresPresents{
+		width: 100%;
+		margin: 0;
+		padding: 5pt;
+		border-spacing: 0;
+		empty-cells: show;
+	}
+	
+	.FicheDePresence tr{
+		vertical-align: top;
+	}
+		
+	.Entete td{
+		border: medium solid black;
+		vertical-align: middle;
+		text-align: center;
+	}
+
+	.EnteteLogo{
+		height: 2.0cm;
+		width: 6.7cm;
+		text-align: center;
+	}
+
+	.EnteteEvent{
+		height: 0.8cm;
+	}
+
+	.EnteteDate{
+		height: 0.8cm;
+		width: 3cm;
+	}
+
+	.EnteteTitre{
+		height: 1.2cm;
+	}
+
+	.LigneTitres td{
+		vertical-align: middle;
+		border-bottom: medium solid gray;
+	}
+
+	.Ligne1 td{
+		vertical-align: middle;
+	}
+
+	.Ligne td{
+		vertical-align: middle;
+		border-top: thin solid silver;
+	}
+
+	.LigneTotal td{
+		vertical-align: middle;
+		border-top: medium solid gray;
+	}
+
+	.Colonne1, .colonne2{
+		width: 40%;
+	}
+	
+	.Colonne3, .Colonne4{
+		width: 10%;
+		text-align: center;
+		border-left: thin dashed silver;
+		border-right: thin dashed silver;
+	}
+	
+	.LigneTotal td.Colonne3, .LigneTotal td.Colonne4{
+		border: medium solid gray;
+	}
+	
+}

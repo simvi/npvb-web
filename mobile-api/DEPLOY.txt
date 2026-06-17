@@ -1,0 +1,117 @@
+================================================================================
+  DÉPLOIEMENT API MOBILE NPVB v1 sur Free
+================================================================================
+
+📦 FICHIERS À UPLOADER
+----------------------
+Uploader UNIQUEMENT le dossier "mobile-api/" à la racine de votre FTP Free :
+
+Racine FTP Free/
+└── mobile-api/
+    ├── v1/
+    │   └── index.php  (295 lignes, PHP 4 compatible)
+    └── README.md
+
+URL finale : http://nantespvb.free.fr/mobile-api/v1/index.php
+
+
+✅ ÉTAPES DE DÉPLOIEMENT
+------------------------
+1. Uploader le dossier "mobile-api/" via FTP (FileZilla, Cyberduck, etc.)
+
+2. Tester l'API :
+   Ouvrir : http://nantespvb.free.fr/mobile-api/v1/index.php
+
+   Devrait afficher :
+   {"success":true,"data":{"name":"NPVB API","version":"v1","status":"online","php":"4.4.3-dev"}}
+
+3. Tester le login :
+   curl -X POST -H "Content-Type: application/json" \
+     -d '{"username":"VOTRE_PSEUDO","password":"VOTRE_MDP"}' \
+     http://nantespvb.free.fr/mobile-api/v1/index.php?endpoint=auth/login
+
+4. OPTIONNEL - Changer le secret token :
+   Éditer ligne 70 de index.php :
+   $TOKEN_SECRET = 'VOTRE_SECRET_UNIQUE';
+
+
+🗑️ ANCIEN DOSSIER À SUPPRIMER
+------------------------------
+Vous pouvez SUPPRIMER le dossier "api/" (bloqué par Free de toute façon)
+Il contenait des fichiers PHP 5.3+ incompatibles avec PHP 4.
+
+
+📱 MIGRATION APPS MOBILES iOS/Android
+--------------------------------------
+Mettre à jour les URLs dans vos apps :
+
+ANCIEN (flux_v3.php) :
+  http://nantespvb.free.fr/app/flux_v3.php?type=connection
+  http://nantespvb.free.fr/app/flux_v3.php?type=get_members
+  http://nantespvb.free.fr/app/flux_v3.php?type=get_events
+  etc.
+
+NOUVEAU (mobile-api) :
+  http://nantespvb.free.fr/mobile-api/v1/index.php?endpoint=auth/login
+  http://nantespvb.free.fr/mobile-api/v1/index.php?endpoint=members
+  http://nantespvb.free.fr/mobile-api/v1/index.php?endpoint=events
+  etc.
+
+CHANGEMENTS DANS LES RÉPONSES :
+✓ Toutes wrappées dans {"success": true, "data": ...}
+✓ Login retourne un token (au lieu de juste [{"Pseudonyme":"..."}])
+✓ Format cohérent pour toutes les réponses
+
+
+🔧 ENDPOINTS DISPONIBLES
+-------------------------
+AUTH :
+  POST   /mobile-api/v1/index.php?endpoint=auth/login
+
+MEMBERS :
+  GET    /mobile-api/v1/index.php?endpoint=members
+  GET    /mobile-api/v1/index.php?endpoint=members/{username}
+  GET    /mobile-api/v1/index.php?endpoint=members/{username}/presences?status=o
+  GET    /mobile-api/v1/index.php?endpoint=memberships
+
+EVENTS :
+  GET    /mobile-api/v1/index.php?endpoint=events
+  GET    /mobile-api/v1/index.php?endpoint=events/{dateHeure}/{libelle}
+  GET    /mobile-api/v1/index.php?endpoint=events/{dateHeure}/presences
+
+PRESENCES :
+  POST   /mobile-api/v1/index.php?endpoint=presences
+  Body : {"dateHeure":"...","joueur":"...","libelle":"...","presence":"o|n|!"}
+
+RESOURCES :
+  GET    /mobile-api/v1/index.php?endpoint=resources/rules
+  GET    /mobile-api/v1/index.php?endpoint=resources/competlib
+  GET    /mobile-api/v1/index.php?endpoint=resources/ufolep
+
+
+✨ AVANTAGES DE CETTE SOLUTION
+-------------------------------
+✓ Compatible PHP 4.4.3 de Free (json_encode custom, mysql_*)
+✓ Architecture REST moderne malgré les limitations
+✓ Un seul fichier = facile à maintenir
+✓ Compatible avec la DB existante (OLD_PASSWORD)
+✓ Gestion complète des présences (inscription/capacité/absent)
+✓ Format JSON cohérent pour toutes les réponses
+
+
+❌ SUPPRESSION DE L'ANCIEN flux_v3.php
+---------------------------------------
+Une fois les apps mobiles mises à jour et testées, vous pourrez supprimer :
+  /app/flux_v3.php
+
+Ne PAS le supprimer avant que les apps soient mises à jour !
+
+
+📞 SUPPORT
+----------
+En cas de problème :
+1. Vérifier que PHP affiche bien "4.4.3-dev" sur la page d'accueil
+2. Tester les endpoints un par un avec curl ou Postman
+3. Vérifier les credentials DB dans index.php ligne 66-70
+
+================================================================================

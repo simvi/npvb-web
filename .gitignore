@@ -1,0 +1,27 @@
+# Secrets — JAMAIS dans le dépôt
+PASSWD/
+_passwrds.inc.php
+.env
+config-local.php
+
+# Données et dumps
+*.sql
+*.sql.gz
+
+# Sessions et cache
+sessions/
+*.tmp
+*.iso
+*.backup
+*.old
+
+# Photos/uploads volumineux (gérés séparément)
+Photos/
+DEPOT/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

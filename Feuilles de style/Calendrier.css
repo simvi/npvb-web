@@ -1,0 +1,179 @@
+#Calendrier {
+	border-collapse: separate;
+	border-spacing: 6px;
+	margin: 15px auto;
+	text-align: left;
+	table-layout: fixed;
+    width: 100%;
+}
+
+#Calendrier .JourMois td {
+	width: 100px;
+	height: 92px;
+}
+	
+#Calendrier .JourMois p {
+	font-size: 12px;
+	margin: 0;
+	font-weight: bold;
+	text-align: center;
+	padding: 5px;
+	border-top: 1px dashed black;
+	white-space: nowrap;
+}
+
+#Calendrier .JourMois p:last-child {
+	margin-bottom: 0;
+}
+
+#Calendrier .JourMois em {
+	font-style: normal;
+}
+#Calendrier .JourMois p img {
+	vertical-align: middle ;
+	margin: 0;
+	padding: 0;
+}
+		
+#Calendrier .Annule {
+	color: #172446;
+	background-color: #fd707e;
+}
+
+#Calendrier .RencontreComplet {
+	background-color: #00f2b2;
+}
+	
+#Calendrier .RencontreIncomplet {
+	background-color: #ff956c;
+}
+
+#Calendrier .Initialise {
+	color: red;
+	background-color: #0fd;
+}
+	
+#Calendrier .Seance {
+	background-color: #30d5ff;
+}
+
+	
+#Calendrier .Asso{
+	color: black;
+	background-color: #cfc2f5;
+	text-decoration: blink;
+}
+
+#Calendrier .BonMois {
+	background-color: white;
+	margin: auto;
+	text-align: center;
+	font-weight: bold;
+	font-size: 14px;
+	border: 1px solid #172446;
+	color: #172446;
+	border-radius: 5px;
+	vertical-align: top;
+	padding: 10px 0 0;
+	overflow: hidden;
+}
+
+#Calendrier .AutreMois {
+	background-color: #c9c9c9;
+	border: 1px solid #4c4c4c;
+	color: #4c4c4c;
+	opacity: 0.4;
+	text-align: center;
+	font-weight: bold;
+	font-size: 14px;
+	border-radius: 5px;
+	vertical-align: top;
+	padding: 10px 0;
+}
+
+#Calendrier .JourAvecEvent {
+	cursor: pointer;
+}
+
+
+#Calendrier .Aujourdhui {
+	border: 1px solid #172446;
+	background-color: rgba(229, 193, 13, 0.5);
+	text-align: center;
+	font-weight: bold;
+	font-size: 14px;
+	border-radius: 5px;
+	padding: 10px 0 0;
+	vertical-align: top;
+	overflow: hidden;
+}
+
+#Calendrier .TitreMois td {
+	font-size: 30px;
+	text-align: center;
+	font-weight: bold;
+}
+
+#Calendrier .TitreMois td a{
+	text-decoration: none;
+}
+
+#Calendrier .TitreJourSemaine td {
+	border: 0;
+	width: 85px;
+	font-size: 16px;
+	text-align: center;
+	font-weight: bold;
+	padding: 10px;
+	overflow: hidden;
+    text-overflow: ellipsis;
+}
+	
+#Calendrier .Legende  td{
+	font-size: 12px;
+}
+
+#Calendrier .RectangleLegende {
+	width: 30px;
+	height: 12px;
+	font-size: 10px;
+}
+
+@media (max-width: 1000px) {
+	#Calendrier .TitreJourSemaine td {
+		font-size: 13px;
+	}
+
+	#Calendrier .JourMois p {
+		font-size: 10px;
+	}
+}
+
+@media (max-width: 600px) {
+	#Corps {
+		padding: 0 2px !important;
+	}
+
+	#Calendrier {
+		min-width: 350px;
+		border-spacing: 1px;
+	}
+
+	#Calendrier .JourMois p {
+		font-size: 9px;
+	}
+
+	#Calendrier .Legende > td:first-child {
+		display: none;
+	}
+
+	#Calendrier .Legende > td {
+		display: flex;
+		flex-direction: column;
+	}
+
+	#Calendrier .Legende > td tr {
+		margin: 5px;
+		display: block;
+	}
+}

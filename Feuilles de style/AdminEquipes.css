@@ -1,0 +1,57 @@
+#Equipes { 
+	border: 0;
+	width: 100%;
+	text-align: left;
+}
+
+#Equipes .FicheEquipe {
+	display: block;
+	margin: 10px 0;
+	padding: 0px;
+	border: 1px solid #172446;
+	border-radius: 5px;
+}
+
+#Equipes .TitreFicheEquipe {
+	border-style: none;
+	font-size: 16px;
+	font-weight: bold;
+	margin: 0px;
+	padding: 10px;
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+}
+
+#Equipes .ContenuFicheEquipe {
+	border-style: none;
+	font-size: 14px;
+	width: 100%;
+	padding: 10px;
+}
+	
+#Equipes .TousJoueurs {
+	font-style: italic;
+	text-align: right;
+	color: #fd707e;
+}
+	
+#Equipes .PresenceParDefaut {
+	font-style: italic;
+	text-align: right;
+}
+	
+#Equipes .Asso .TitreFicheEquipe {
+	background-color: #cfc2f5;
+}
+
+#Equipes .UneEquipe .TitreFicheEquipe {
+	background-color: #00f2b2;
+}
+
+#Equipes .Seance .TitreFicheEquipe {
+	background-color: #30d5ff;
+}
+	
+#Equipes .SousTitreEquipe {
+	font-weight: bold;
+}

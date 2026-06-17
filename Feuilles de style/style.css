@@ -1,0 +1,296 @@
+body {
+	margin: 10px auto 20px;
+	text-align: center;
+	color: #172446;
+	font-family: sans-serif;
+	background: #eeeeee url('../Images/fond.svg') no-repeat center bottom 10px;
+	background-size: 95% auto;
+	padding-bottom: 60px;
+	min-width: 300px;
+}
+
+.BandeauNPVB {
+	display: none;
+}
+
+#Corps {
+	border: 0;
+	text-align: center;
+	margin: 20px auto;
+	padding: 0 10px;
+	width: 800px;
+}
+
+#Accueil{
+	font-size: 14px;
+	font-family: verdana, arial, sans-serif;
+	text-align: left;
+}
+
+.Explications {
+	padding: 10px;
+}
+
+a {
+	color: #e5c10d;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+.Remarque {
+	font-size: 12px;
+	font-weight: normal;
+	margin: 0px;
+	font-family: arial, verdana, sans-serif;
+	text-align: left;
+	font-style: italic;
+}
+	
+.Action, input[type=submit] {
+	padding: 9px;
+	font-size: 15px;
+	border: 1px solid #172446;
+	background: #172446;
+	color: white;
+	border-radius: 2px;
+	cursor: pointer;
+}
+
+.Action:hover, .Action:focus, input[type=submit]:hover, input[type=submit]:focus {
+	background: #0D152A;
+	cursor: pointer;
+}
+
+input[type=checkbox] {
+    cursor: pointer;
+}
+
+input, select {
+	padding: 9px;
+	font-size: 15px;
+	border: 1px solid #172446;
+	color: #172446;
+	border-radius: 2px;
+	margin: 5px;
+}
+
+.Bouton.Annule {
+	padding: 9px;
+	font-size: 15px;
+	border: 1px solid #da5162;
+	background: #f47e87;
+	color: white;
+	border-radius: 2px;
+	cursor: pointer;
+}
+
+.Bouton.Annule:hover, .Bouton.Annule:focus {
+	background: #fd707e;
+	cursor: pointer;
+}
+
+.ModifError {
+    text-align: center;
+    font-weight: bold;
+    font-size: 18px;
+    background: #fd707e;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.ModifOk {
+	text-align: center;
+	font-weight: bold;
+	font-size: 18px;
+	background: #00f2b2;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+form {
+	margin: 0;
+	padding: 0;
+}
+
+#Entete {
+	position: relative;
+	margin: 50px 20%;
+}
+
+#Entete img {
+	width: 60%;
+	max-width: 450px;
+	min-width: 250px;
+}
+
+#HeureCourante {
+	visibility: hidden;
+	position: absolute;
+	border: 0;
+	margin: 0;
+	padding: 0;
+	left: 81px;
+	top: 70px;
+	font-family: arial, sans-serif;
+	font-size: 9px;
+}
+
+#NomJoueur {
+	text-align: right;
+	display: block;
+}	
+	
+#Menu ul {
+	padding: 0px;
+	margin: 0 10%;
+	text-indent: 0;
+	list-style-type: none;
+	clear: both;
+	display: flex;
+	justify-content: center;
+	border-bottom: 2px solid #172446;
+}
+
+#Menu ul:nth-child(2) {
+	margin-top: 20px;
+	border: 0;
+}
+
+#Menu li {
+	margin: 0 10px;
+	padding: 0;
+	display: flex;
+}
+
+textarea:focus, input:focus {
+    outline: none;
+}
+
+#Menu a {
+	text-align: center;
+	display: block;
+	text-decoration: none;
+	color: #172446;
+	font-weight: bold;
+	font-size: 15px;
+	min-width: 120px;
+	border-radius: 2px 2px 0px 0px;
+	padding: 11px;
+}
+	
+#Menu li.MenuActif a {
+	background-color: #e5c10d;
+}
+
+#Menu li.MenuActif a:hover {
+	color: #172446;
+}
+
+#special {
+	margin-top: 30px;
+	text-align: center;
+	text-decoration: none;
+	color: #22a;
+}
+
+#Menu a:hover {
+	background: #172446;
+	color: white;
+} 
+
+#FormulaireLogin input {
+	width: 120px;
+    border-radius: 2px 2px 0px 0px;
+    position: relative;
+    border-bottom: none;
+    margin: 0 4px 0 0;
+}
+
+#FormulaireLogin > div {
+	height: 100%;
+	display: flex;
+}
+
+#FormulaireLogin {
+	margin-left: 30px;
+	display: block;
+}
+
+.applications {
+	display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.applications a {
+	display: block;
+	margin: 0 30px;
+	transform: scale(1);
+	transition: .3s ease-in-out;
+}
+
+.applications a:hover {
+	transform: scale(1.2);
+}
+
+.applications img {
+	display: block;
+    width: 170px;
+}
+
+@media (max-width: 1000px) {
+
+	body {
+		padding-bottom: 20px;
+	}
+
+	#Corps {
+		width: auto;
+	}
+
+	#Menu ul {
+		padding: 0px;
+		margin: 0 10px;
+	}
+
+	#Menu li {
+		margin: 0 2px;
+	}
+	
+	#Menu a {
+		padding: 9px;
+		min-width: 100px;
+	}
+
+	#Entete {
+		margin: 20px 10px;
+	}
+
+	#NomJoueur {
+		padding-top: 10px;
+	}
+
+	#FormulaireLogin {
+		margin-left: 5px;
+	}
+
+	#FormulaireLogin input {
+		padding: 7px;
+		width: 100px;
+	}
+}
+
+@media (max-width: 600px) {
+
+	#Menu ul {
+		flex-wrap: wrap;
+	}
+
+	#Menu a {
+		font-size: 14px;
+		min-width: auto;
+		padding: 7px;
+		margin: 5px;
+	}
+}

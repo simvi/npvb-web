@@ -1,0 +1,171 @@
+#Jour { 
+	border: 0;
+	width: 100%;
+	text-align: left;
+}
+
+#Jour .FicheEvent {
+	display: block;
+	margin: 10px 0;
+	padding: 0px;
+	border: 1px solid #172446;
+	border-radius: 5px;
+}
+
+#Jour .FicheEvent p {
+	font-size: 16px;
+	font-weight: bold;
+	padding: 10px;
+	margin: 0;
+}
+
+#Jour .FicheEvent .TitreJour {
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+}
+
+#Jour .Asso .TitreJour {
+	background-color: #cfc2f5;
+}
+
+#Jour .Annule .TitreJour {
+	background-color: #fd707e;
+}
+
+#Jour .RencontreComplet .TitreJour {
+	background-color: #00f2b2;
+}
+
+#Jour .RencontreIncomplet .TitreJour {
+	background-color: #ff956c;
+}
+	
+#Jour .Seance .TitreJour {
+	background-color: #30d5ff;
+}
+	
+#Jour .Bloque {
+	text-align: center;
+	background-color: #c9c9c9;
+	color: #4c4c4c;
+	border-bottom-right-radius: 5px;
+	border-bottom-left-radius: 5px;
+}
+
+#Jour .Rouleau {
+	text-align: center;
+	display: none;
+}
+	
+#Jour .Rouleau table {
+	margin-left: auto;
+    margin-right: auto;
+    color: black;
+}
+	
+#Jour .DerouleRouleau {
+	text-align: center;
+	display: block;
+}
+	
+#Jour .TitreResponsable{
+	text-align: center;
+	font-weight: bold;
+	font-size: 14px;
+	text-decoration: underline;
+}
+
+
+#Jour .ListeJoueurs{
+	margin-left: 10px;
+	text-align: center;
+	height: 100px;
+	overflow: auto;
+}
+
+#Jour .Commentaire {
+	margin-left: 10px;
+	text-align: left;
+	height: 100px;
+	overflow: auto;
+}
+
+#Jour .TitreListeJoueurs{
+	font-weight: bold;
+	font-size: 14px;
+}
+	
+#Jour .Grise {
+	background-color: silver;
+}
+
+#Jour .Colone1 {
+	width: 300px;
+}
+
+#Jour .Colone2 {
+	width: 50px;
+	text-align: center;
+}
+
+#Jour .Score {
+	display: inline;
+	text-align: center;
+	font-family: arial black, arial, sans-serif;
+	border-style: inset;
+	border-width: 2px;
+	background-color: black;
+	color: #dda;
+	border-color: gray;
+	padding: 0 2px;
+	margin: 0 5px;
+}
+
+#Jour .ScoreTitre td{
+	color: white;
+	font-weight: bold;
+	font-size: 16px;
+}	
+
+#Jour .ScoreSet td{
+	color: white;
+	font-size: 12px;
+	text-align: center;
+}	
+
+#Jour .scoretableau {
+	border-style: outset;
+	background-color: gray;
+	color: white;
+	border-color: gray;
+	padding: 1px;
+}	
+
+#Jour .ListePresents {
+	margin: 0;
+	height: 3.7em;
+	overflow: auto;
+}
+
+#Jour .InfosEvent {
+	width: 100%;
+}
+
+#Jour .InfosEvent tr {
+	margin: 10px 0;
+	display: block;
+}
+
+#Jour .InfosEvent tr td:first-child {
+    font-weight: bold;
+	vertical-align: top;
+}
+
+#Jour .InfosEvent1 {
+	width: 25%;
+}
+
+#Jour .InfosEvent2 {
+	width: 75%;
+}
+

@@ -1,0 +1,2 @@
+ErrorDocument 404 http://nantespvb.free.fr/index.php?Page=Erreur404
+AddDefaultCharset UTF-8

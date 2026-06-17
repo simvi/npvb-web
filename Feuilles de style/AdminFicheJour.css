@@ -1,0 +1,73 @@
+#Jour { 
+	border: 0;
+	width: 100%;
+	text-align: left;
+}
+
+#Jour .FicheEvent {
+	display: block;
+	margin: 10px 0;
+	padding: 0px;
+	border: 1px solid #172446;
+	border-radius: 5px;
+}
+
+#Jour .FicheEvent p {
+	font-size: 16px;
+	font-weight: bold;
+	padding: 10px;
+	margin: 0;
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+}
+	
+#Jour .FicheEvent td:first-child {
+	font-weight: bold;
+}
+
+#Jour .TitreJour {
+	border-style: none;
+	font-size: 16px;
+	font-weight: bold;
+	margin: 0px;
+	padding: 10px;
+}
+
+#Jour .Asso p {
+	background-color: #cfc2f5;
+}
+
+#Jour .Annule p {
+	background-color: #fd707e;
+}
+
+#Jour .UneRencontre p{
+	background-color: #00f2b2;
+}
+	
+#Jour .Seance p {
+	background-color: #30d5ff;
+}
+	
+#Jour .Bloque{
+	text-align: center;
+}
+
+#Jour .FicheEvent p a{
+    color: #172446;
+}
+
+#Jour .FicheEvent p a:hover{
+	color: #0D152A;
+}
+		
+#Jour .AucunEvenement {
+	text-align: center;
+	font-weight: bold;
+	font-size: 18px;
+	color: #a11;
+	background-color: white;
+	border: none;
+}
+
+
