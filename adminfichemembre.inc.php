@@ -248,8 +248,21 @@ if ($Mode=="ModifPhoto"){
 				default: $ErreurDonnees["Photo"] .= "Format non supporté (jpg, png ou gif)<br/>";
 			}
 			if ($src){
+				// Corrige l'orientation EXIF (photos de téléphone en portrait :
+				// les pixels ne sont pas tournés, seule une métadonnée l'indique)
+				if (($paramPhoto[2]==IMAGETYPE_JPEG) && function_exists('exif_read_data')){
+					$exif = @exif_read_data($PhotoMembre);
+					if (!empty($exif['Orientation'])){
+						switch ((int)$exif['Orientation']){
+							case 3: $src = imageRotate($src, 180, 0); break;
+							case 6: $src = imageRotate($src, -90, 0); break;
+							case 8: $src = imageRotate($src, 90, 0); break;
+						}
+					}
+				}
 				// Recadrage carré centré puis redimensionnement en 100x100 jpg
-				$Largeur = $paramPhoto[0]; $Hauteur = $paramPhoto[1];
+				// (dimensions relues depuis l'image, la rotation ayant pu les inverser)
+				$Largeur = imageSX($src); $Hauteur = imageSY($src);
 				$Cote = min($Largeur, $Hauteur);
 				$OffsetX = (int)(($Largeur - $Cote) / 2);
 				$OffsetY = (int)(($Hauteur - $Cote) / 2);
