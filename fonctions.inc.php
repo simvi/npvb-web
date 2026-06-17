@@ -6,9 +6,9 @@ if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
 function ConvertisDate($LaDate, $Vers){
 	$LaDate = "".$LaDate;
 	switch($Vers){
-		case "PHP": $LadateChangee = mkTime(substr($LaDate, 8, 2), substr($LaDate, 10, 2), substr($LaDate, 12, 2), substr($LaDate, 4, 2), substr($LaDate, 6, 2), substr($LaDate, 0, 4));break;
-		case "PHPDate": $LadateChangee = mkTime(substr($LaDate, 0, 4), substr($LaDate, 5, 2), substr($LaDate, 8, 2), 0, 0, 0);break;
-		case "MySQL": $LadateChangee =  date("YmdHis", $LaDate); break;
+		case "PHP": $LadateChangee = mkTime((int)substr($LaDate, 8, 2), (int)substr($LaDate, 10, 2), (int)substr($LaDate, 12, 2), (int)substr($LaDate, 4, 2), (int)substr($LaDate, 6, 2), (int)substr($LaDate, 0, 4));break;
+		case "PHPDate": $LadateChangee = mkTime((int)substr($LaDate, 0, 4), (int)substr($LaDate, 5, 2), (int)substr($LaDate, 8, 2), 0, 0, 0);break;
+		case "MySQL": $LadateChangee =  date("YmdHis", (int)$LaDate); break;
 		//case "MySQLDate": $LadateChangee =  date("YmdHis", $LaDate); break;
 		default:
 	}
