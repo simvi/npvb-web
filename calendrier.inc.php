@@ -140,6 +140,26 @@ if ($Mode<>"Admin"){
 <?
 }
 ?>
+<script>
+(function(){
+	var KEY = 'npvbCalScroll';
+	// Restaure la position de défilement après un changement de mois
+	var saved = sessionStorage.getItem(KEY);
+	if (saved !== null) {
+		sessionStorage.removeItem(KEY);
+		var y = parseInt(saved, 10) || 0;
+		window.scrollTo(0, y);
+		window.addEventListener('load', function(){ window.scrollTo(0, y); });
+	}
+	// Mémorise la position avant de changer de mois (flèches < et >)
+	var liens = document.querySelectorAll('.TitreMois a');
+	for (var i = 0; i < liens.length; i++) {
+		liens[i].addEventListener('click', function(){
+			sessionStorage.setItem(KEY, window.scrollY || window.pageYOffset || 0);
+		});
+	}
+})();
+</script>
 
 
 
