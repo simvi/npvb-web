@@ -5,6 +5,24 @@ $Equipes = ChargeEquipes();
 
 if ($Mode<>"Admin") $Mode=($Joueur)?"Saisie":"Visu";
 
+// Hauteur uniforme des cellules calée sur le jour le plus chargé du mois affiché
+// (transmise au CSS via la variable --cal-events sur le tableau)
+$MaxEvenementsJour = 0;
+if (is_array($Evenements)) {
+	foreach ($Evenements as $__date => $__heures) {
+		if ((int)substr($__date, 4, 2) != (int)$Mois) continue; // uniquement le mois affiché
+		$__nb = 0;
+		foreach ($__heures as $__hkey => $__events) {
+			foreach ($__events as $__ev) {
+				if (($Mode != "Admin") && ($__ev->Etat == "I")) continue; // events masqués hors admin
+				$__nb++;
+			}
+		}
+		if ($__nb > $MaxEvenementsJour) $MaxEvenementsJour = $__nb;
+	}
+}
+if ($MaxEvenementsJour < 1) $MaxEvenementsJour = 1;
+
 //**********************************   PAGE WEB   ************************************************//
 ?>
 <link href="Feuilles de style/style.css" rel="stylesheet" type="text/css" />
@@ -23,7 +41,7 @@ if ($Mode<>"Admin"){
 <?
 }
 ?>	
-	<table id="Calendrier">
+	<table id="Calendrier" style="--cal-events: <?=$MaxEvenementsJour?>;">
 		<tr class="TitreMois">
 			<td><a href="<?=$PHP_SELF?>?Page=<?=(($Mode=="Admin")?"adminevenements":"calendrier")?>&amp;Annee=<?=$AnneeAvant?>&amp;Mois=<?=$MoisAvant?>">&lt;</a></td> <td colspan="5"><?=$montharray[(int)$Mois]?> <?=$Annee?></td> <td><a href="<?=$PHP_SELF?>?Page=<?=(($Mode=="Admin")?"adminevenements":"calendrier")?>&amp;Annee=<?=$AnneeApres?>&amp;Mois=<?=$MoisApres?>">&gt;</a></td>
 		</tr>

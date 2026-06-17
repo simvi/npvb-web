@@ -16,7 +16,10 @@
    → toutes les cellules gardent la même hauteur, quel que soit le nombre
    d'événements (le détail complet reste accessible au survol / au clic) */
 #Calendrier .JourContenu {
-	height: 116px;
+	/* Hauteur calée sur le jour le plus chargé du mois (--cal-events fourni par PHP) :
+	   base pour le numéro du jour + N lignes d'événements. Aucune coupure, et les
+	   mois calmes ont des cellules plus petites. */
+	height: calc(26px + var(--cal-events, 3) * 32px);
 	overflow: hidden;
 }
 	
@@ -233,9 +236,9 @@
 		padding: 3px 0 0 !important;
 	}
 
-	/* Hauteur fixe et identique pour toutes les cellules sur mobile */
+	/* Hauteur calée sur le jour le plus chargé du mois (lignes plus compactes) */
 	#Calendrier .JourContenu {
-		height: 88px;
+		height: calc(16px + var(--cal-events, 3) * 21px);
 	}
 
 	#Calendrier .BonMois em,
