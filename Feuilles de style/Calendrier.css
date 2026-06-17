@@ -16,7 +16,7 @@
    → toutes les cellules gardent la même hauteur, quel que soit le nombre
    d'événements (le détail complet reste accessible au survol / au clic) */
 #Calendrier .JourContenu {
-	height: 84px;
+	height: 116px;
 	overflow: hidden;
 }
 	
@@ -235,7 +235,7 @@
 
 	/* Hauteur fixe et identique pour toutes les cellules sur mobile */
 	#Calendrier .JourContenu {
-		height: 64px;
+		height: 88px;
 	}
 
 	#Calendrier .BonMois em,
