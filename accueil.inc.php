@@ -170,15 +170,11 @@ if (isset($Joueur) && is_object($Joueur)) {
 }
 ?>
 
-<?
-if (!$Joueur){
-	//************************************************************//
-	// Ici la page d'accueil pour les personnes non identifiées //
-	//************************************************************//
-	
+<?php
+// Capture le texte visiteur par défaut (toujours, pour permettre l'édition
+// par un admin depuis sa vue connectée)
+ob_start();
 ?>
-		
-<?php ob_start(); ?>
 		<p><em>Mise à jour : 1er Mai 2026</em></p>
 		<p align="center">Bienvenue à tous les sportifs !<br>
 		<p align="center"><em>Le NPVB est un club de volley loisirs dont les mots d'ordre principaux sont</em>
@@ -237,8 +233,14 @@ if (!$Joueur){
 
 				
 <?php
-	$defautVisiteur = ob_get_clean();
-	rendreZoneAccueil('accueil_visiteur', getContenuAccueil('accueil_visiteur', $defautVisiteur, $sdblink), $estAdminAccueil);
+$defautVisiteur = ob_get_clean();
+$contenuVisiteur = getContenuAccueil('accueil_visiteur', $defautVisiteur, $sdblink);
+
+if (!$Joueur){
+	//************************************************************//
+	// Page d'accueil pour les personnes non identifiées
+	//************************************************************//
+	rendreZoneAccueil('accueil_visiteur', $contenuVisiteur, false);
 }else{
 	//******************************************************//
 	// Ici la page d'accueil pour les utilisateurs identifiés //
@@ -319,11 +321,15 @@ if (!$Joueur){
 <?php
 if($Joueur->DieuToutPuissant=="o"){
 	//******************************************************//
-	// Complément éventuel pour les super-utilisateurs //
+	// Édition du texte affiché aux visiteurs non connectés //
 	//******************************************************//
 ?>
-		
+		<br />
+		<hr />
+		<h3>Texte de la page d'accueil pour les visiteurs (non connectés)</h3>
+		<p class="Remarque">Ce texte n'est visible que par les personnes non connectées. Cliquez sur le crayon pour le modifier.</p>
 <?php
+	rendreZoneAccueil('accueil_visiteur', $contenuVisiteur, true);
 	}
 }
 ?>
