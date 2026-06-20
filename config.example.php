@@ -16,6 +16,9 @@ $config = [
     'club_url'   => 'https://monclub.fr',
     'club_logo'  => 'Images/logo.svg',
 
+    // --- API mobile (token d'authentification — changer pour chaque club) ---
+    'mobile_token_secret' => 'changez_moi_secret_unique_par_club',
+
     // --- SMTP (Gmail : créer un "mot de passe d'application" dans les paramètres Google) ---
     'smtp_from' => 'noreply@monclub.fr',
     'smtp_user' => 'votre.email@gmail.com',

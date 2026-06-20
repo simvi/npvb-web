@@ -76,13 +76,13 @@ if (!function_exists('json_encode')) {
     }
 }
 
-// Configuration DB — identifiants centralisés (hors dépôt)
-include(__DIR__ . "/../../PASSWD/_passwrds.inc.php");
-$DB_HOST = $basesql;
-$DB_NAME = $labasededonnees;
-$DB_USER = $utilisateursql;
-$DB_PASS = $motdepassesql;
-$TOKEN_SECRET = 'npvb_secret_2025_CHANGEZ_MOI';
+// Configuration — chargée depuis config.php (hors dépôt)
+include(__DIR__ . "/../../config.php");
+$DB_HOST = $config['db_host'];
+$DB_NAME = $config['db_name'];
+$DB_USER = $config['db_user'];
+$DB_PASS = $config['db_pass'];
+$TOKEN_SECRET = $config['mobile_token_secret'];
 
 // Connexion DB
 $dblink = mysql_connect($DB_HOST, $DB_USER, $DB_PASS);
@@ -103,12 +103,12 @@ if (empty($endpoint)) {
     echo json_encode(array(
         'success' => true,
         'data' => array(
-            'name' => 'NPVB API',
+            'name' => $config['club_sigle'] . ' API',
             'version' => 'v1',
             'status' => 'online',
             'php' => phpversion()
         ),
-        'message' => 'NPVB API v1'
+        'message' => $config['club_sigle'] . ' API v1'
     ));
     mysql_close($dblink);
     exit;
