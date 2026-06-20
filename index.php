@@ -148,16 +148,16 @@ print ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 <html xmlns="http://www.w3.org/1999/xhtml"
            xml:lang="FR" lang="French">
 <head>
-	<title>Nantes Plaisir du Volley Ball - LE SITE OFFICIEL</title>
+	<title><?php echo htmlspecialchars($config['club_nom']); ?> - LE SITE OFFICIEL</title>
 	<meta charset="UTF-8" />
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta http-equiv="Content-Language" content="fr" />
-	<meta name="Description" content="Calendrier de Nantes Plaisir du Volley Ball" />
+	<meta name="Description" content="Calendrier de <?php echo htmlspecialchars($config['club_nom']); ?>" />
 	<meta name="Keywords" content="nantes, volley, ball, sport, plaisir, detente, loisir, club, association, 44, Noe Lambert, gymnase, site, web, calendrier" />
-	<meta name="author" content="Nantes PVB" />
+	<meta name="author" content="<?php echo htmlspecialchars($config['club_sigle']); ?>" />
 	<meta name="Robots" content="All" />
-	<meta name="reply-to" content="nantespvb@gmail.com" />
-	<meta name="owner" content="Nantes Plaisir du Volley Ball" />
+	<meta name="reply-to" content="<?php echo htmlspecialchars($config['club_email']); ?>" />
+	<meta name="owner" content="<?php echo htmlspecialchars($config['club_nom']); ?>" />
 	<meta name="Rating" content="General" />
     	<meta name="verify-v1" content="FSYeF8Wwa0ABLnMB8SFSvXigw4CQ/JX3wf7yEIGOfsw=" />
 	<meta name="apple-itunes-app" content="app-id=793137223, app-argument=http%3A%2F%2Fyousite.com%2Fsomepath%3Fquery%3Da%2Cb" />
@@ -203,8 +203,8 @@ print ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 
 <body>
 	<div id="Entete">
-		<a href="http://nantespvb.free.fr">
-			<img src="Images/logo.svg" alt="Nantes Plaisir du Volley-Ball" />
+		<a href="<?php echo htmlspecialchars($config['club_url']); ?>">
+			<img src="<?php echo htmlspecialchars($config['club_logo']); ?>" alt="<?php echo htmlspecialchars($config['club_nom']); ?>" />
 		</a>
 		<?php if (isset($Joueur) && is_object($Joueur)){ ?>
 			<span id="NomJoueur">Bienvenue<br/><?php echo escape_html($Joueur->Prenom); ?> <?php echo escape_html($Joueur->Nom); ?></span>
@@ -230,7 +230,7 @@ if ((!isset($Joueur) || !is_object($Joueur)) && ($Page=="accueil")){
 		</form>
 		<div style="margin-top: 5px; text-align: center; font-size: 0.85em;">
 			<?php if (isset($ErreurDonnees["Login"]) && $ErreurDonnees["Login"]) { ?>
-			<span style="color: #666;">Mot de passe oubli&eacute; ? Contactez <a href="mailto:nantespvb@gmail.com" style="color: #666;">nantespvb@gmail.com</a></span>
+			<span style="color: #666;">Mot de passe oubli&eacute; ? Contactez <a href="mailto:<?php echo htmlspecialchars($config['club_email']); ?>" style="color: #666;"><?php echo htmlspecialchars($config['club_email']); ?></a></span>
 		<?php } ?>
 		</div>
 		</li>

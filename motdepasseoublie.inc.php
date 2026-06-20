@@ -70,7 +70,7 @@ if (isset($_POST['DemandeReset']) && $_POST['DemandeReset'] == 'o') {
 					$CorpsEmail = str_replace('$DureeValiditeTokenHeures', $DureeValiditeTokenHeures, $CorpsEmail);
 
 					// Envoyer l'email via Brevo API
-					if (EnvoyerEmailBrevo($Email, $SujetMailDemandeReset, $CorpsEmail, "simon.viaud@gmail.com", "NPVB")) {
+					if (EnvoyerEmailBrevo($Email, $SujetMailDemandeReset, $CorpsEmail, $config['smtp_from'], $config['club_sigle'])) {
 						// Succes - Message generique pour ne pas reveler l'existence du compte
 						$MessageConfirmation = "Si votre compte existe et possede une adresse email valide, vous recevrez un lien de reinitialisation dans quelques minutes.";
 					} else {
@@ -96,7 +96,7 @@ if (isset($_POST['DemandeReset']) && $_POST['DemandeReset'] == 'o') {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-	<title>NPVB - Mot de passe oubli&eacute;</title>
+	<title><?= htmlspecialchars($config['club_sigle']) ?> - Mot de passe oubli&eacute;</title>
 	<link rel="stylesheet" type="text/css" href="Feuilles de style/motdepasseoublie.css" />
 </head>
 <body>
@@ -104,7 +104,7 @@ if (isset($_POST['DemandeReset']) && $_POST['DemandeReset'] == 'o') {
 <div id="conteneur">
 
 	<div id="header">
-		<h1>Nantes Plaisir du Volley Ball</h1>
+		<h1><?= htmlspecialchars($config['club_nom']) ?></h1>
 		<h2>R&eacute;initialisation de mot de passe</h2>
 	</div>
 
@@ -169,7 +169,7 @@ if (isset($_POST['DemandeReset']) && $_POST['DemandeReset'] == 'o') {
 				<ul>
 					<li>Si vous n'avez pas renseign&eacute; d'adresse email, contactez un administrateur du club.</li>
 					<li>Le lien de r&eacute;initialisation est valable pendant <strong><?= $DureeValiditeTokenHeures ?> heures</strong>.</li>
-					<li>Pour toute question : <a href="mailto:nantespvb@gmail.com">nantespvb@gmail.com</a></li>
+					<li>Pour toute question : <a href="mailto:<?= htmlspecialchars($config['club_email']) ?>"><?= htmlspecialchars($config['club_email']) ?></a></li>
 				</ul>
 			</div>
 			<?
@@ -180,7 +180,7 @@ if (isset($_POST['DemandeReset']) && $_POST['DemandeReset'] == 'o') {
 
 	<div id="footer">
 		<p>
-			&copy; 2026 Nantes Plaisir du Volley Ball -
+			&copy; 2026 <?= htmlspecialchars($config['club_nom']) ?> -
 			<a href="index.php">Retour &agrave; l'accueil</a>
 		</p>
 	</div>

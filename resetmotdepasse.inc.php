@@ -79,7 +79,7 @@ if ($TokenValide && isset($_POST['ChangerMotDePasse']) && $_POST['ChangerMotDePa
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-	<title>NPVB - Nouveau mot de passe</title>
+	<title><?= htmlspecialchars($config['club_sigle']) ?> - Nouveau mot de passe</title>
 	<link rel="stylesheet" type="text/css" href="Feuilles de style/motdepasseoublie.css" />
 </head>
 <body>
@@ -87,7 +87,7 @@ if ($TokenValide && isset($_POST['ChangerMotDePasse']) && $_POST['ChangerMotDePa
 <div id="conteneur">
 
 	<div id="header">
-		<h1>Nantes Plaisir du Volley Ball</h1>
+		<h1><?= htmlspecialchars($config['club_nom']) ?></h1>
 		<h2>D&eacute;finir un nouveau mot de passe</h2>
 	</div>
 
@@ -117,7 +117,7 @@ if ($TokenValide && isset($_POST['ChangerMotDePasse']) && $_POST['ChangerMotDePa
 				<h3>Lien invalide</h3>
 				<p><?= $MessageErreur ?></p>
 				<p>
-					<strong>Contactez un administrateur sur <a href="mailto:nantespvb@gmail.com">nantespvb@gmail.com</a> pour obtenir un nouveau lien.</strong><br/>
+					<strong>Contactez un administrateur sur <a href="mailto:<?= htmlspecialchars($config['club_email']) ?>"><?= htmlspecialchars($config['club_email']) ?></a> pour obtenir un nouveau lien.</strong><br/>
 					<a href="index.php" class="lien-retour">Retour &agrave; la connexion</a>
 				</p>
 			</div>
@@ -192,7 +192,7 @@ if ($TokenValide && isset($_POST['ChangerMotDePasse']) && $_POST['ChangerMotDePa
 
 	<div id="footer">
 		<p>
-			&copy; 2026 Nantes Plaisir du Volley Ball -
+			&copy; 2026 <?= htmlspecialchars($config['club_nom']) ?> -
 			<a href="index.php">Retour &agrave; l'accueil</a>
 		</p>
 	</div>

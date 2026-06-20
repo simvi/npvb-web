@@ -1,8 +1,8 @@
 <div class="Explications">
-	<p>Nantes Plaisir du Volley Ball</p>
+	<p><?php echo htmlspecialchars($config['club_nom']); ?></p>
 </div>
 
-<h1>Maintenance en cours<br/>veuillez réessayer dans quelques instants</h1>
+<h1>Maintenance en cours<br/>veuillez rï¿½essayer dans quelques instants</h1>
 
 <div class="Explications">
 	Veuilez accepter toutes nos excuses

@@ -1,7 +1,7 @@
 <?
 if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
 
-include("PASSWD/_passwrds.inc.php");
+// Credentials DB depuis config.php (chargé par index.php)
 
 // Reimplementation de OLD_PASSWORD() de MySQL (supprime en MySQL 5.7)
 function old_password_hash($password) {
@@ -24,14 +24,12 @@ function old_password_hash($password) {
 
 //Tentative de connexion a la base de donnees
 $ConnectDB=true;
-// PHP 8 : le mot de passe est désormais stocké directement dans _passwrds.inc.php
-// (ancienne obfuscation par index de caractères supprimée — syntaxe {} invalide en PHP 8)
-$motdepassesqlok=$motdepassesql;
+$motdepassesqlok = $config['db_pass'];
 
-if (!($sdblink = mySql_connect($basesql, $utilisateursql, $motdepassesqlok))){
+if (!($sdblink = mySql_connect($config['db_host'], $config['db_user'], $motdepassesqlok))){
 	$ConnectDB=false;
 	}
-if (!(mySql_select_db($labasededonnees, $sdblink))){
+if (!(mySql_select_db($config['db_name'], $sdblink))){
 	$ConnectDB=false;
 	}
 
