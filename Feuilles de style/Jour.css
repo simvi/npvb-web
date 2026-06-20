@@ -8,7 +8,7 @@
 	display: block;
 	margin: 10px 0;
 	padding: 0px;
-	border: 1px solid #172446;
+	border: 1px solid var(--couleur-primaire);
 	border-radius: 5px;
 }
 
@@ -37,7 +37,7 @@
 }
 
 #Jour .RencontreIncomplet .TitreJour {
-	background-color: #ff956c;
+	background-color: var(--couleur-alerte);
 }
 	
 #Jour .Seance .TitreJour {
@@ -47,7 +47,7 @@
 #Jour .Bloque {
 	text-align: center;
 	background-color: #c9c9c9;
-	color: #4c4c4c;
+	color: var(--couleur-texte);
 	border-bottom-right-radius: 5px;
 	border-bottom-left-radius: 5px;
 }

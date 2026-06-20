@@ -8,7 +8,7 @@
 	display: block;
 	margin: 10px 0;
 	padding: 0px;
-	border: 1px solid #172446;
+	border: 1px solid var(--couleur-primaire);
 	border-radius: 5px;
 }
 
@@ -54,7 +54,7 @@
 }
 
 #Jour .FicheEvent p a{
-    color: #172446;
+    color: var(--couleur-primaire);
 }
 
 #Jour .FicheEvent p a:hover{

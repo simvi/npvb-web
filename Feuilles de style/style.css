@@ -1,7 +1,7 @@
 body {
 	margin: 10px auto 20px;
 	text-align: center;
-	color: #172446;
+	color: var(--couleur-primaire);
 	font-family: sans-serif;
 	background: #eeeeee url('../Images/fond.svg') no-repeat center bottom 10px;
 	background-size: 95% auto;
@@ -32,7 +32,7 @@ body {
 }
 
 a {
-	color: #e5c10d;
+	color: var(--couleur-accent);
 	font-weight: bold;
 	text-decoration: none;
 }
@@ -49,8 +49,8 @@ a {
 .Action, input[type=submit] {
 	padding: 9px;
 	font-size: 15px;
-	border: 1px solid #172446;
-	background: #172446;
+	border: 1px solid var(--couleur-primaire);
+	background: var(--couleur-primaire);
 	color: white;
 	border-radius: 2px;
 	cursor: pointer;
@@ -68,8 +68,8 @@ input[type=checkbox] {
 input, select {
 	padding: 9px;
 	font-size: 15px;
-	border: 1px solid #172446;
-	color: #172446;
+	border: 1px solid var(--couleur-primaire);
+	color: var(--couleur-primaire);
 	border-radius: 2px;
 	margin: 5px;
 }
@@ -148,7 +148,7 @@ form {
 	clear: both;
 	display: flex;
 	justify-content: center;
-	border-bottom: 2px solid #172446;
+	border-bottom: 2px solid var(--couleur-primaire);
 }
 
 #Menu ul:nth-child(2) {
@@ -170,7 +170,7 @@ textarea:focus, input:focus {
 	text-align: center;
 	display: block;
 	text-decoration: none;
-	color: #172446;
+	color: var(--couleur-primaire);
 	font-weight: bold;
 	font-size: 15px;
 	min-width: 120px;
@@ -179,11 +179,11 @@ textarea:focus, input:focus {
 }
 	
 #Menu li.MenuActif a {
-	background-color: #e5c10d;
+	background-color: var(--couleur-accent);
 }
 
 #Menu li.MenuActif a:hover {
-	color: #172446;
+	color: var(--couleur-primaire);
 }
 
 #special {
@@ -194,7 +194,7 @@ textarea:focus, input:focus {
 }
 
 #Menu a:hover {
-	background: #172446;
+	background: var(--couleur-primaire);
 	color: white;
 } 
 
@@ -325,7 +325,7 @@ textarea:focus, input:focus {
 		gap: 12px;
 		margin: 10px auto 0;
 		padding: 13px 22px;
-		background: #172446;
+		background: var(--couleur-primaire);
 		color: #fff;
 		font-weight: bold;
 		font-size: 16px;
@@ -452,8 +452,8 @@ textarea:focus, input:focus {
 	position: absolute;
 	top: 0;
 	right: 0;
-	background: #e5c10d;
-	color: #172446;
+	background: var(--couleur-accent);
+	color: var(--couleur-primaire);
 	border: none;
 	border-radius: 4px;
 	padding: 6px 11px;
@@ -468,7 +468,7 @@ textarea:focus, input:focus {
 }
 
 .contenu-accueil.en-edition {
-	border: 2px dashed #172446;
+	border: 2px dashed var(--couleur-primaire);
 	border-radius: 6px;
 	padding: 12px;
 	background: #fff;
@@ -504,7 +504,7 @@ textarea:focus, input:focus {
 	cursor: pointer;
 	font-size: 13px;
 	line-height: 1.4;
-	color: #172446;
+	color: var(--couleur-primaire);
 	flex-shrink: 0;
 }
 .editeur-toolbar button:hover {
@@ -534,7 +534,7 @@ textarea:focus, input:focus {
 	transition: transform .1s, border-color .1s;
 }
 .editeur-toolbar .tb-swatch:hover {
-	border-color: #172446;
+	border-color: var(--couleur-primaire);
 	transform: scale(1.2);
 	background: inherit !important; /* garde la couleur au hover */
 }
@@ -547,7 +547,7 @@ textarea:focus, input:focus {
 }
 .editeur-toolbar .tb-swatch-reset:hover {
 	background: #fee !important;
-	color: #dc3545;
+	color: var(--couleur-danger);
 }
 
 /* Images insérées dans le contenu accueil */

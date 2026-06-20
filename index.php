@@ -187,6 +187,18 @@ print ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 
 	<?php print(lienCSS("style.css")); ?>
 
+	<style>
+	:root {
+		--couleur-primaire:   <?php echo $config['couleur_primaire']; ?>;
+		--couleur-secondaire: <?php echo $config['couleur_secondaire']; ?>;
+		--couleur-danger:     <?php echo $config['couleur_danger']; ?>;
+		--couleur-succes:     <?php echo $config['couleur_succes']; ?>;
+		--couleur-alerte:     <?php echo $config['couleur_alerte']; ?>;
+		--couleur-accent:     <?php echo $config['couleur_accent']; ?>;
+		--couleur-texte:      <?php echo $config['couleur_texte']; ?>;
+	}
+	</style>
+
 	<script src="libGene.js" type="text/javascript"></script>
 
     <script type="text/javascript">

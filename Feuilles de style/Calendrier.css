@@ -48,7 +48,7 @@
 }
 		
 #Calendrier .Annule {
-	color: #172446;
+	color: var(--couleur-primaire);
 	background-color: #fd707e;
 }
 
@@ -57,7 +57,7 @@
 }
 	
 #Calendrier .RencontreIncomplet {
-	background-color: #ff956c;
+	background-color: var(--couleur-alerte);
 }
 
 #Calendrier .Initialise {
@@ -82,8 +82,8 @@
 	text-align: center;
 	font-weight: bold;
 	font-size: 14px;
-	border: 1px solid #172446;
-	color: #172446;
+	border: 1px solid var(--couleur-primaire);
+	color: var(--couleur-primaire);
 	border-radius: 5px;
 	vertical-align: top;
 	padding: 10px 0 0;
@@ -92,8 +92,8 @@
 
 #Calendrier .AutreMois {
 	background-color: #c9c9c9;
-	border: 1px solid #4c4c4c;
-	color: #4c4c4c;
+	border: 1px solid var(--couleur-texte);
+	color: var(--couleur-texte);
 	opacity: 0.4;
 	text-align: center;
 	font-weight: bold;
@@ -109,7 +109,7 @@
 
 
 #Calendrier .Aujourdhui {
-	border: 1px solid #172446;
+	border: 1px solid var(--couleur-primaire);
 	background-color: rgba(229, 193, 13, 0.5);
 	text-align: center;
 	font-weight: bold;
@@ -160,7 +160,7 @@
 
 .LegendeCalendrier .LegendeTitre {
 	font-weight: bold;
-	color: #172446;
+	color: var(--couleur-primaire);
 }
 
 .LegendeCalendrier .LegendeItem {
@@ -183,7 +183,7 @@
 .RectangleLegende.Seance            { background-color: #30d5ff; }
 .RectangleLegende.Asso              { background-color: #cfc2f5; }
 .RectangleLegende.RencontreComplet  { background-color: #00f2b2; }
-.RectangleLegende.RencontreIncomplet{ background-color: #ff956c; }
+.RectangleLegende.RencontreIncomplet{ background-color: var(--couleur-alerte); }
 .RectangleLegende.Annule            { background-color: #fd707e; }
 .RectangleLegende.Initialise        { background-color: #0fd; }
 

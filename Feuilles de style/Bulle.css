@@ -7,7 +7,7 @@
     height: auto; 
     padding: 1px; 
     text-align: left;
-    border: 1px solid #172446;
+    border: 1px solid var(--couleur-primaire);
 	text-align: center;
 	font-size: 14px;
     border-radius: 5px;
