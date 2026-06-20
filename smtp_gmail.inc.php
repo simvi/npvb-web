@@ -6,20 +6,17 @@ if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
 // Compatible PHP 4.3+
 // ============================================================================
 
-// Configuration Gmail SMTP
-$GMAIL_SMTP_USER = "simon.viaud@gmail.com";      // Votre email Gmail
-$GMAIL_SMTP_PASS = "vevwkstqluomtlkh";     // Mot de passe d'application (16 caracteres)
-$GMAIL_SMTP_HOST = "smtp.gmail.com";
-$GMAIL_SMTP_PORT = 465;                          // Port SSL direct (pas STARTTLS)
+// Fonction principale d'envoi d'email via Gmail SMTP
+function EnvoyerEmailGmail($destinataire, $sujet, $contenu, $expediteur = "", $nomExpediteur = "") {
+    GLOBAL $config;
 
-// Fonction principale d'envoi d'email via Gmail
-function EnvoyerEmailGmail($destinataire, $sujet, $contenu, $expediteur = "", $nomExpediteur = "NPVB") {
-    GLOBAL $GMAIL_SMTP_USER, $GMAIL_SMTP_PASS, $GMAIL_SMTP_HOST, $GMAIL_SMTP_PORT;
+    if (!$expediteur)    $expediteur    = $config['smtp_from'];
+    if (!$nomExpediteur) $nomExpediteur = $config['club_sigle'];
 
-    // Si pas d'expediteur specifie, utiliser le compte Gmail
-    if (!$expediteur) {
-        $expediteur = $GMAIL_SMTP_USER;
-    }
+    $GMAIL_SMTP_USER = $config['smtp_user'];
+    $GMAIL_SMTP_PASS = $config['smtp_pass'];
+    $GMAIL_SMTP_HOST = $config['smtp_host'];
+    $GMAIL_SMTP_PORT = $config['smtp_port'];
 
     // Connexion SMTP
     $smtp = smtp_connect($GMAIL_SMTP_HOST, $GMAIL_SMTP_PORT);

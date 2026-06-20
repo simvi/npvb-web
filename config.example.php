@@ -16,8 +16,12 @@ $config = [
     'club_url'   => 'https://monclub.fr',
     'club_logo'  => 'Images/logo.svg',
 
-    // --- Email sortant (expéditeur Brevo/SMTP) ---
+    // --- SMTP (Gmail : créer un "mot de passe d'application" dans les paramètres Google) ---
     'smtp_from' => 'noreply@monclub.fr',
+    'smtp_user' => 'votre.email@gmail.com',
+    'smtp_pass' => 'xxxx xxxx xxxx xxxx',
+    'smtp_host' => 'smtp.gmail.com',
+    'smtp_port' => 465,
 
     // --- Couleurs de la charte graphique ---
     'couleur_primaire'   => '#172446',
