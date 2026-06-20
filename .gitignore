@@ -3,6 +3,10 @@ PASSWD/
 _passwrds.inc.php
 .env
 config-local.php
+config.php
+
+# Uploads contenu éditeur
+Images/contenu/
 
 # Données et dumps
 *.sql

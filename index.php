@@ -16,6 +16,9 @@ header("X-Content-Type-Options: nosniff");
 
 $PasseParIndex=true;
 
+// Configuration club (credentials DB, identité, couleurs) — propre à chaque déploiement
+require_once("config.php");
+
 // CORRECTIF SÉCURITÉ #1 (PHP 8) : register_globals étant supprimé, on recrée les
 // variables depuis $_GET/$_POST (comportement attendu par le code legacy, y compris
 // les champs au nom dynamique type seraPresent<Equipe><Date>).
