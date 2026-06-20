@@ -8,9 +8,10 @@ config.php
 # Uploads contenu éditeur
 Images/contenu/
 
-# Données et dumps
+# Données et dumps (sauf le schéma de déploiement)
 *.sql
 *.sql.gz
+!scripts/schema.sql
 
 # Sessions et cache
 sessions/
