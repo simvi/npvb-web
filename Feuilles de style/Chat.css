@@ -59,6 +59,13 @@
 .ChatConvArchive .ChatConvType { background: #999; }
 .ChatArchForm { margin: 12px 4px 4px; }
 .ChatArchForm button { font-size: 12px; width: 100%; }
+.ChatGererGroupes {
+	display: block;
+	margin: 6px 4px;
+	font-size: 12px;
+	text-align: center;
+	color: var(--couleur-secondaire);
+}
 
 #ChatTitre {
 	text-align: center;

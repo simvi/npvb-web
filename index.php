@@ -88,7 +88,7 @@ $pages_autorisees = array(
 	'accueil', 'calendrier', 'jour', 'membres', 'Erreur404', 'maintenance',
 	'adminstats', 'adminfichejour', 'adminevenements', 'adminequipes',
 	'adminmembres', 'adminnewmessage', 'adminfichemembre', 'adminmessages',
-	'adminaccueilimage', 'resetmotdepasse', 'chat', 'chatapi'
+	'adminaccueilimage', 'resetmotdepasse', 'chat', 'chatapi', 'adminchat'
 );
 
 // Vérifier que la page demandée est autorisée

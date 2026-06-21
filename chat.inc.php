@@ -100,6 +100,7 @@ function chatTypeLabel($t) {
 			<input type="hidden" name="Action" value="ChatArchiveEquipes" />
 			<button type="submit" class="PetitBouton Annule">Archiver les conversations d'équipe</button>
 		</form>
+		<a class="ChatGererGroupes" href="<?=$PHP_SELF?>?Page=adminchat">Gérer les groupes bureau</a>
 <?php } ?>
 	</div>
 

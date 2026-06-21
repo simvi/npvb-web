@@ -46,6 +46,7 @@ $CAPACITES_PAGES = array(
 	'adminaccueil'      => 'editer_accueil',
 	'adminaccueilimage' => 'editer_accueil',
 	'adminstats'        => 'voir_stats',
+	'adminchat'         => 'gerer_roles',
 );
 
 // Pages où le capitaine entre (contenu filtré par équipe à l'intérieur de la page).
