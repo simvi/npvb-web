@@ -129,3 +129,45 @@ CREATE TABLE IF NOT EXISTS `NPVB_Navigateurs` (
   `Lu`          enum('o','n')  NOT NULL DEFAULT 'n',
   PRIMARY KEY (`Navigateur`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Chat / messagerie
+CREATE TABLE IF NOT EXISTS `NPVB_Conversations` (
+  `Id`             int(11)      NOT NULL AUTO_INCREMENT,
+  `Type`           enum('generale','equipe','bureau','prive') NOT NULL DEFAULT 'generale',
+  `Nom`            varchar(60)  NOT NULL,
+  `Equipe`         varchar(10)  DEFAULT NULL,
+  `PosterCapacite` varchar(30)  DEFAULT NULL,
+  `DateCreation`   datetime     NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `NPVB_MessagesChat` (
+  `Id`           int(11)     NOT NULL AUTO_INCREMENT,
+  `Conversation` int(11)     NOT NULL,
+  `Auteur`       varchar(30) NOT NULL,
+  `Contenu`      text        NOT NULL,
+  `DateEnvoi`    datetime    NOT NULL,
+  `Supprime`     enum('o','n') NOT NULL DEFAULT 'n',
+  PRIMARY KEY (`Id`),
+  KEY `idx_conv` (`Conversation`, `Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `NPVB_MessagesLus` (
+  `Joueur`       varchar(30) NOT NULL,
+  `Conversation` int(11)     NOT NULL,
+  `DernierLuId`  int(11)     NOT NULL DEFAULT 0,
+  PRIMARY KEY (`Joueur`, `Conversation`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `NPVB_AppareilsPush` (
+  `Joueur`     varchar(30)  NOT NULL,
+  `Token`      varchar(255) NOT NULL,
+  `Plateforme` enum('ios','android') NOT NULL,
+  `DateMaj`    datetime     NOT NULL,
+  PRIMARY KEY (`Token`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Conversation générale par défaut (annonces du club)
+INSERT INTO `NPVB_Conversations` (`Type`, `Nom`, `PosterCapacite`, `DateCreation`)
+  SELECT 'generale', 'Annonces du club', 'poster_annonce', NOW()
+  WHERE NOT EXISTS (SELECT 1 FROM `NPVB_Conversations` WHERE `Type`='generale');

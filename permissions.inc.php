@@ -24,7 +24,7 @@ $ROLES_ASSIGNABLES = array(
 $CAPACITES_GLOBALES = array(
 	'admin'        => array('*'),  // tout
 	'organisateur' => array('gerer_evenements', 'saisir_presences', 'cloturer_evenements', 'voir_stats'),
-	'redacteur'    => array('editer_accueil', 'gerer_messages'),
+	'redacteur'    => array('editer_accueil', 'gerer_messages', 'poster_annonce'),
 	'capitaine'    => array(),     // rien en global — uniquement par équipe
 	'membre'       => array(),
 );
@@ -165,5 +165,32 @@ function estAdminQuelconque($Joueur) {
 		|| peut($Joueur, 'gerer_messages')
 		|| peut($Joueur, 'gerer_roles')
 		|| (isset($Joueur->Roles) && in_array('capitaine', $Joueur->Roles));
+}
+
+// ============================================================================
+// Chat / messagerie
+// ============================================================================
+
+// Vrai si le joueur peut poster dans une conversation.
+// $posterCapacite = valeur NPVB_Conversations.PosterCapacite (NULL = tous les participants)
+function peutPosterConversation($Joueur, $posterCapacite) {
+	if (!$posterCapacite) return true;
+	return peut($Joueur, $posterCapacite);
+}
+
+// Nombre total de messages non lus pour le joueur (v1 : conversations 'generale',
+// accessibles à tous les connectés). Exclut ses propres messages.
+function compterNonLus($Joueur, $sdblink) {
+	if (!isset($Joueur) || !is_object($Joueur)) return 0;
+	$pseudo = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
+	$sql = "SELECT COUNT(*) AS n
+	        FROM NPVB_MessagesChat m
+	        JOIN NPVB_Conversations c ON c.Id = m.Conversation AND c.Type='generale'
+	        LEFT JOIN NPVB_MessagesLus l ON l.Conversation = m.Conversation AND l.Joueur='".$pseudo."'
+	        WHERE m.Supprime='n' AND m.Auteur <> '".$pseudo."'
+	          AND m.Id > COALESCE(l.DernierLuId, 0)";
+	$res = mysql_query($sql, $sdblink);
+	if ($res && ($row = mysql_fetch_object($res))) return (int)$row->n;
+	return 0;
 }
 ?>
