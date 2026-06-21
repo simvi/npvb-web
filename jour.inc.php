@@ -204,7 +204,7 @@ if (($Evenements[$Jour])&&($Joueur)){
                     $RaisonBloque = "Vous ne faites pas partie de ".$Equipes[$Event->Libelle]->Nom;
                 
                 //A virer le $termine
-                if (($Joueur->DieuToutPuissant=="o")||((!$EvenementDémarré)&&($Event->Etat=="O") && (($Equipes[$Event->Libelle]->faisPartie($Joueur->Pseudonyme))||($Event->seraPresent($Joueur->Pseudonyme))))||(($Responsable)&&($EvenementTerminé)&&(($Event->Etat=="F")||($Event->Etat=="O"))))
+                if ((peut($Joueur, 'saisir_presences'))||((!$EvenementDémarré)&&($Event->Etat=="O") && (($Equipes[$Event->Libelle]->faisPartie($Joueur->Pseudonyme))||($Event->seraPresent($Joueur->Pseudonyme))))||(($Responsable)&&($EvenementTerminé)&&(($Event->Etat=="F")||($Event->Etat=="O"))))
                     $Termine=false;
                 
                 //----Prépare le contenu de la cellule----//
@@ -277,13 +277,13 @@ if (($Evenements[$Jour])&&($Joueur)){
                 }else continue;//Ce n'est pas une evènement reconnu
                 if ($Event->Analyse) $TexteCellule .= "<tr><td>Commentaire:</td><td><div class=\"Commentaire\">".str_replace("\n", "<br/>", $Event->Analyse)."</div></td></tr>";
                 if (is_file($RepertoireRelevesFNP."FNP_".$Event->DateHeure."_".$Event->Libelle.".xls")) $TexteCellule .= "<tr><td>Relevé FNP:</td><td><a href=\"".$RepertoireRelevesFNP."FNP_".$Event->DateHeure."_".$Event->Libelle.".xls\">Disponible ici</a></td></tr>";
-                if ((($Joueur->DieuToutPuissant=="o")||($Joueur->Pseudonyme==$Equipes[$Event->Libelle]->Responsable)||($Joueur->Pseudonyme==$Equipes[$Event->Libelle]->Supleant))&&($Event->Etat=="F")){
+                if (((peut($Joueur, 'saisir_presences'))||($Joueur->Pseudonyme==$Equipes[$Event->Libelle]->Responsable)||($Joueur->Pseudonyme==$Equipes[$Event->Libelle]->Supleant))&&($Event->Etat=="F")){
                     $TexteCellule .= "<tr><td>Disponible:</td><td><a href=\"FicheDePresence.php?Evenement=".$Event->Libelle."&amp;Jour=".$Event->DateHeure."\">Télécharger le tableau des présence</a></td></tr>";
                 }
                 $TexteCellule .= "</table>";
             }
             print("\t<tr>\n\t\t<td class=\"".$Style." FicheEvent\">".$TexteCellule);
-            if (($Joueur->DieuToutPuissant=="o")||((($Joueur->Pseudonyme==$Equipes[$Event->Libelle]->Responsable)||($Joueur->Pseudonyme==$Equipes[$Event->Libelle]->Supleant))&&(($Event->Etat=="O")||($Event->Etat=="F")))) {
+            if ((peut($Joueur, 'saisir_presences'))||((($Joueur->Pseudonyme==$Equipes[$Event->Libelle]->Responsable)||($Joueur->Pseudonyme==$Equipes[$Event->Libelle]->Supleant))&&(($Event->Etat=="O")||($Event->Etat=="F")))) {
                 
                 //------------------------
                 //---Menu deroulant saisie de seraPresent
@@ -293,8 +293,8 @@ if (($Evenements[$Jour])&&($Joueur)){
                 $TxtTypeEquipe = " de l'équipe";
                 if ($Event->Libelle=="SEANCE") $TxtTypeResponsable .= " des absences";
                 if ($Event->Libelle=="ASSO") $TxtTypeResponsable .= " des événements";
-                if ($Joueur->DieuToutPuissant=="o") $TxtTypeResponsable = "qu'administrateur";
-                if (($Event->Etat=="O")||((($Event->Etat=="T")||(($Event->Etat=="F")))&&($Joueur->DieuToutPuissant=="o"))){
+                if (peut($Joueur, 'saisir_presences')) $TxtTypeResponsable = "qu'administrateur";
+                if (($Event->Etat=="O")||((($Event->Etat=="T")||(($Event->Etat=="F")))&&(peut($Joueur, 'saisir_presences')))){
                     
                     ?>
                     
@@ -337,14 +337,14 @@ if (($Evenements[$Jour])&&($Joueur)){
                     <?
                     $Compteur=1;
                     foreach ($Joueurs as $UnJoueur){
-                        if (((($Event->etaitPresent($UnJoueur->Pseudonyme))||($Event->etaitAbsent($UnJoueur->Pseudonyme)||($Event->seraPresent($UnJoueur->Pseudonyme))||($Equipes[$Event->Libelle]->faisPartie($UnJoueur->Pseudonyme)))&&($Event->Etat=="T"))||((($Event->Etat=="O")||($Event->Etat=="F"))&&(($Event->seraPresent($UnJoueur->Pseudonyme))||($Equipes[$Event->Libelle]->faisPartie($UnJoueur->Pseudonyme)))&&(($UnJoueur->Pseudonyme<>$Joueur->Pseudonyme)||(($Joueur->DieuToutPuissant=="o")&&($RaisonBloque)))))&&($UnJoueur->Etat<>"E")){
+                        if (((($Event->etaitPresent($UnJoueur->Pseudonyme))||($Event->etaitAbsent($UnJoueur->Pseudonyme)||($Event->seraPresent($UnJoueur->Pseudonyme))||($Equipes[$Event->Libelle]->faisPartie($UnJoueur->Pseudonyme)))&&($Event->Etat=="T"))||((($Event->Etat=="O")||($Event->Etat=="F"))&&(($Event->seraPresent($UnJoueur->Pseudonyme))||($Equipes[$Event->Libelle]->faisPartie($UnJoueur->Pseudonyme)))&&(($UnJoueur->Pseudonyme<>$Joueur->Pseudonyme)||((peut($Joueur, 'saisir_presences'))&&($RaisonBloque)))))&&($UnJoueur->Etat<>"E")){
                             print("\n\t\t\t\t\t\t<tr class=\"".(($Compteur==-1)?"":"Grise")."\"><td class=\"Colone1\">".$UnJoueur->Prenom." ".$UnJoueur->Nom."</td><td class=\"Colone2\"><input type=\"radio\" name=\"seraPresent".$UnJoueur->Pseudonyme.$Event->Libelle.$Event->DateHeure."\" value=\"n\"".(($Event->seraPresent($UnJoueur->Pseudonyme))?"":" checked=\"checked\"")." /></td><td class=\"Colone2\"><input type=\"radio\" name=\"seraPresent".$UnJoueur->Pseudonyme.$Event->Libelle.$Event->DateHeure."\" value=\"o\"".(($Event->seraPresent($UnJoueur->Pseudonyme))?" checked=\"checked\"":"")." /></td></tr>");
                             $Compteur = -$Compteur;
                         }
                     }
                     ?>			</table>
                     <?
-                    if (($Equipes[$Event->Libelle]->TousJoueurs=="n")&&($Joueur->DieuToutPuissant=="o")){
+                    if (($Equipes[$Event->Libelle]->TousJoueurs=="n")&&(peut($Joueur, 'saisir_presences'))){
                         print("\n\t\t\tDépanner l'équipe avec <select name=\"Depanne".$Event->Libelle.$Event->DateHeure."\">");
                         print("\n\t\t\t\t<option value=\"\" selected=\"selected\"></option>");
                         foreach ($Joueurs as $UnJoueur){
@@ -371,7 +371,7 @@ if (($Evenements[$Jour])&&($Joueur)){
                     //---Menu deroulant saisie de etaitPresent
                     //------------------------
                     
-                    if ((($Event->Etat=="F")||(($Event->Etat=="T")&&($Joueur->DieuToutPuissant=="o")))&&($EvenementTerminé)){
+                    if ((($Event->Etat=="F")||(($Event->Etat=="T")&&(peut($Joueur, 'saisir_presences'))))&&($EvenementTerminé)){
                         ?>
                         
                         <input type="hidden" id="estDerouleetaitPresent<?=$Event->Libelle.$Event->DateHeure?>" name="estDerouleetaitPresent<?=$Event->Libelle.$Event->DateHeure?>" value="n"/>
