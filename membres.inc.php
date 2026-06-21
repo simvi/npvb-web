@@ -66,6 +66,9 @@ if ($Mode=="Fiche")
 ?>	
 
 <h2><?=$Joueurs[$Membre]->Prenom?> <?=$Joueurs[$Membre]->Nom?></h2>
+<?php if ($Joueurs[$Membre]->Pseudonyme != $Joueur->Pseudonyme) { ?>
+<p style="text-align:center"><a href="<?=$PHP_SELF?>?Page=chat&amp;Prive=<?=htmlspecialchars($Joueurs[$Membre]->Pseudonyme, ENT_QUOTES)?>" class="PetitBouton Action" style="text-decoration:none">&#9993; Envoyer un message</a></p>
+<?php } ?>
 
 <tr>
 	<td>

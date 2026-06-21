@@ -204,6 +204,35 @@ function peutPosterDansConv($Joueur, $conv, $sdblink) {
 	return peutPosterConversation($Joueur, $conv->PosterCapacite);
 }
 
+// Nom affiché d'une conversation pour un joueur donné.
+// Pour un privé : le nom de l'AUTRE participant.
+function nomConversationPourJoueur($conv, $Joueur, $sdblink) {
+	if (!$conv) return '';
+	if ($conv->Type != 'prive') return $conv->Nom;
+	$me = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
+	$r = mysql_query("SELECT j.Prenom, j.Nom, j.Pseudonyme
+	                  FROM NPVB_ConversationMembres cm JOIN NPVB_Joueurs j ON j.Pseudonyme=cm.Joueur
+	                  WHERE cm.Conversation=".(int)$conv->Id." AND cm.Joueur<>'".$me."' LIMIT 1", $sdblink);
+	if ($r && ($x = mysql_fetch_object($r))) { $n = trim($x->Prenom.' '.$x->Nom); return ($n != '') ? $n : $x->Pseudonyme; }
+	return 'Privé';
+}
+
+// Trouve la conversation privée entre 2 membres, ou la crée. Retourne son Id (0 si invalide).
+function trouverOuCreerPrive($a, $b, $sdblink) {
+	if (!$a || !$b || $a == $b) return 0;
+	$ae = mysql_real_escape_string($a, $sdblink);
+	$be = mysql_real_escape_string($b, $sdblink);
+	$r = mysql_query("SELECT Conversation FROM NPVB_ConversationMembres
+	                  WHERE Conversation IN (SELECT Id FROM NPVB_Conversations WHERE Type='prive')
+	                    AND Joueur IN ('".$ae."','".$be."')
+	                  GROUP BY Conversation HAVING COUNT(*)=2 LIMIT 1", $sdblink);
+	if ($r && ($x = mysql_fetch_object($r))) return (int)$x->Conversation;
+	mysql_query("INSERT INTO NPVB_Conversations (Type, Nom, DateCreation) VALUES ('prive', 'Privé', NOW())", $sdblink);
+	$cid = mysql_insert_id($sdblink);
+	mysql_query("INSERT IGNORE INTO NPVB_ConversationMembres (Conversation, Joueur) VALUES (".$cid.", '".$ae."'), (".$cid.", '".$be."')", $sdblink);
+	return $cid;
+}
+
 // Crée une conversation d'équipe active pour chaque équipe qui n'en a pas
 // (idempotent ; appelé à l'ouverture du chat). Inclut ASSO/SEANCE/CODIR.
 function assurerConversationsEquipes($sdblink) {

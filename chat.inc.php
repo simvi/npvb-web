@@ -13,11 +13,20 @@ if ($peutModerer && isset($_POST['Action']) && $_POST['Action']=="ChatArchiveEqu
 // après un archivage de saison
 assurerConversationsEquipes($sdblink);
 
+// Ouverture/création d'une conversation privée (?Prive=<pseudo>)
+$convForce = 0;
+if (isset($_REQUEST['Prive']) && $_REQUEST['Prive'] != '' && $_REQUEST['Prive'] != $Joueur->Pseudonyme) {
+	$cibleEcap = mysql_real_escape_string($_REQUEST['Prive'], $sdblink);
+	if (mySql_fetch_object(mySql_query("SELECT 1 FROM NPVB_Joueurs WHERE Pseudonyme='".$cibleEcap."' AND Etat='V'", $sdblink))) {
+		$convForce = trouverOuCreerPrive($Joueur->Pseudonyme, $_REQUEST['Prive'], $sdblink);
+	}
+}
+
 // Conversations accessibles au membre (avec non-lus)
 $conversations = conversationsAccessibles($Joueur, $sdblink);
 
-// Conversation sélectionnée (par défaut : la première accessible)
-$convSel = isset($_REQUEST['conv']) ? (int)$_REQUEST['conv'] : 0;
+// Conversation sélectionnée (Prive prioritaire, sinon ?conv, sinon 1ère accessible)
+$convSel = $convForce ? $convForce : (isset($_REQUEST['conv']) ? (int)$_REQUEST['conv'] : 0);
 $conv = null;
 foreach ($conversations as $c) { if ($c->Id == $convSel) { $conv = $c; break; } }
 if (!$conv && count($conversations)) $conv = $conversations[0];
@@ -90,7 +99,7 @@ function chatTypeLabel($t) {
 ?>
 		<a class="ChatConv<?=($actif?' ChatConvActif':'')?><?=($c->Archive=='o'?' ChatConvArchive':'')?>" href="<?=$PHP_SELF?>?Page=chat&amp;conv=<?=(int)$c->Id?>">
 			<span class="ChatConvType"><?=chatTypeLabel($c->Type)?></span>
-			<span class="ChatConvNom"><?=htmlspecialchars($c->Nom, ENT_QUOTES)?></span>
+			<span class="ChatConvNom"><?=htmlspecialchars(nomConversationPourJoueur($c, $Joueur, $sdblink), ENT_QUOTES)?></span>
 <?php if ($c->nonlus > 0) { ?><span class="ChatBadge"><?=(int)$c->nonlus?></span><?php } ?>
 		</a>
 <?php } ?>
@@ -108,7 +117,7 @@ function chatTypeLabel($t) {
 <?php if (!$conv) { ?>
 		<div class="Explications"><p>Aucune conversation à afficher.</p></div>
 <?php } else { ?>
-		<h2 id="ChatTitre"><?=htmlspecialchars($conv->Nom, ENT_QUOTES)?></h2>
+		<h2 id="ChatTitre"><?=htmlspecialchars(nomConversationPourJoueur($conv, $Joueur, $sdblink), ENT_QUOTES)?></h2>
 
 		<div id="ChatFil" data-conv="<?=(int)$convId?>" data-dernier="<?=(int)$dernierId?>">
 <?php
