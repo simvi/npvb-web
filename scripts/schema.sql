@@ -117,6 +117,13 @@ CREATE TABLE IF NOT EXISTS `NPVB_PasswordReset` (
   KEY `idx_expiration` (`DateExpiration`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `NPVB_JoueurRoles` (
+  `Pseudonyme`  varchar(30)  NOT NULL,
+  `Role`        varchar(20)  NOT NULL,
+  PRIMARY KEY (`Pseudonyme`, `Role`),
+  KEY `idx_pseudo` (`Pseudonyme`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `NPVB_Navigateurs` (
   `Navigateur`  varchar(255)   NOT NULL DEFAULT '',
   `Vision`      enum('o','n')  NOT NULL DEFAULT 'n',
