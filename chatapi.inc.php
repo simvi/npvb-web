@@ -47,7 +47,14 @@ if ($action == 'send') {
 	if ($contenu == '') { echo json_encode(array('ok' => false, 'err' => 'Message vide')); exit; }
 	$c = mysql_real_escape_string($contenu, $sdblink);
 	if (mySql_query("INSERT INTO NPVB_MessagesChat (Conversation, Auteur, Contenu, DateEnvoi) VALUES (".$convId.", '".$pseudoEcap."', '".$c."', NOW())", $sdblink)) {
-		echo json_encode(array('ok' => true, 'id' => mysql_insert_id($sdblink)));
+		$newId = mysql_insert_id($sdblink);
+		// Notification push aux autres membres (no-op si FCM non configuré)
+		include_once('push.inc.php');
+		$dest = destinatairesChat($convId, $Joueur->Pseudonyme, $sdblink);
+		$titre = $conv->Nom;
+		$apercu = (strlen($contenu) > 80) ? substr($contenu, 0, 77).'...' : $contenu;
+		envoyerPush($dest, $titre, $apercu, $sdblink, array('conv' => $convId, 'type' => 'chat'));
+		echo json_encode(array('ok' => true, 'id' => $newId));
 	} else {
 		echo json_encode(array('ok' => false, 'err' => 'Erreur enregistrement'));
 	}

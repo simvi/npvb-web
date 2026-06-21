@@ -19,6 +19,12 @@ $config = [
     // --- API mobile (token d'authentification — changer pour chaque club) ---
     'mobile_token_secret' => 'changez_moi_secret_unique_par_club',
 
+    // --- Notifications push (Firebase Cloud Messaging HTTP v1) ---
+    // Vide = push désactivé (no-op). Pour activer : créer un projet Firebase,
+    // télécharger le JSON de compte de service (hors git) et renseigner :
+    'fcm_project_id'      => '',
+    'fcm_service_account' => '',  // ex: /home/user/.nantespvb/fcm-service-account.json
+
     // --- SMTP (Gmail : créer un "mot de passe d'application" dans les paramètres Google) ---
     'smtp_from' => 'noreply@monclub.fr',
     'smtp_user' => 'votre.email@gmail.com',

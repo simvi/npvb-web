@@ -532,7 +532,14 @@ if ($resource == 'chat') {
         $ue = mysql_real_escape_string($username);
         $ce = mysql_real_escape_string($contenu);
         if (mysql_query("INSERT INTO NPVB_MessagesChat (Conversation, Auteur, Contenu, DateEnvoi) VALUES ($convId, '$ue', '$ce', NOW())")) {
-            echo json_encode(array('success' => true, 'data' => array('id' => mysql_insert_id())));
+            $newId = mysql_insert_id();
+            // Notification push aux autres membres (no-op si FCM non configuré)
+            include_once(__DIR__ . '/../../push.inc.php');
+            $cr = mysql_query("SELECT Nom FROM NPVB_Conversations WHERE Id=$convId");
+            $cn = ($cr && mysql_num_rows($cr) > 0) ? mysql_fetch_assoc($cr) : array('Nom' => 'Annonce');
+            $apercu = (strlen($contenu) > 80) ? substr($contenu, 0, 77) . '...' : $contenu;
+            envoyerPush(destinatairesChat($convId, $username, $dblink), $cn['Nom'], $apercu, $dblink, array('conv' => $convId, 'type' => 'chat'));
+            echo json_encode(array('success' => true, 'data' => array('id' => $newId)));
         } else {
             echo json_encode(array('success' => false, 'error' => array('code' => 'DB_ERROR', 'message' => 'Enregistrement impossible')));
         }
@@ -560,6 +567,25 @@ if ($resource == 'chat') {
     }
 
     echo json_encode(array('success' => false, 'error' => array('code' => 'NOT_FOUND', 'message' => 'Chat endpoint inconnu')));
+    mysql_close($dblink); exit;
+}
+
+// === PUSH (enregistrement d'appareil) ===
+if ($resource == 'push' && isset($segments[1]) && $segments[1] == 'register' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+    $input = file_get_contents('php://input');
+    preg_match('/"username"\s*:\s*"([^"]+)"/', $input, $u);
+    preg_match('/"token"\s*:\s*"([^"]+)"/', $input, $t);
+    preg_match('/"plateforme"\s*:\s*"([^"]+)"/', $input, $pf);
+    $username = isset($u[1]) ? $u[1] : '';
+    $token = isset($t[1]) ? $t[1] : '';
+    $plateforme = isset($pf[1]) ? $pf[1] : 'android';
+    if (empty($username) || empty($token)) {
+        echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'username et token requis')));
+        mysql_close($dblink); exit;
+    }
+    include_once(__DIR__ . '/../../push.inc.php');
+    $ok = enregistrerAppareilPush($username, $token, $plateforme, $dblink);
+    echo json_encode(array('success' => (bool)$ok));
     mysql_close($dblink); exit;
 }
 
