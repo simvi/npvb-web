@@ -122,6 +122,68 @@ function chatNonLus($pseudo, $convId) {
     return 0;
 }
 
+// Accès d'un membre à une conversation (miroir de permissions.inc.php)
+function mobileConvAccessible($pseudo, $convId) {
+    $p = mysql_real_escape_string($pseudo);
+    $c = (int)$convId;
+    $conv = mysql_fetch_object(mysql_query("SELECT Type, Equipe FROM NPVB_Conversations WHERE Id=$c"));
+    if (!$conv) return false;
+    if ($conv->Type == 'generale') return true;
+    if ($conv->Type == 'equipe') {
+        $eq = mysql_real_escape_string($conv->Equipe);
+        $r = mysql_query("SELECT 1 FROM NPVB_Appartenance WHERE Joueur='$p' AND Equipe='$eq'
+                          UNION SELECT 1 FROM NPVB_Equipes WHERE Nom='$eq' AND (Responsable='$p' OR Supleant='$p') LIMIT 1");
+        return ($r && mysql_num_rows($r) > 0);
+    }
+    $r = mysql_query("SELECT 1 FROM NPVB_ConversationMembres WHERE Conversation=$c AND Joueur='$p' LIMIT 1");
+    return ($r && mysql_num_rows($r) > 0);
+}
+
+// Peut poster (accès + non archivée + capacité). PosterCapacite NULL = participants.
+function mobilePeutPoster($pseudo, $convId) {
+    $c = (int)$convId;
+    $conv = mysql_fetch_object(mysql_query("SELECT PosterCapacite, Archive FROM NPVB_Conversations WHERE Id=$c"));
+    if (!$conv || $conv->Archive == 'o') return false;
+    if (!mobileConvAccessible($pseudo, $convId)) return false;
+    if (!$conv->PosterCapacite) return true;
+    if ($conv->PosterCapacite == 'poster_annonce') return peutPosterChatParRole($pseudo);
+    return false;
+}
+
+// Conversations accessibles au membre (id, type, nom, archive, nonlus, peutPoster)
+function mobileConvsAccessibles($pseudo) {
+    $p = mysql_real_escape_string($pseudo);
+    $ids = array();
+    $r = mysql_query("SELECT Id FROM NPVB_Conversations WHERE Type='generale'");
+    while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
+    $r = mysql_query("SELECT c.Id FROM NPVB_Conversations c WHERE c.Type='equipe' AND (
+                        c.Equipe IN (SELECT Equipe FROM NPVB_Appartenance WHERE Joueur='$p')
+                        OR c.Equipe IN (SELECT Nom FROM NPVB_Equipes WHERE Responsable='$p' OR Supleant='$p'))");
+    while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
+    $r = mysql_query("SELECT Conversation AS Id FROM NPVB_ConversationMembres WHERE Joueur='$p'");
+    while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
+    if (empty($ids)) return array();
+    $in = implode(',', array_keys($ids));
+    $res = mysql_query("SELECT * FROM NPVB_Conversations WHERE Id IN ($in) ORDER BY Archive, FIELD(Type,'generale','equipe','bureau','prive'), Nom");
+    $out = array();
+    while ($c = mysql_fetch_object($res)) {
+        $nom = $c->Nom;
+        if ($c->Type == 'prive') {
+            $rr = mysql_query("SELECT j.Prenom, j.Nom, j.Pseudonyme FROM NPVB_ConversationMembres cm
+                               JOIN NPVB_Joueurs j ON j.Pseudonyme=cm.Joueur
+                               WHERE cm.Conversation=".(int)$c->Id." AND cm.Joueur<>'$p' LIMIT 1");
+            if ($rr && ($jj = mysql_fetch_object($rr))) { $n = trim($jj->Prenom.' '.$jj->Nom); $nom = ($n != '') ? $n : $jj->Pseudonyme; }
+        }
+        $out[] = array(
+            'id' => (int)$c->Id, 'type' => $c->Type, 'nom' => $nom,
+            'archive' => ($c->Archive == 'o'),
+            'nonlus' => ($c->Archive == 'o') ? 0 : chatNonLus($pseudo, $c->Id),
+            'peutPoster' => mobilePeutPoster($pseudo, $c->Id)
+        );
+    }
+    return $out;
+}
+
 // Récupérer endpoint
 $endpoint = isset($_GET['endpoint']) ? trim($_GET['endpoint'], '/') : '';
 
@@ -473,16 +535,10 @@ if ($resource == 'chat') {
         if ($cr && mysql_num_rows($cr) > 0) { $crow = mysql_fetch_assoc($cr); $convId = (int)$crow['Id']; }
     }
 
-    // GET /chat/conversations?username=XXX
+    // GET /chat/conversations?username=XXX  (toutes les conversations accessibles)
     if ($sousRes == 'conversations' && $_SERVER['REQUEST_METHOD'] != 'POST') {
         $username = isset($_GET['username']) ? $_GET['username'] : '';
-        $convs = array();
-        $r = mysql_query("SELECT Id, Type, Nom FROM NPVB_Conversations WHERE Type='generale' ORDER BY Id");
-        while ($row = mysql_fetch_assoc($r)) {
-            $row['nonlus'] = $username ? chatNonLus($username, $row['Id']) : 0;
-            $row['peutPoster'] = $username ? peutPosterChatParRole($username) : false;
-            $convs[] = $row;
-        }
+        $convs = $username ? mobileConvsAccessibles($username) : array();
         echo json_encode(array('success' => true, 'data' => $convs));
         mysql_close($dblink); exit;
     }
@@ -491,6 +547,10 @@ if ($resource == 'chat') {
     if ($sousRes == 'messages' && $_SERVER['REQUEST_METHOD'] != 'POST') {
         $since = isset($_GET['since']) ? (int)$_GET['since'] : 0;
         $username = isset($_GET['username']) ? $_GET['username'] : '';
+        if (!$username || !mobileConvAccessible($username, $convId)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Accès refusé à cette conversation')));
+            mysql_close($dblink); exit;
+        }
         $q = "SELECT m.Id, m.Auteur, m.Contenu, m.DateEnvoi, j.Prenom, j.Nom
               FROM NPVB_MessagesChat m LEFT JOIN NPVB_Joueurs j ON j.Pseudonyme=m.Auteur
               WHERE m.Conversation=$convId AND m.Supprime='n' AND m.Id > $since
@@ -525,8 +585,8 @@ if ($resource == 'chat') {
             echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'username et contenu requis')));
             mysql_close($dblink); exit;
         }
-        if (!peutPosterChatParRole($username)) {
-            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Droit de publication requis')));
+        if (!mobilePeutPoster($username, $convId)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Publication non autorisée dans cette conversation')));
             mysql_close($dblink); exit;
         }
         $ue = mysql_real_escape_string($username);
@@ -555,8 +615,8 @@ if ($resource == 'chat') {
         $username = isset($u[1]) ? $u[1] : '';
         $lastid = isset($li[1]) ? (int)$li[1] : 0;
         if (isset($cv[1])) $convId = (int)$cv[1];
-        if (empty($username)) {
-            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'username requis')));
+        if (empty($username) || !mobileConvAccessible($username, $convId)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Accès refusé à cette conversation')));
             mysql_close($dblink); exit;
         }
         $ue = mysql_real_escape_string($username);
