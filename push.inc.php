@@ -128,12 +128,27 @@ function envoyerPush($pseudos, $titre, $corps, $dblink, $data = array(), $silenc
 }
 
 // Destinataires d'un message chat = participants de la conversation sauf l'auteur.
-// v1 : conversation 'generale' = tous les membres actifs ayant un appareil enregistré.
+// Type-aware (autonome, utilisable depuis le web et l'API mobile).
 function destinatairesChat($convId, $auteur, $dblink) {
 	$a = mysql_real_escape_string($auteur, $dblink);
+	$c = (int)$convId;
+	$conv = mysql_fetch_object(mysql_query("SELECT Type, Equipe FROM NPVB_Conversations WHERE Id=".$c, $dblink));
+	if (!$conv) return array();
+
+	if ($conv->Type == 'generale') {
+		$where = "j.Etat='V'";
+	} else if ($conv->Type == 'equipe') {
+		$eq = mysql_real_escape_string($conv->Equipe, $dblink);
+		$where = "(a.Joueur IN (SELECT Joueur FROM NPVB_Appartenance WHERE Equipe='".$eq."')
+		           OR a.Joueur IN (SELECT Responsable FROM NPVB_Equipes WHERE Nom='".$eq."')
+		           OR a.Joueur IN (SELECT Supleant FROM NPVB_Equipes WHERE Nom='".$eq."'))";
+	} else {
+		$where = "a.Joueur IN (SELECT Joueur FROM NPVB_ConversationMembres WHERE Conversation=".$c.")";
+	}
+
 	$res = mysql_query("SELECT DISTINCT a.Joueur FROM NPVB_AppareilsPush a
-	                    JOIN NPVB_Joueurs j ON j.Pseudonyme=a.Joueur AND j.Etat='V'
-	                    WHERE a.Joueur <> '$a'", $dblink);
+	                    JOIN NPVB_Joueurs j ON j.Pseudonyme=a.Joueur
+	                    WHERE a.Joueur <> '".$a."' AND ".$where, $dblink);
 	$liste = array();
 	if ($res) { while ($row = mysql_fetch_object($res)) { $liste[] = $row->Joueur; } }
 	return $liste;

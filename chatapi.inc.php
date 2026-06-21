@@ -13,6 +13,13 @@ $convId = isset($_REQUEST['conv']) ? (int)$_REQUEST['conv'] : 0;
 $conv = mySql_fetch_object(mySql_query("SELECT * FROM NPVB_Conversations WHERE Id=".$convId, $sdblink));
 if (!$conv) { echo json_encode(array('ok' => false, 'err' => 'Conversation introuvable')); exit; }
 
+// Accès à la conversation requis pour toute action (lecture comprise)
+if (!peutAccederConversation($Joueur, $conv, $sdblink)) {
+	http_response_code(403);
+	echo json_encode(array('ok' => false, 'err' => 'Accès refusé'));
+	exit;
+}
+
 $pseudoEcap = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
 
 // --- Récupérer les nouveaux messages depuis un id donné ---

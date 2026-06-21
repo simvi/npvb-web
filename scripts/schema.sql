@@ -152,6 +152,13 @@ CREATE TABLE IF NOT EXISTS `NPVB_MessagesChat` (
   KEY `idx_conv` (`Conversation`, `Id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `NPVB_ConversationMembres` (
+  `Conversation` int(11)     NOT NULL,
+  `Joueur`       varchar(30) NOT NULL,
+  PRIMARY KEY (`Conversation`, `Joueur`),
+  KEY `idx_joueur` (`Joueur`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `NPVB_MessagesLus` (
   `Joueur`       varchar(30) NOT NULL,
   `Conversation` int(11)     NOT NULL,

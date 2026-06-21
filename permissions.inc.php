@@ -171,24 +171,104 @@ function estAdminQuelconque($Joueur) {
 // Chat / messagerie
 // ============================================================================
 
-// Vrai si le joueur peut poster dans une conversation.
-// $posterCapacite = valeur NPVB_Conversations.PosterCapacite (NULL = tous les participants)
+// Vrai si le joueur peut poster (capacité requise par la conversation).
+// $posterCapacite = NPVB_Conversations.PosterCapacite (NULL = tous les participants)
 function peutPosterConversation($Joueur, $posterCapacite) {
 	if (!$posterCapacite) return true;
 	return peut($Joueur, $posterCapacite);
 }
 
-// Nombre total de messages non lus pour le joueur (v1 : conversations 'generale',
-// accessibles à tous les connectés). Exclut ses propres messages.
+// Vrai si le joueur participe (a accès) à une conversation. $conv = ligne NPVB_Conversations.
+//   generale : tous les connectés
+//   equipe   : membre de l'équipe (appartenance) ou responsable/suppléant
+//   bureau/prive : membre explicite (NPVB_ConversationMembres)
+function peutAccederConversation($Joueur, $conv, $sdblink) {
+	if (!isset($Joueur) || !is_object($Joueur) || !$conv) return false;
+	$pseudo = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
+	if ($conv->Type == 'generale') return true;
+	if ($conv->Type == 'equipe') {
+		$eq = mysql_real_escape_string($conv->Equipe, $sdblink);
+		$r = mysql_query("SELECT 1 FROM NPVB_Appartenance WHERE Joueur='".$pseudo."' AND Equipe='".$eq."'
+		                  UNION SELECT 1 FROM NPVB_Equipes WHERE Nom='".$eq."' AND (Responsable='".$pseudo."' OR Supleant='".$pseudo."') LIMIT 1", $sdblink);
+		return ($r && mysql_num_rows($r) > 0);
+	}
+	$r = mysql_query("SELECT 1 FROM NPVB_ConversationMembres WHERE Conversation=".(int)$conv->Id." AND Joueur='".$pseudo."' LIMIT 1", $sdblink);
+	return ($r && mysql_num_rows($r) > 0);
+}
+
+// Vrai si le joueur peut poster dans cette conversation (accès + capacité).
+function peutPosterDansConv($Joueur, $conv, $sdblink) {
+	if (!peutAccederConversation($Joueur, $conv, $sdblink)) return false;
+	return peutPosterConversation($Joueur, $conv->PosterCapacite);
+}
+
+// Liste des pseudonymes participant à une conversation (pour le push notamment).
+function participantsConversation($conv, $sdblink) {
+	$liste = array();
+	if (!$conv) return $liste;
+	if ($conv->Type == 'generale') {
+		$r = mysql_query("SELECT Pseudonyme FROM NPVB_Joueurs WHERE Etat='V'", $sdblink);
+	} else if ($conv->Type == 'equipe') {
+		$eq = mysql_real_escape_string($conv->Equipe, $sdblink);
+		$r = mysql_query("SELECT Joueur AS Pseudonyme FROM NPVB_Appartenance WHERE Equipe='".$eq."'
+		                  UNION SELECT Responsable FROM NPVB_Equipes WHERE Nom='".$eq."' AND Responsable IS NOT NULL AND Responsable<>''
+		                  UNION SELECT Supleant FROM NPVB_Equipes WHERE Nom='".$eq."' AND Supleant IS NOT NULL AND Supleant<>''", $sdblink);
+	} else {
+		$r = mysql_query("SELECT Joueur AS Pseudonyme FROM NPVB_ConversationMembres WHERE Conversation=".(int)$conv->Id, $sdblink);
+	}
+	if ($r) { while ($x = mysql_fetch_object($r)) { if ($x->Pseudonyme) $liste[] = $x->Pseudonyme; } }
+	return $liste;
+}
+
+// Non-lus d'UNE conversation pour le joueur (exclut ses propres messages).
+function nonLusConversation($Joueur, $convId, $sdblink) {
+	$pseudo = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
+	$convId = (int)$convId;
+	$sql = "SELECT COUNT(*) AS n FROM NPVB_MessagesChat m
+	        LEFT JOIN NPVB_MessagesLus l ON l.Conversation=m.Conversation AND l.Joueur='".$pseudo."'
+	        WHERE m.Conversation=".$convId." AND m.Supprime='n' AND m.Auteur<>'".$pseudo."'
+	          AND m.Id > COALESCE(l.DernierLuId,0)";
+	$r = mysql_query($sql, $sdblink);
+	if ($r && ($row = mysql_fetch_object($r))) return (int)$row->n;
+	return 0;
+}
+
+// Conversations accessibles au joueur (objets NPVB_Conversations + ->nonlus).
+function conversationsAccessibles($Joueur, $sdblink) {
+	if (!isset($Joueur) || !is_object($Joueur)) return array();
+	$pseudo = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
+	$ids = array();
+	$r = mysql_query("SELECT Id FROM NPVB_Conversations WHERE Type='generale'", $sdblink);
+	if ($r) while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
+	$r = mysql_query("SELECT c.Id FROM NPVB_Conversations c WHERE c.Type='equipe' AND (
+	                    c.Equipe IN (SELECT Equipe FROM NPVB_Appartenance WHERE Joueur='".$pseudo."')
+	                    OR c.Equipe IN (SELECT Nom FROM NPVB_Equipes WHERE Responsable='".$pseudo."' OR Supleant='".$pseudo."'))", $sdblink);
+	if ($r) while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
+	$r = mysql_query("SELECT Conversation AS Id FROM NPVB_ConversationMembres WHERE Joueur='".$pseudo."'", $sdblink);
+	if ($r) while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
+	if (empty($ids)) return array();
+	$in = implode(',', array_keys($ids));
+	$res = mysql_query("SELECT * FROM NPVB_Conversations WHERE Id IN (".$in.") ORDER BY FIELD(Type,'generale','equipe','bureau','prive'), Nom", $sdblink);
+	$convs = array();
+	if ($res) { while ($c = mysql_fetch_object($res)) { $c->nonlus = nonLusConversation($Joueur, $c->Id, $sdblink); $convs[] = $c; } }
+	return $convs;
+}
+
+// Total des non-lus sur toutes les conversations accessibles (badge du menu).
 function compterNonLus($Joueur, $sdblink) {
 	if (!isset($Joueur) || !is_object($Joueur)) return 0;
 	$pseudo = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
 	$sql = "SELECT COUNT(*) AS n
 	        FROM NPVB_MessagesChat m
-	        JOIN NPVB_Conversations c ON c.Id = m.Conversation AND c.Type='generale'
+	        JOIN NPVB_Conversations c ON c.Id = m.Conversation
 	        LEFT JOIN NPVB_MessagesLus l ON l.Conversation = m.Conversation AND l.Joueur='".$pseudo."'
-	        WHERE m.Supprime='n' AND m.Auteur <> '".$pseudo."'
-	          AND m.Id > COALESCE(l.DernierLuId, 0)";
+	        WHERE m.Supprime='n' AND m.Auteur <> '".$pseudo."' AND m.Id > COALESCE(l.DernierLuId, 0)
+	          AND (
+	            c.Type='generale'
+	            OR (c.Type='equipe' AND (c.Equipe IN (SELECT Equipe FROM NPVB_Appartenance WHERE Joueur='".$pseudo."')
+	                                     OR c.Equipe IN (SELECT Nom FROM NPVB_Equipes WHERE Responsable='".$pseudo."' OR Supleant='".$pseudo."')))
+	            OR (c.Type IN ('bureau','prive') AND c.Id IN (SELECT Conversation FROM NPVB_ConversationMembres WHERE Joueur='".$pseudo."'))
+	          )";
 	$res = mysql_query($sql, $sdblink);
 	if ($res && ($row = mysql_fetch_object($res))) return (int)$row->n;
 	return 0;
