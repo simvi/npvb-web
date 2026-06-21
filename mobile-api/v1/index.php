@@ -95,6 +95,10 @@ mysql_select_db($DB_NAME, $dblink);
 mysql_query("SET CHARACTER SET utf8mb4", $dblink);
 mysql_query("SET NAMES utf8mb4", $dblink);
 
+// Liste d'attente (promotion auto). $PasseParIndex requis par attente.inc.php/push/smtp.
+$PasseParIndex = true;
+include_once(__DIR__ . '/../../attente.inc.php');
+
 // Statut admin calculé depuis les rôles (remplace l'ancienne colonne DieuToutPuissant)
 function estAdminParRole($pseudo) {
     $p = mysql_real_escape_string($pseudo);
@@ -469,6 +473,7 @@ if ($resource == 'presences' && $_SERVER['REQUEST_METHOD'] == 'POST') {
         // DESINSCRIPTION
         if ($exists) {
             mysql_query("DELETE FROM NPVB_Presence WHERE Joueur='$joueur' AND DateHeure='$dateHeure' AND Libelle='$libelle'");
+            if (function_exists('promouvoirListeAttente')) promouvoirListeAttente($dateHeure, $libelle, $dblink);
             echo json_encode(array('success' => true, 'data' => array('status' => true), 'message' => 'Désinscription réussie'));
         } else {
             echo json_encode(array('success' => false, 'error' => array('code' => 'NOT_REGISTERED', 'message' => 'Présence non enregistrée')));
@@ -481,6 +486,7 @@ if ($resource == 'presences' && $_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             mysql_query("INSERT INTO NPVB_Presence (Joueur, DateHeure, Libelle, Prevue) VALUES ('$joueur', '$dateHeure', '$libelle', '$prevue')");
         }
+        if (function_exists('promouvoirListeAttente')) promouvoirListeAttente($dateHeure, $libelle, $dblink);
         echo json_encode(array('success' => true, 'data' => array('status' => true), 'message' => 'Absence enregistrée'));
     } elseif ($presence == 'o') {
         // PRESENT - Vérifier capacité pour SEANCE

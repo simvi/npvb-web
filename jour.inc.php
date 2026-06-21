@@ -126,6 +126,13 @@ if($Action=="Presence"){
             }
         }
     }
+    // Liste d'attente : promouvoir le 1er de la file si des places se sont
+    // libérées (idempotent : n'agit que s'il reste une place + une file).
+    foreach ($Evenements[$Jour] as $HeureKey=>$HeureEvent){
+        foreach ($Evenements[$Jour][$HeureKey] as $Key=>$Event){
+            if ((int)$Event->InscritsMax > 0) promouvoirListeAttente($Event->DateHeure, $Event->Libelle, $sdblink);
+        }
+    }
 }
 
 
