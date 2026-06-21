@@ -88,7 +88,7 @@ $pages_autorisees = array(
 	'accueil', 'calendrier', 'jour', 'membres', 'Erreur404', 'maintenance',
 	'adminstats', 'adminfichejour', 'adminevenements', 'adminequipes',
 	'adminmembres', 'adminnewmessage', 'adminfichemembre', 'adminmessages',
-	'adminaccueilimage', 'resetmotdepasse'
+	'adminaccueilimage', 'resetmotdepasse', 'chat'
 );
 
 // Vérifier que la page demandée est autorisée
@@ -101,7 +101,7 @@ if (!peutAccederPage($Joueur, $Page)) {
 	$Page = "accueil";
 }
 
-$pages_membres = array('jour', 'membres');
+$pages_membres = array('jour', 'membres', 'chat');
 if (in_array($Page, $pages_membres)) {
 	// Vérification connexion
 	if (!isset($Joueur) || !is_object($Joueur)) {
@@ -171,6 +171,7 @@ print ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 			case "adminmembres":
 			case "membres": print(lienCSS("Membres.css")); break;
 			case "adminfichejour": print(lienCSS("AdminFicheJour.css")); break;
+			case "chat": print(lienCSS("Chat.css")); break;
 			case "jour": print(lienCSS("Jour.css")); break;
 			case "adminevenements":
 			case "calendrier": 	print(lienCSS("Bulle.css"));
@@ -249,6 +250,7 @@ if (isset($Joueur) && is_object($Joueur)) {
 <li<?php echo (($Page=="accueil")?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=accueil">Accueil</a></li>
 		<li<?php echo ((($Page=="calendrier")||($Page=="jour"))?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=calendrier">Le calendrier</a></li>
 		<li<?php echo (($Page=="membres")?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=membres">Les membres</a></li>
+		<li<?php echo (($Page=="chat")?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=chat">Discussion<?php $nl=compterNonLus($Joueur, $sdblink); if ($nl>0) echo ' <span class="ChatBadge" id="ChatBadge">'.$nl.'</span>'; else echo '<span class="ChatBadge" id="ChatBadge" style="display:none"></span>'; ?></a></li>
 		<li><a href="<?php echo $script_name; ?>?Page=accueil&amp;Action=deloguer">Fermer session</a></li>
 <?php
 }

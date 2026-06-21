@@ -1,0 +1,107 @@
+#ChatTitre {
+	text-align: center;
+	color: var(--couleur-primaire);
+}
+
+#ChatFil {
+	max-width: 700px;
+	margin: 15px auto;
+	padding: 10px;
+	text-align: left;
+	background: #fff;
+	border: 1px solid #d0d8ec;
+	border-radius: 8px;
+	max-height: 60vh;
+	overflow-y: auto;
+}
+
+.ChatVide {
+	text-align: center;
+	color: #888;
+	font-style: italic;
+	padding: 20px;
+}
+
+.ChatMsg {
+	position: relative;
+	margin: 8px 0;
+	padding: 8px 12px;
+	background: #f0f4ff;
+	border-radius: 8px;
+	border-left: 3px solid var(--couleur-primaire);
+}
+
+.ChatMsg.ChatMsgMoi {
+	background: #eafbe7;
+	border-left-color: var(--couleur-succes);
+}
+
+.ChatMsgEntete {
+	font-size: 12px;
+	margin-bottom: 3px;
+}
+
+.ChatAuteur {
+	font-weight: bold;
+	color: var(--couleur-primaire);
+}
+
+.ChatDate {
+	color: #999;
+	margin-left: 6px;
+}
+
+.ChatMsgCorps {
+	font-size: 14px;
+	overflow-wrap: break-word;
+	word-break: break-word;
+}
+
+.ChatSupprForm {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	margin: 0;
+}
+
+.ChatSuppr {
+	border: none;
+	background: transparent;
+	color: var(--couleur-danger);
+	cursor: pointer;
+	font-size: 13px;
+	padding: 2px 4px;
+}
+
+#ChatForm {
+	max-width: 700px;
+	margin: 10px auto;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+#ChatContenu {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 9px;
+	font-size: 15px;
+	border: 1px solid var(--couleur-primaire);
+	border-radius: 4px;
+	font-family: inherit;
+	resize: vertical;
+}
+
+/* Badge de non-lus dans le menu */
+.ChatBadge {
+	display: inline-block;
+	background: var(--couleur-danger);
+	color: #fff;
+	font-size: 11px;
+	font-weight: bold;
+	min-width: 16px;
+	padding: 1px 5px;
+	border-radius: 10px;
+	text-align: center;
+	vertical-align: middle;
+}
