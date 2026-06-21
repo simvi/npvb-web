@@ -74,8 +74,22 @@ if ($ModeModif){
 			if ($Evenements[substr($DateHeure, 0, 8)][substr($DateHeure, 8, 4)][$Libelle]->Adversaire<>$Adversaire) $Requete .= ", Adversaire='".$Adversaire."'";
 			if ($Evenements[substr($DateHeure, 0, 8)][substr($DateHeure, 8, 4)][$Libelle]->Domicile<>$Domicile) $Requete .= ", Domicile='".$Domicile."'";
 			if ($Evenements[substr($DateHeure, 0, 8)][substr($DateHeure, 8, 4)][$Libelle]->Analyse<>$Analyse) $Requete .= ", Analyse='".$Analyse."'";
-			$Requete .= ", InscritsMax='".$InscritsMax."'";			
-			
+			$Requete .= ", InscritsMax='".$InscritsMax."'";
+
+			// Résultat du match (uniquement pour les rencontres, pas ASSO/SEANCE)
+			if (($Equipe<>"ASSO") && ($Equipe<>"SEANCE")) {
+				$scoresL = array(); $scoresV = array();
+				for ($s = 1; $s <= 5; $s++) {
+					$scoresL[] = isset($_POST['ResSet'.$s.'L']) ? $_POST['ResSet'.$s.'L'] : 0;
+					$scoresV[] = isset($_POST['ResSet'.$s.'V']) ? $_POST['ResSet'.$s.'V'] : 0;
+				}
+				$resEncode = encoderResultat(
+					isset($_POST['ResSetsL']) ? $_POST['ResSetsL'] : 0,
+					isset($_POST['ResSetsV']) ? $_POST['ResSetsV'] : 0,
+					$scoresL, $scoresV);
+				$Requete .= ", Resultat='".mysql_real_escape_string($resEncode, $sdblink)."'";
+			}
+
 			$Requete .= " WHERE (DateHeure='".$DateHeure."' AND Libelle='".$Libelle."')";
 			
 			if (!mySql_query($Requete, $sdblink)) $ErreurDonnees["Enregistrement"] .= "Erreur d'enregistrement: ".mySql_errno($sdblink).":<br/>".mySql_error($sdblink)."<br/>";
@@ -226,9 +240,27 @@ if ($Evenements[$Jour]){
 			<tr><td>Adresse</td><td><input type="text" name="Adresse" value="<?=$Adresse?>" size="30" maxlength="50" /></td></tr>
 <?
 			if (($Event->Libelle<>"ASSO")&&($Event->Libelle<>"SEANCE")){
+				$R = decoderResultat($Event->Resultat);
+				// recompose 5 sets éventuellement vides pour la saisie
+				$setScores = array();
+				for ($si=0; $si<5; $si++) $setScores[$si] = isset($R['sets'][$si]) ? $R['sets'][$si] : array('L'=>0,'V'=>0);
 ?>
 			<tr><td>Adversaire</td><td><input type="text" name="Adversaire" value="<?=$Adversaire?>" size="30" maxlength="30" /></td></tr>
 			<tr><td>Rencontre à</td><td><input type="radio" name="Domicile" value="o"<?=(($Domicile=="o")?" checked=\"checked\"":"")?> /> Domicile<br/><input type="radio" name="Domicile" value="n"<?=(($Domicile=="n")?" checked=\"checked\"":"")?> /> L'extérieur</td></tr>
+			<tr><td>Résultat</td><td>
+				<table class="SaisieResultat">
+				<tr><td></td><td>Sets</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+				<tr><td>Locaux</td>
+					<td><input type="text" name="ResSetsL" value="<?=$R['setsL']?>" size="1" maxlength="1" /></td>
+<?php for ($si=1; $si<=5; $si++){ ?>				<td><input type="text" name="ResSet<?=$si?>L" value="<?=$setScores[$si-1]['L']?>" size="2" maxlength="2" /></td>
+<?php } ?>			</tr>
+				<tr><td>Visiteurs</td>
+					<td><input type="text" name="ResSetsV" value="<?=$R['setsV']?>" size="1" maxlength="1" /></td>
+<?php for ($si=1; $si<=5; $si++){ ?>				<td><input type="text" name="ResSet<?=$si?>V" value="<?=$setScores[$si-1]['V']?>" size="2" maxlength="2" /></td>
+<?php } ?>			</tr>
+				<tr><td></td><td colspan="6" class="Remarque">Laisser à 0 si non joué / pas de résultat</td></tr>
+				</table>
+			</td></tr>
 <?
 			}
 ?>

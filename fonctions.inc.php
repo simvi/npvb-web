@@ -322,4 +322,37 @@ function RechercherMembreParIdentifiant($Identifiant) {
 	return false;
 }
 
+// ============================================================================
+// Résultats de match — encodage/décodage du champ NPVB_Evenements.Resultat
+// Format (22 car.) : [setsL][setsV] puis 5 sets de [scoreL 2c][scoreV 2c].
+// ============================================================================
+
+// Encode un résultat. $scoresL/$scoresV = tableaux de 5 scores. '' si tout à zéro.
+function encoderResultat($setsL, $setsV, $scoresL, $scoresV) {
+	$r = ((int)$setsL % 10) . ((int)$setsV % 10);
+	for ($i = 0; $i < 5; $i++) {
+		$l = (int)(isset($scoresL[$i]) ? $scoresL[$i] : 0);
+		$v = (int)(isset($scoresV[$i]) ? $scoresV[$i] : 0);
+		$r .= ($l >= 10 ? $l : '0' . $l) . ($v >= 10 ? $v : '0' . $v);
+	}
+	return preg_match('/^0+$/', $r) ? '' : $r;
+}
+
+// Sets gagnés "L/V" pour affichage compact ('' si pas de résultat).
+function resultatSetsGagnes($res) {
+	if (!trim($res) || strlen($res) < 2) return '';
+	return ((int)substr($res, 0, 1)) . '/' . ((int)substr($res, 1, 1));
+}
+
+// Décode un résultat en tableau : ['setsL','setsV','sets'=>[['L','V'],...]].
+function decoderResultat($res) {
+	$out = array('setsL' => (int)substr($res, 0, 1), 'setsV' => (int)substr($res, 1, 1), 'sets' => array());
+	for ($i = 0; $i < 5; $i++) {
+		$l = (int)substr($res, 2 + $i * 4, 2);
+		$v = (int)substr($res, 4 + $i * 4, 2);
+		if ($l > 0 || $v > 0) $out['sets'][] = array('L' => $l, 'V' => $v);
+	}
+	return $out;
+}
+
 ?>
