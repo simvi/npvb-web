@@ -4,7 +4,7 @@ if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
 // ============================================================
 // Contenu éditable de la page d'accueil (admins DieuToutPuissant)
 // ============================================================
-$estAdminAccueil = (isset($Joueur) && is_object($Joueur) && $Joueur->DieuToutPuissant == "o");
+$estAdminAccueil = peut($Joueur, 'editer_accueil');
 
 // Charge le contenu enregistré pour une clé, sinon retourne le texte par défaut
 if (!function_exists('getContenuAccueil')) {
@@ -344,7 +344,7 @@ if (!$Joueur){
 ?>
 
 <?php
-if($Joueur->DieuToutPuissant=="o"){
+if(peut($Joueur, 'editer_accueil')){
 	//******************************************************//
 	// Édition du texte affiché aux visiteurs non connectés //
 	//******************************************************//

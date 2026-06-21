@@ -257,14 +257,19 @@ if (isset($Joueur) && is_object($Joueur)) {
 
 
 <?php
-if (isset($Joueur) && is_object($Joueur) && $Joueur->DieuToutPuissant=="o"){
+if (isset($Joueur) && is_object($Joueur) && estAdminQuelconque($Joueur)){
 ?>
 
 	<ul>
+<?php if (peutAccederPage($Joueur, 'adminequipes')){ ?>
 		<li<?php echo (($Page=="adminequipes")?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=adminequipes">Admin.Equipes</a></li>
+<?php } if (peutAccederPage($Joueur, 'adminevenements')){ ?>
 		<li<?php echo ((($Page=="adminevenements")||($Page=="adminfichejour"))?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=adminevenements">Admin.Evenements</a></li>
+<?php } if (peutAccederPage($Joueur, 'adminmembres')){ ?>
 		<li<?php echo ((($Page=="adminmembres")||($Page=="adminfichemembre"))?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=adminmembres">Admin.Membres</a></li>
+<?php } if (peutAccederPage($Joueur, 'adminmessages')){ ?>
 		<li<?php echo (($Page=="adminmessages")?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=adminmessages">Admin.Messages</a></li>
+<?php } ?>
 	</ul>
 <?php
 }
