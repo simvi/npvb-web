@@ -12,6 +12,14 @@ if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
 // des capacités de tous ses rôles.
 // ============================================================================
 
+// Rôles attribuables via l'interface admin (le rôle 'membre' est implicite : aucune ligne)
+$ROLES_ASSIGNABLES = array(
+	'admin'        => 'Administrateur (tous les droits)',
+	'organisateur' => 'Organisateur (événements, toutes équipes)',
+	'capitaine'    => 'Capitaine (événements + membres de son équipe)',
+	'redacteur'    => 'Rédacteur (accueil, messages, actualités)',
+);
+
 // Capacités GLOBALES (toutes équipes confondues)
 $CAPACITES_GLOBALES = array(
 	'admin'        => array('*'),  // tout

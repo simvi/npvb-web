@@ -207,7 +207,19 @@ if ((($Mode=="Modif")||($Mode=="Nouveau")) && !isset($_POST['GenererLienReset'])
 				 }
 				break;
 				
-			default:	
+			default:
+		}
+
+		// Mise à jour des rôles du membre (réservé à gerer_roles = admin)
+		if (!$ErreurDonnees["Enregistrement"] && $Membre && peut($Joueur, 'gerer_roles')) {
+			global $ROLES_ASSIGNABLES;
+			$rolesSoumis = (isset($_POST['Roles']) && is_array($_POST['Roles'])) ? $_POST['Roles'] : array();
+			mySql_query("DELETE FROM NPVB_JoueurRoles WHERE Pseudonyme='".$Membre."'", $sdblink);
+			foreach ($rolesSoumis as $r) {
+				if (isset($ROLES_ASSIGNABLES[$r])) {
+					mySql_query("INSERT INTO NPVB_JoueurRoles (Pseudonyme, Role) VALUES ('".$Membre."', '".mysql_real_escape_string($r, $sdblink)."')", $sdblink);
+				}
+			}
 		}
 		// Supprimé: vérification d'envoi d'email (plus nécessaire)
 		// Supprimé: vérification du mot de passe pour envoi email (plus nécessaire)
@@ -481,6 +493,18 @@ if ($ErreurDonnees["Pseudonyme"]){
 							<tr><td class="Colonne1">Mot de passe<br/>initial</td><td class="Colonne2"><input type="password" name="MotDePasse" size="30" /><br/><small style="color:#666;">Obligatoire pour créer le compte</small></td></tr>
 <?php } ?>
 							<tr><td class="Colonne1">Accord pour<br/>diffusion</td><td class="Colonne2"><input type="radio" name="Accord" value="o"<?=($Accord=="o")?" checked=\"checked\"":""?>/>oui / <input type="radio" name="Accord" value="n"<?=($Accord=="n")?" checked=\"checked\"":""?>/>non</td></tr>
+<?php
+	if ($Mode=="Modif" && peut($Joueur, 'gerer_roles')) {
+		$RolesMembre = array();
+		$resRolesM = mysql_query("SELECT Role FROM NPVB_JoueurRoles WHERE Pseudonyme='".$Membre."'", $sdblink);
+		if ($resRolesM) { while ($rowRoleM = mysql_fetch_object($resRolesM)) { $RolesMembre[] = $rowRoleM->Role; } }
+?>
+						<tr><td class="Colonne1">R&ocirc;les</td><td class="Colonne2">
+<?php foreach ($ROLES_ASSIGNABLES as $cleRole=>$libelleRole){ ?>
+							<label style="display:block;margin:2px 0;"><input type="checkbox" name="Roles[]" value="<?=$cleRole?>"<?=(in_array($cleRole, $RolesMembre)?" checked=\"checked\"":"")?> /> <?=$libelleRole?></label>
+<?php } ?>
+						</td></tr>
+<?php } ?>
 					</table>
 					</fieldset>
 				</td>
