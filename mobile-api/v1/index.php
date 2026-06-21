@@ -489,31 +489,14 @@ if ($resource == 'presences' && $_SERVER['REQUEST_METHOD'] == 'POST') {
         if (function_exists('promouvoirListeAttente')) promouvoirListeAttente($dateHeure, $libelle, $dblink);
         echo json_encode(array('success' => true, 'data' => array('status' => true), 'message' => 'Absence enregistrée'));
     } elseif ($presence == 'o') {
-        // PRESENT - Vérifier capacité pour SEANCE
-        if ($libelle == 'SEANCE') {
-            $countQuery = "SELECT COUNT(*) as count FROM NPVB_Presence
-                           WHERE DateHeure='$dateHeure' AND Libelle='$libelle' AND Prevue='o'";
-            $countResult = mysql_query($countQuery);
-            $countRow = mysql_fetch_assoc($countResult);
-            $currentCount = $countRow['count'];
-
-            $maxQuery = "SELECT InscritsMax FROM NPVB_Evenements
-                         WHERE DateHeure='$dateHeure' AND Libelle='$libelle'";
-            $maxResult = mysql_query($maxQuery);
-            $maxRow = mysql_fetch_assoc($maxResult);
-            $maxCount = $maxRow['InscritsMax'];
-
-            if (!$exists && $currentCount >= $maxCount) {
-                echo json_encode(array(
-                    'success' => false,
-                    'error' => array(
-                        'code' => 'CAPACITY_REACHED',
-                        'message' => "Nombre d'inscrits maximum déjà atteint"
-                    )
-                ));
-                mysql_close($dblink);
-                exit;
-            }
+        // PRÉSENT — si l'événement est complet (InscritsMax>0 atteint), liste d'attente
+        if (!$exists && function_exists('estComplet') && estComplet($dateHeure, $libelle, $dblink)) {
+            ajouterListeAttente($joueur, $dateHeure, $libelle, $dblink);
+            $pos = positionListeAttente($joueur, $dateHeure, $libelle, $dblink);
+            echo json_encode(array('success' => true, 'data' => array('status' => 'waitlisted', 'position' => $pos),
+                'message' => "Événement complet : vous êtes en liste d'attente (position " . $pos . ")"));
+            mysql_close($dblink);
+            exit;
         }
 
         $prevue = 'o';
@@ -522,6 +505,8 @@ if ($resource == 'presences' && $_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             mysql_query("INSERT INTO NPVB_Presence (Joueur, DateHeure, Libelle, Prevue) VALUES ('$joueur', '$dateHeure', '$libelle', '$prevue')");
         }
+        // S'il était en liste d'attente, l'en retirer (désormais inscrit)
+        if (function_exists('retirerListeAttente')) retirerListeAttente($joueur, $dateHeure, $libelle, $dblink);
         echo json_encode(array('success' => true, 'data' => array('status' => true), 'message' => 'Inscription réussie'));
     } else {
         echo json_encode(array('success' => false, 'error' => array('code' => 'INVALID_INPUT', 'message' => 'Valeur presence invalide')));
