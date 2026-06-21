@@ -98,6 +98,7 @@ if ($ModeModif){
 			$Modification=true;
 			if (!mySql_query("DELETE FROM NPVB_Evenements WHERE DateHeure='".$DateHeure."' AND Libelle='".$Libelle."'", $sdblink)) $ErreurDonnees["Enregistrement"] .= "Erreur d'enregistrement: ".mySql_errno($sdblink).":<br/>".mySql_error($sdblink)."<br/>";
 			if (!mySql_query("DELETE FROM NPVB_Presence WHERE DateHeure='".$DateHeure."' AND Libelle='".$Libelle."'", $sdblink)) $ErreurDonnees["Enregistrement"] .= "Erreur d'enregistrement: ".mySql_errno($sdblink).":<br/>".mySql_error($sdblink)."<br/>";
+			mySql_query("DELETE FROM NPVB_ListeAttente WHERE DateHeure='".$DateHeure."' AND Libelle='".$Libelle."'", $sdblink);
 			break;
 		default:
 		$Modification=true;
