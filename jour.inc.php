@@ -137,6 +137,27 @@ if($Action=="Presence"){
 
 
 //******************************************************************
+//************ Liste d'attente : rejoindre / quitter (liens GET)
+//******************************************************************
+if ($Joueur && isset($_GET['Action'])) {
+    $adh  = isset($_GET['AttenteDH'])  ? $_GET['AttenteDH']  : '';
+    $alib = isset($_GET['AttenteLib']) ? $_GET['AttenteLib'] : '';
+    if ($_GET['Action']=="RejoindreAttente" && $adh && $alib) {
+        // seulement si complet et pas déjà inscrit
+        if (estComplet($adh, $alib, $sdblink)) {
+            $pe = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
+            $de = mysql_real_escape_string($adh, $sdblink);
+            $le = mysql_real_escape_string($alib, $sdblink);
+            if (!mySql_fetch_object(mySql_query("SELECT 1 FROM NPVB_Presence WHERE Joueur='".$pe."' AND DateHeure='".$de."' AND Libelle='".$le."' AND Prevue='o'", $sdblink))) {
+                ajouterListeAttente($Joueur->Pseudonyme, $adh, $alib, $sdblink);
+            }
+        }
+    } else if ($_GET['Action']=="QuitterAttente" && $adh && $alib) {
+        retirerListeAttente($Joueur->Pseudonyme, $adh, $alib, $sdblink);
+    }
+}
+
+//******************************************************************
 //************ Charge les données et affiche la page
 //******************************************************************
 $Evenements = ChargeEvenements(null, null, $Jour);
@@ -218,6 +239,20 @@ if (($Evenements[$Jour])&&($Joueur)){
                 
                 $ADomicile = (($Event->Libelle<>"ASSO")&&($Event->Libelle<>"SEANCE"))?(($Event->Domicile == "o")?" <em>(à domicile)</em>":" <em>(à l'extérieur)</em>"):"";
                 $TexteCellule = "<p class=\"TitreJour\"><input type=\"checkbox\" name=\"seraPresent".$Event->Libelle.$Event->DateHeure."\" value=\"oui\"".(($Event->seraPresent($Joueur->Pseudonyme))?" checked=\"checked\"":"").(($RaisonBloque && !($Event->seraPresent($Joueur->Pseudonyme)))?" disabled=\"disabled\"":"")." /> ".$Event->Intitule.(($RaisonBloque && !($Event->seraPresent($Joueur->Pseudonyme)))?"<input type=\"hidden\" name=\"seraPresent".$Event->Libelle.$Event->DateHeure."\" value=\"".(($Event->seraPresent($Joueur->Pseudonyme))?"oui":"non")."\" />":"").$ADomicile."</p><table class=\"InfosEvent\">";
+
+                // Liste d'attente : événement ouvert, non démarré, complet, membre non inscrit et éligible
+                if (($Event->Etat=="O") && !$EvenementDémarré && !($Event->seraPresent($Joueur->Pseudonyme))
+                    && estComplet($Event->DateHeure, $Event->Libelle, $sdblink)
+                    && (($Equipes[$Event->Libelle]->faisPartie($Joueur->Pseudonyme)) || ($Equipes[$Event->Libelle]->TousJoueurs=="o"))) {
+                    $nbAtt = nbListeAttente($Event->DateHeure, $Event->Libelle, $sdblink);
+                    $urlBase = $PHP_SELF."?Page=jour&amp;Jour=".$Jour."&amp;Mois=".$Mois."&amp;Annee=".$Annee."&amp;AttenteDH=".$Event->DateHeure."&amp;AttenteLib=".$Event->Libelle;
+                    if (estEnListeAttente($Joueur->Pseudonyme, $Event->DateHeure, $Event->Libelle, $sdblink)) {
+                        $pos = positionListeAttente($Joueur->Pseudonyme, $Event->DateHeure, $Event->Libelle, $sdblink);
+                        $TexteCellule .= "<tr><td colspan=\"2\"><span class=\"ListeAttente\">&#9203; Liste d'attente : position ".$pos."/".$nbAtt." &mdash; <a href=\"".$urlBase."&amp;Action=QuitterAttente\">quitter</a></span></td></tr>";
+                    } else {
+                        $TexteCellule .= "<tr><td colspan=\"2\"><a class=\"BoutonAttente\" href=\"".$urlBase."&amp;Action=RejoindreAttente\">&#9203; Rejoindre la liste d'attente".(($nbAtt>0)?" (".$nbAtt." en attente)":"")."</a></td></tr>";
+                    }
+                }
                 
                 $TexteCellule .= "<tr><td class=\"InfosEvent1\">Heure:</td><td class=\"InfosEvent2\">".substr($Event->DateHeure, 8, 2)."H".substr($Event->DateHeure, 10, 2)."</td></tr>";
                 if ($Event->Adversaire) $TexteCellule .= "<tr><td>Adversaire:</td><td>".$Event->Adversaire."</td></tr>";

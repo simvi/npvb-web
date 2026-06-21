@@ -555,3 +555,24 @@ textarea:focus, input:focus {
 	max-width: 100%;
 	height: auto;
 }
+
+/* Liste d'attente (événements complets) */
+.BoutonAttente {
+	display: inline-block;
+	margin: 4px 0;
+	padding: 5px 10px;
+	background: var(--couleur-accent);
+	color: var(--couleur-primaire);
+	border-radius: 4px;
+	font-size: 13px;
+	font-weight: bold;
+	text-decoration: none;
+}
+.BoutonAttente:hover { background: #d4b00c; }
+.ListeAttente {
+	display: inline-block;
+	margin: 4px 0;
+	font-size: 13px;
+	font-style: italic;
+	color: var(--couleur-primaire);
+}
