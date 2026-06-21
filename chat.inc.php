@@ -2,6 +2,17 @@
 if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
 if (!$Joueur){ require("accueil.inc.php"); return;}
 
+$peutModerer = peut($Joueur, 'gerer_roles'); // admin
+
+// Archivage en masse des conversations d'équipe (admin) — réinitialisation de saison
+if ($peutModerer && isset($_POST['Action']) && $_POST['Action']=="ChatArchiveEquipes") {
+	mySql_query("UPDATE NPVB_Conversations SET Archive='o', ArchiveDate=NOW() WHERE Type='equipe' AND Archive='n'", $sdblink);
+}
+
+// Crée (si besoin) une conversation active par équipe — inclut la recréation
+// après un archivage de saison
+assurerConversationsEquipes($sdblink);
+
 // Conversations accessibles au membre (avec non-lus)
 $conversations = conversationsAccessibles($Joueur, $sdblink);
 
@@ -13,7 +24,6 @@ if (!$conv && count($conversations)) $conv = $conversations[0];
 $convId = $conv ? (int)$conv->Id : 0;
 
 $peutPoster  = $conv ? peutPosterDansConv($Joueur, $conv, $sdblink) : false;
-$peutModerer = peut($Joueur, 'gerer_roles'); // admin : supprimer un message
 $pseudoEcap  = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
 
 // --- Envoi d'un message (POST classique, sans JS) ---
@@ -72,14 +82,24 @@ function chatTypeLabel($t) {
 		<h3>Conversations</h3>
 <?php if (!count($conversations)) { ?>
 		<p class="Remarque">Aucune conversation.</p>
-<?php } foreach ($conversations as $c) {
+<?php } $sectionArchive = false; foreach ($conversations as $c) {
+		if ($c->Archive == 'o' && !$sectionArchive) { $sectionArchive = true; ?>
+		<h3 class="ChatArchTitre">Archives</h3>
+<?php }
 		$actif = ($c->Id == $convId);
 ?>
-		<a class="ChatConv<?=($actif?' ChatConvActif':'')?>" href="<?=$PHP_SELF?>?Page=chat&amp;conv=<?=(int)$c->Id?>">
+		<a class="ChatConv<?=($actif?' ChatConvActif':'')?><?=($c->Archive=='o'?' ChatConvArchive':'')?>" href="<?=$PHP_SELF?>?Page=chat&amp;conv=<?=(int)$c->Id?>">
 			<span class="ChatConvType"><?=chatTypeLabel($c->Type)?></span>
 			<span class="ChatConvNom"><?=htmlspecialchars($c->Nom, ENT_QUOTES)?></span>
 <?php if ($c->nonlus > 0) { ?><span class="ChatBadge"><?=(int)$c->nonlus?></span><?php } ?>
 		</a>
+<?php } ?>
+<?php if ($peutModerer) { ?>
+		<form method="post" action="<?=$PHP_SELF?>" class="ChatArchForm" onsubmit="return confirm('Archiver toutes les conversations d\'équipe ?\n\nL\'historique est conservé en lecture seule et de nouvelles conversations vierges sont recréées.');">
+			<input type="hidden" name="Page" value="chat" />
+			<input type="hidden" name="Action" value="ChatArchiveEquipes" />
+			<button type="submit" class="PetitBouton Annule">Archiver les conversations d'équipe</button>
+		</form>
 <?php } ?>
 	</div>
 
@@ -124,6 +144,8 @@ function chatTypeLabel($t) {
 			<textarea name="Contenu" id="ChatContenu" rows="3" placeholder="Votre message..."></textarea>
 			<input type="submit" value="Envoyer" class="Action" />
 		</form>
+<?php } else if ($conv->Archive == 'o') { ?>
+		<p class="Remarque">Conversation archivée — lecture seule.</p>
 <?php } else { ?>
 		<p class="Remarque">Vous ne pouvez pas publier dans cette conversation.</p>
 <?php } ?>

@@ -137,6 +137,8 @@ CREATE TABLE IF NOT EXISTS `NPVB_Conversations` (
   `Nom`            varchar(60)  NOT NULL,
   `Equipe`         varchar(10)  DEFAULT NULL,
   `PosterCapacite` varchar(30)  DEFAULT NULL,
+  `Archive`        enum('o','n') NOT NULL DEFAULT 'n',
+  `ArchiveDate`    datetime     DEFAULT NULL,
   `DateCreation`   datetime     NOT NULL,
   PRIMARY KEY (`Id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

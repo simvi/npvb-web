@@ -47,7 +47,7 @@ if ($action == 'poll') {
 
 // --- Envoyer un message ---
 if ($action == 'send') {
-	if (!peutPosterConversation($Joueur, $conv->PosterCapacite)) {
+	if (!peutPosterDansConv($Joueur, $conv, $sdblink)) {
 		http_response_code(403); echo json_encode(array('ok' => false, 'err' => 'Accès refusé')); exit;
 	}
 	$contenu = isset($_POST['contenu']) ? trim($_POST['contenu']) : '';

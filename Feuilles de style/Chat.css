@@ -47,6 +47,19 @@
 .ChatConvNom { font-weight: bold; font-size: 13px; vertical-align: middle; }
 .ChatConv .ChatBadge { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
 
+.ChatArchTitre {
+	margin: 12px 6px 4px;
+	font-size: 12px;
+	text-transform: uppercase;
+	color: #999;
+	border-top: 1px solid #e0e0e0;
+	padding-top: 8px;
+}
+.ChatConvArchive { opacity: 0.6; }
+.ChatConvArchive .ChatConvType { background: #999; }
+.ChatArchForm { margin: 12px 4px 4px; }
+.ChatArchForm button { font-size: 12px; width: 100%; }
+
 #ChatTitre {
 	text-align: center;
 	color: var(--couleur-primaire);

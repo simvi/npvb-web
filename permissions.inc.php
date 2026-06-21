@@ -196,10 +196,20 @@ function peutAccederConversation($Joueur, $conv, $sdblink) {
 	return ($r && mysql_num_rows($r) > 0);
 }
 
-// Vrai si le joueur peut poster dans cette conversation (accès + capacité).
+// Vrai si le joueur peut poster dans cette conversation (non archivée + accès + capacité).
 function peutPosterDansConv($Joueur, $conv, $sdblink) {
+	if (!$conv || (isset($conv->Archive) && $conv->Archive == 'o')) return false;
 	if (!peutAccederConversation($Joueur, $conv, $sdblink)) return false;
 	return peutPosterConversation($Joueur, $conv->PosterCapacite);
+}
+
+// Crée une conversation d'équipe active pour chaque équipe qui n'en a pas
+// (idempotent ; appelé à l'ouverture du chat). Inclut ASSO/SEANCE/CODIR.
+function assurerConversationsEquipes($sdblink) {
+	mysql_query("INSERT INTO NPVB_Conversations (Type, Nom, Equipe, DateCreation)
+	             SELECT 'equipe', e.Nom, e.Nom, NOW() FROM NPVB_Equipes e
+	             WHERE NOT EXISTS (SELECT 1 FROM NPVB_Conversations c
+	                               WHERE c.Type='equipe' AND c.Equipe=e.Nom AND c.Archive='n')", $sdblink);
 }
 
 // Liste des pseudonymes participant à une conversation (pour le push notamment).
@@ -248,9 +258,12 @@ function conversationsAccessibles($Joueur, $sdblink) {
 	if ($r) while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
 	if (empty($ids)) return array();
 	$in = implode(',', array_keys($ids));
-	$res = mysql_query("SELECT * FROM NPVB_Conversations WHERE Id IN (".$in.") ORDER BY FIELD(Type,'generale','equipe','bureau','prive'), Nom", $sdblink);
+	$res = mysql_query("SELECT * FROM NPVB_Conversations WHERE Id IN (".$in.") ORDER BY Archive, FIELD(Type,'generale','equipe','bureau','prive'), Nom", $sdblink);
 	$convs = array();
-	if ($res) { while ($c = mysql_fetch_object($res)) { $c->nonlus = nonLusConversation($Joueur, $c->Id, $sdblink); $convs[] = $c; } }
+	if ($res) { while ($c = mysql_fetch_object($res)) {
+		$c->nonlus = ($c->Archive == 'o') ? 0 : nonLusConversation($Joueur, $c->Id, $sdblink);
+		$convs[] = $c;
+	} }
 	return $convs;
 }
 
@@ -263,6 +276,7 @@ function compterNonLus($Joueur, $sdblink) {
 	        JOIN NPVB_Conversations c ON c.Id = m.Conversation
 	        LEFT JOIN NPVB_MessagesLus l ON l.Conversation = m.Conversation AND l.Joueur='".$pseudo."'
 	        WHERE m.Supprime='n' AND m.Auteur <> '".$pseudo."' AND m.Id > COALESCE(l.DernierLuId, 0)
+	          AND c.Archive='n'
 	          AND (
 	            c.Type='generale'
 	            OR (c.Type='equipe' AND (c.Equipe IN (SELECT Equipe FROM NPVB_Appartenance WHERE Joueur='".$pseudo."')
