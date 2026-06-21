@@ -102,6 +102,26 @@ function estAdminParRole($pseudo) {
     return ($r && mysql_num_rows($r) > 0);
 }
 
+// Capacité 'poster_annonce' = rôle admin ou redacteur (cf. permissions.inc.php)
+function peutPosterChatParRole($pseudo) {
+    $p = mysql_real_escape_string($pseudo);
+    $r = mysql_query("SELECT 1 FROM NPVB_JoueurRoles WHERE Pseudonyme='$p' AND Role IN ('admin','redacteur') LIMIT 1");
+    return ($r && mysql_num_rows($r) > 0);
+}
+
+// Nombre de messages non lus d'une conversation pour un membre (exclut ses propres messages)
+function chatNonLus($pseudo, $convId) {
+    $p = mysql_real_escape_string($pseudo);
+    $c = (int)$convId;
+    $sql = "SELECT COUNT(*) AS n FROM NPVB_MessagesChat m
+            LEFT JOIN NPVB_MessagesLus l ON l.Conversation=m.Conversation AND l.Joueur='$p'
+            WHERE m.Conversation=$c AND m.Supprime='n' AND m.Auteur<>'$p'
+              AND m.Id > COALESCE(l.DernierLuId, 0)";
+    $r = mysql_query($sql);
+    if ($r) { $row = mysql_fetch_assoc($r); return (int)$row['n']; }
+    return 0;
+}
+
 // Récupérer endpoint
 $endpoint = isset($_GET['endpoint']) ? trim($_GET['endpoint'], '/') : '';
 
@@ -440,6 +460,107 @@ if ($resource == 'presences' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     }
     mysql_close($dblink);
     exit;
+}
+
+// === CHAT ===
+if ($resource == 'chat') {
+    $sousRes = isset($segments[1]) ? $segments[1] : '';
+
+    // Conversation : param conv, défaut = conversation 'generale'
+    $convId = isset($_GET['conv']) ? (int)$_GET['conv'] : 0;
+    if (!$convId) {
+        $cr = mysql_query("SELECT Id FROM NPVB_Conversations WHERE Type='generale' ORDER BY Id LIMIT 1");
+        if ($cr && mysql_num_rows($cr) > 0) { $crow = mysql_fetch_assoc($cr); $convId = (int)$crow['Id']; }
+    }
+
+    // GET /chat/conversations?username=XXX
+    if ($sousRes == 'conversations' && $_SERVER['REQUEST_METHOD'] != 'POST') {
+        $username = isset($_GET['username']) ? $_GET['username'] : '';
+        $convs = array();
+        $r = mysql_query("SELECT Id, Type, Nom FROM NPVB_Conversations WHERE Type='generale' ORDER BY Id");
+        while ($row = mysql_fetch_assoc($r)) {
+            $row['nonlus'] = $username ? chatNonLus($username, $row['Id']) : 0;
+            $row['peutPoster'] = $username ? peutPosterChatParRole($username) : false;
+            $convs[] = $row;
+        }
+        echo json_encode(array('success' => true, 'data' => $convs));
+        mysql_close($dblink); exit;
+    }
+
+    // GET /chat/messages?conv=&since=&username=
+    if ($sousRes == 'messages' && $_SERVER['REQUEST_METHOD'] != 'POST') {
+        $since = isset($_GET['since']) ? (int)$_GET['since'] : 0;
+        $username = isset($_GET['username']) ? $_GET['username'] : '';
+        $q = "SELECT m.Id, m.Auteur, m.Contenu, m.DateEnvoi, j.Prenom, j.Nom
+              FROM NPVB_MessagesChat m LEFT JOIN NPVB_Joueurs j ON j.Pseudonyme=m.Auteur
+              WHERE m.Conversation=$convId AND m.Supprime='n' AND m.Id > $since
+              ORDER BY m.Id ASC";
+        $r = mysql_query($q);
+        $msgs = array();
+        while ($row = mysql_fetch_assoc($r)) {
+            $nom = trim($row['Prenom'].' '.$row['Nom']); if ($nom == '') $nom = $row['Auteur'];
+            $msgs[] = array(
+                'id' => (int)$row['Id'], 'auteur' => $row['Auteur'], 'nom' => $nom,
+                'contenu' => $row['Contenu'], 'dateEnvoi' => $row['DateEnvoi'],
+                'moi' => ($username && $row['Auteur'] == $username)
+            );
+        }
+        echo json_encode(array('success' => true, 'data' => array(
+            'conversation' => $convId, 'messages' => $msgs,
+            'nonlus' => $username ? chatNonLus($username, $convId) : 0
+        )));
+        mysql_close($dblink); exit;
+    }
+
+    // POST /chat/messages  (body: conv, contenu, username)
+    if ($sousRes == 'messages' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+        $input = file_get_contents('php://input');
+        preg_match('/"username"\s*:\s*"([^"]+)"/', $input, $u);
+        preg_match('/"contenu"\s*:\s*"(.*?)"\s*[,}]/s', $input, $c);
+        preg_match('/"conv"\s*:\s*(\d+)/', $input, $cv);
+        $username = isset($u[1]) ? $u[1] : '';
+        $contenu = isset($c[1]) ? trim($c[1]) : '';
+        if (isset($cv[1])) $convId = (int)$cv[1];
+        if (empty($username) || $contenu == '') {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'username et contenu requis')));
+            mysql_close($dblink); exit;
+        }
+        if (!peutPosterChatParRole($username)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Droit de publication requis')));
+            mysql_close($dblink); exit;
+        }
+        $ue = mysql_real_escape_string($username);
+        $ce = mysql_real_escape_string($contenu);
+        if (mysql_query("INSERT INTO NPVB_MessagesChat (Conversation, Auteur, Contenu, DateEnvoi) VALUES ($convId, '$ue', '$ce', NOW())")) {
+            echo json_encode(array('success' => true, 'data' => array('id' => mysql_insert_id())));
+        } else {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'DB_ERROR', 'message' => 'Enregistrement impossible')));
+        }
+        mysql_close($dblink); exit;
+    }
+
+    // POST /chat/read  (body: conv, lastid, username)
+    if ($sousRes == 'read' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+        $input = file_get_contents('php://input');
+        preg_match('/"username"\s*:\s*"([^"]+)"/', $input, $u);
+        preg_match('/"lastid"\s*:\s*(\d+)/', $input, $li);
+        preg_match('/"conv"\s*:\s*(\d+)/', $input, $cv);
+        $username = isset($u[1]) ? $u[1] : '';
+        $lastid = isset($li[1]) ? (int)$li[1] : 0;
+        if (isset($cv[1])) $convId = (int)$cv[1];
+        if (empty($username)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'username requis')));
+            mysql_close($dblink); exit;
+        }
+        $ue = mysql_real_escape_string($username);
+        mysql_query("INSERT INTO NPVB_MessagesLus (Joueur, Conversation, DernierLuId) VALUES ('$ue', $convId, $lastid)
+                     ON DUPLICATE KEY UPDATE DernierLuId=GREATEST(DernierLuId, $lastid)");
+        echo json_encode(array('success' => true, 'data' => array('nonlus' => chatNonLus($username, $convId))));
+        mysql_close($dblink); exit;
+    }
+
+    echo json_encode(array('success' => false, 'error' => array('code' => 'NOT_FOUND', 'message' => 'Chat endpoint inconnu')));
+    mysql_close($dblink); exit;
 }
 
 // === RESOURCES ===
