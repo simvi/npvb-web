@@ -2,40 +2,45 @@
 if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
 if (!$Joueur){ require("accueil.inc.php"); return;}
 
-// Conversation générale (v1)
-$convId = 1;
-$conv = mySql_fetch_object(mySql_query("SELECT * FROM NPVB_Conversations WHERE Id=".(int)$convId, $sdblink));
-if (!$conv) {
-	$conv = mySql_fetch_object(mySql_query("SELECT * FROM NPVB_Conversations WHERE Type='generale' ORDER BY Id LIMIT 1", $sdblink));
-}
-if ($conv) $convId = $conv->Id;
+// Conversations accessibles au membre (avec non-lus)
+$conversations = conversationsAccessibles($Joueur, $sdblink);
 
-$peutPoster   = ($conv) ? peutPosterConversation($Joueur, $conv->PosterCapacite) : false;
-$peutModerer  = peut($Joueur, 'gerer_roles'); // admin : peut supprimer un message
-$pseudoEcap   = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
+// Conversation sélectionnée (par défaut : la première accessible)
+$convSel = isset($_REQUEST['conv']) ? (int)$_REQUEST['conv'] : 0;
+$conv = null;
+foreach ($conversations as $c) { if ($c->Id == $convSel) { $conv = $c; break; } }
+if (!$conv && count($conversations)) $conv = $conversations[0];
+$convId = $conv ? (int)$conv->Id : 0;
+
+$peutPoster  = $conv ? peutPosterDansConv($Joueur, $conv, $sdblink) : false;
+$peutModerer = peut($Joueur, 'gerer_roles'); // admin : supprimer un message
+$pseudoEcap  = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
 
 // --- Envoi d'un message (POST classique, sans JS) ---
 if ($conv && isset($_POST['Action']) && $_POST['Action']=="ChatEnvoi" && $peutPoster) {
 	$contenu = isset($_POST['Contenu']) ? trim($_POST['Contenu']) : '';
 	if ($contenu !== '') {
-		$c = mysql_real_escape_string($contenu, $sdblink);
-		mySql_query("INSERT INTO NPVB_MessagesChat (Conversation, Auteur, Contenu, DateEnvoi) VALUES (".(int)$convId.", '".$pseudoEcap."', '".$c."', NOW())", $sdblink);
+		$cc = mysql_real_escape_string($contenu, $sdblink);
+		mySql_query("INSERT INTO NPVB_MessagesChat (Conversation, Auteur, Contenu, DateEnvoi) VALUES (".$convId.", '".$pseudoEcap."', '".$cc."', NOW())", $sdblink);
+		$newId = mysql_insert_id($sdblink);
+		include_once('push.inc.php');
+		$apercu = (strlen($contenu) > 80) ? substr($contenu, 0, 77).'...' : $contenu;
+		envoyerPush(destinatairesChat($convId, $Joueur->Pseudonyme, $sdblink), $conv->Nom, $apercu, $sdblink, array('conv' => $convId, 'type' => 'chat'));
 	}
 }
 
 // --- Suppression d'un message (admin) ---
 if ($conv && isset($_POST['Action']) && $_POST['Action']=="ChatSupprime" && $peutModerer && isset($_POST['MsgId'])) {
 	$mid = (int)$_POST['MsgId'];
-	mySql_query("UPDATE NPVB_MessagesChat SET Supprime='o' WHERE Id=".$mid." AND Conversation=".(int)$convId, $sdblink);
+	mySql_query("UPDATE NPVB_MessagesChat SET Supprime='o' WHERE Id=".$mid." AND Conversation=".$convId, $sdblink);
 }
 
-// --- Chargement des messages ---
+// --- Chargement des messages de la conversation active ---
 $messages = array();
 if ($conv) {
 	$res = mySql_query("SELECT m.Id, m.Auteur, m.Contenu, m.DateEnvoi, j.Prenom, j.Nom
-	                    FROM NPVB_MessagesChat m
-	                    LEFT JOIN NPVB_Joueurs j ON j.Pseudonyme = m.Auteur
-	                    WHERE m.Conversation=".(int)$convId." AND m.Supprime='n'
+	                    FROM NPVB_MessagesChat m LEFT JOIN NPVB_Joueurs j ON j.Pseudonyme = m.Auteur
+	                    WHERE m.Conversation=".$convId." AND m.Supprime='n'
 	                    ORDER BY m.Id ASC", $sdblink);
 	while ($row = mySql_fetch_object($res)) { $messages[] = $row; }
 }
@@ -44,52 +49,83 @@ if ($conv) {
 $dernierId = count($messages) ? $messages[count($messages)-1]->Id : 0;
 if ($conv) {
 	mySql_query("INSERT INTO NPVB_MessagesLus (Joueur, Conversation, DernierLuId)
-	             VALUES ('".$pseudoEcap."', ".(int)$convId.", ".(int)$dernierId.")
+	             VALUES ('".$pseudoEcap."', ".$convId.", ".(int)$dernierId.")
 	             ON DUPLICATE KEY UPDATE DernierLuId=GREATEST(DernierLuId, ".(int)$dernierId.")", $sdblink);
+	$conv->nonlus = 0; // on vient de lire
+}
+
+// Libellé court du type de conversation
+function chatTypeLabel($t) {
+	switch ($t) {
+		case 'generale': return 'Général';
+		case 'equipe':   return 'Équipe';
+		case 'bureau':   return 'Bureau';
+		case 'prive':    return 'Privé';
+	}
+	return '';
 }
 ?>
 
-<h2 id="ChatTitre"><?=($conv)?htmlspecialchars($conv->Nom, ENT_QUOTES):"Discussion"?></h2>
+<div id="ChatLayout">
 
-<?php if (!$conv) { ?>
-	<div class="Explications"><p class="ModifError">Aucune conversation disponible.</p></div>
-<?php } else { ?>
-
-<div id="ChatFil" data-conv="<?=(int)$convId?>" data-dernier="<?=(int)$dernierId?>">
-<?php
-	if (!count($messages)) {
-		echo '<p class="ChatVide">Aucun message pour le moment.</p>';
-	}
-	foreach ($messages as $m) {
-		$estMoi = ($m->Auteur == $Joueur->Pseudonyme);
-		$nom = trim($m->Prenom." ".$m->Nom);
-		if ($nom=="") $nom = $m->Auteur;
-		$heure = substr($m->DateEnvoi, 8, 2)."/".substr($m->DateEnvoi, 5, 2)." ".substr($m->DateEnvoi, 11, 5);
+	<div id="ChatListe">
+		<h3>Conversations</h3>
+<?php if (!count($conversations)) { ?>
+		<p class="Remarque">Aucune conversation.</p>
+<?php } foreach ($conversations as $c) {
+		$actif = ($c->Id == $convId);
 ?>
-	<div class="ChatMsg<?=($estMoi?" ChatMsgMoi":"")?>" data-id="<?=(int)$m->Id?>">
-		<div class="ChatMsgEntete"><span class="ChatAuteur"><?=htmlspecialchars($nom, ENT_QUOTES)?></span> <span class="ChatDate"><?=$heure?></span></div>
-		<div class="ChatMsgCorps"><?=nl2br(htmlspecialchars($m->Contenu, ENT_QUOTES))?></div>
-<?php if ($peutModerer) { ?>
-		<form method="post" action="<?=$PHP_SELF?>" class="ChatSupprForm" onsubmit="return confirm('Supprimer ce message ?');">
-			<input type="hidden" name="Page" value="chat" />
-			<input type="hidden" name="Action" value="ChatSupprime" />
-			<input type="hidden" name="MsgId" value="<?=(int)$m->Id?>" />
-			<button type="submit" class="ChatSuppr" title="Supprimer">&#10006;</button>
-		</form>
+		<a class="ChatConv<?=($actif?' ChatConvActif':'')?>" href="<?=$PHP_SELF?>?Page=chat&amp;conv=<?=(int)$c->Id?>">
+			<span class="ChatConvType"><?=chatTypeLabel($c->Type)?></span>
+			<span class="ChatConvNom"><?=htmlspecialchars($c->Nom, ENT_QUOTES)?></span>
+<?php if ($c->nonlus > 0) { ?><span class="ChatBadge"><?=(int)$c->nonlus?></span><?php } ?>
+		</a>
 <?php } ?>
 	</div>
+
+	<div id="ChatPanneau">
+<?php if (!$conv) { ?>
+		<div class="Explications"><p>Aucune conversation à afficher.</p></div>
+<?php } else { ?>
+		<h2 id="ChatTitre"><?=htmlspecialchars($conv->Nom, ENT_QUOTES)?></h2>
+
+		<div id="ChatFil" data-conv="<?=(int)$convId?>" data-dernier="<?=(int)$dernierId?>">
+<?php
+		if (!count($messages)) {
+			echo '<p class="ChatVide">Aucun message pour le moment.</p>';
+		}
+		foreach ($messages as $m) {
+			$estMoi = ($m->Auteur == $Joueur->Pseudonyme);
+			$nom = trim($m->Prenom." ".$m->Nom);
+			if ($nom=="") $nom = $m->Auteur;
+			$heure = substr($m->DateEnvoi, 8, 2)."/".substr($m->DateEnvoi, 5, 2)." ".substr($m->DateEnvoi, 11, 5);
+?>
+			<div class="ChatMsg<?=($estMoi?" ChatMsgMoi":"")?>" data-id="<?=(int)$m->Id?>">
+				<div class="ChatMsgEntete"><span class="ChatAuteur"><?=htmlspecialchars($nom, ENT_QUOTES)?></span> <span class="ChatDate"><?=$heure?></span></div>
+				<div class="ChatMsgCorps"><?=nl2br(htmlspecialchars($m->Contenu, ENT_QUOTES))?></div>
+<?php if ($peutModerer) { ?>
+				<form method="post" action="<?=$PHP_SELF?>" class="ChatSupprForm" onsubmit="return confirm('Supprimer ce message ?');">
+					<input type="hidden" name="Page" value="chat" />
+					<input type="hidden" name="conv" value="<?=(int)$convId?>" />
+					<input type="hidden" name="Action" value="ChatSupprime" />
+					<input type="hidden" name="MsgId" value="<?=(int)$m->Id?>" />
+					<button type="submit" class="ChatSuppr" title="Supprimer">&#10006;</button>
+				</form>
 <?php } ?>
-</div>
+			</div>
+<?php } ?>
+		</div>
 
 <?php if ($peutPoster) { ?>
-	<form id="ChatForm" method="post" action="<?=$PHP_SELF?>">
-		<input type="hidden" name="Page" value="chat" />
-		<input type="hidden" name="Action" value="ChatEnvoi" />
-		<textarea name="Contenu" id="ChatContenu" rows="3" placeholder="Votre annonce..."></textarea>
-		<input type="submit" value="Envoyer" class="Action" />
-	</form>
+		<form id="ChatForm" method="post" action="<?=$PHP_SELF?>">
+			<input type="hidden" name="Page" value="chat" />
+			<input type="hidden" name="conv" value="<?=(int)$convId?>" />
+			<input type="hidden" name="Action" value="ChatEnvoi" />
+			<textarea name="Contenu" id="ChatContenu" rows="3" placeholder="Votre message..."></textarea>
+			<input type="submit" value="Envoyer" class="Action" />
+		</form>
 <?php } else { ?>
-	<p class="Remarque">Seuls les administrateurs et rédacteurs peuvent publier ici.</p>
+		<p class="Remarque">Vous ne pouvez pas publier dans cette conversation.</p>
 <?php } ?>
 
 <script type="text/javascript">
@@ -101,9 +137,7 @@ if ($conv) {
 	var peutModerer = <?=($peutModerer?'true':'false')?>;
 	var enCours = false;
 
-	function api(params){
-		return fetch('index.php?Page=chatapi&' + params, {credentials:'same-origin'}).then(function(r){return r.json();});
-	}
+	function api(params){ return fetch('index.php?Page=chatapi&' + params, {credentials:'same-origin'}).then(function(r){return r.json();}); }
 	function apiPost(params, body){
 		return fetch('index.php?Page=chatapi&' + params, {method:'POST', credentials:'same-origin',
 			headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:body}).then(function(r){return r.json();});
@@ -115,14 +149,10 @@ if ($conv) {
 	}
 	function corps(parent, texte){
 		var lignes = texte.split('\n');
-		for (var i=0;i<lignes.length;i++){
-			if (i>0) parent.appendChild(document.createElement('br'));
-			parent.appendChild(document.createTextNode(lignes[i]));
-		}
+		for (var i=0;i<lignes.length;i++){ if (i>0) parent.appendChild(document.createElement('br')); parent.appendChild(document.createTextNode(lignes[i])); }
 	}
 	function ajoute(m){
-		var vide = fil.querySelector('.ChatVide');
-		if (vide) vide.parentNode.removeChild(vide);
+		var vide = fil.querySelector('.ChatVide'); if (vide) vide.parentNode.removeChild(vide);
 		var div = document.createElement('div');
 		div.className = 'ChatMsg' + (m.moi ? ' ChatMsgMoi' : '');
 		div.setAttribute('data-id', m.id);
@@ -135,10 +165,8 @@ if ($conv) {
 		if (peutModerer){
 			var btn = document.createElement('button');
 			btn.className = 'ChatSuppr'; btn.innerHTML = '&#10006;'; btn.title = 'Supprimer';
-			btn.onclick = function(){
-				if (!confirm('Supprimer ce message ?')) return;
-				apiPost('conv='+conv, 'action=delete&id='+m.id).then(function(){ div.parentNode.removeChild(div); });
-			};
+			btn.onclick = function(){ if (!confirm('Supprimer ce message ?')) return;
+				apiPost('conv='+conv, 'action=delete&id='+m.id).then(function(){ div.parentNode.removeChild(div); }); };
 			var wrap = document.createElement('div'); wrap.className = 'ChatSupprForm'; wrap.appendChild(btn);
 			div.appendChild(wrap);
 		}
@@ -153,19 +181,16 @@ if ($conv) {
 			if (data.messages && data.messages.length){
 				data.messages.forEach(function(m){ ajoute(m); if (m.id > dernier) dernier = m.id; });
 				if (auBas) fil.scrollTop = fil.scrollHeight;
-				// marque comme lu (on est sur la page)
 				apiPost('conv='+conv, 'action=markread&lastid='+dernier).then(function(r){ if (r && r.ok) majBadge(r.nonlus); });
 			}
 		}).catch(function(){ enCours = false; });
 	}
 
-	// Envoi sans rechargement
 	var form = document.getElementById('ChatForm');
 	if (form){
 		form.addEventListener('submit', function(e){
 			e.preventDefault();
-			var ta = document.getElementById('ChatContenu');
-			var txt = ta.value.trim();
+			var ta = document.getElementById('ChatContenu'); var txt = ta.value.trim();
 			if (txt === '') return;
 			apiPost('conv='+conv, 'action=send&contenu='+encodeURIComponent(txt)).then(function(r){
 				if (r && r.ok){ ta.value = ''; poll(); } else { alert((r && r.err) ? r.err : 'Erreur'); }
@@ -174,9 +199,11 @@ if ($conv) {
 	}
 
 	fil.scrollTop = fil.scrollHeight;
-	majBadge(0); // on vient de lire à l'ouverture
+	majBadge(0);
 	setInterval(poll, 4000);
 })();
 </script>
 
 <?php } ?>
+	</div>
+</div>

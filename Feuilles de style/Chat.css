@@ -1,6 +1,60 @@
+#ChatLayout {
+	display: flex;
+	gap: 14px;
+	max-width: 920px;
+	margin: 15px auto;
+	text-align: left;
+	align-items: flex-start;
+}
+
+#ChatListe {
+	flex: 0 0 220px;
+	background: #fff;
+	border: 1px solid #d0d8ec;
+	border-radius: 8px;
+	padding: 8px;
+}
+#ChatListe h3 {
+	margin: 4px 6px 8px;
+	color: var(--couleur-primaire);
+	font-size: 15px;
+}
+#ChatPanneau { flex: 1 1 auto; min-width: 0; }
+
+.ChatConv {
+	display: block;
+	position: relative;
+	padding: 8px 10px;
+	margin: 3px 0;
+	border-radius: 6px;
+	text-decoration: none;
+	color: var(--couleur-texte);
+	border: 1px solid transparent;
+}
+.ChatConv:hover { background: #f0f4ff; }
+.ChatConvActif { background: #f0f4ff; border-color: var(--couleur-primaire); }
+.ChatConvType {
+	display: inline-block;
+	font-size: 10px;
+	text-transform: uppercase;
+	color: #fff;
+	background: var(--couleur-primaire);
+	border-radius: 3px;
+	padding: 1px 5px;
+	margin-right: 5px;
+	vertical-align: middle;
+}
+.ChatConvNom { font-weight: bold; font-size: 13px; vertical-align: middle; }
+.ChatConv .ChatBadge { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
+
 #ChatTitre {
 	text-align: center;
 	color: var(--couleur-primaire);
+}
+
+@media (max-width: 700px) {
+	#ChatLayout { flex-direction: column; }
+	#ChatListe { flex: none; width: auto; }
 }
 
 #ChatFil {
