@@ -63,6 +63,7 @@ if (isset($_FILES) && is_array($_FILES)) {
 include("classes.inc.php");
 include("variables.inc.php");
 include("fonctions.inc.php");
+include("permissions.inc.php");
 
 // Déterminer la page AVANT d'inclure _entete
 if (!isset($Page) || empty($Page)) {
