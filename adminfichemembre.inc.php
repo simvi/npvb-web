@@ -2,6 +2,14 @@
 if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
 if (!peutAccederPage($Joueur, 'adminfichemembre')){ require("accueil.inc.php"); return;}
 
+// Capitaine : limité aux membres de ses équipes, sans création de compte.
+// Garde placée avant toute écriture (reset, modif, photo).
+$MembresGerables = membresGerables($Joueur);
+if ($MembresGerables !== null) {
+	$CibleMembre = (isset($_POST['MembrePourReset']) && $_POST['MembrePourReset']) ? $_POST['MembrePourReset'] : $Membre;
+	if (!$CibleMembre || !in_array($CibleMembre, $MembresGerables)) { require("accueil.inc.php"); return; }
+}
+
 //******************
 //** Génération de lien de réinitialisation
 //******************

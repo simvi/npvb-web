@@ -45,7 +45,8 @@ $CAPACITES_PAGES = array(
 $PAGES_CAPITAINE = array(
 	'adminevenements'  => 'gerer_evenements',
 	'adminfichejour'   => 'gerer_evenements',
-	// adminmembres / adminfichemembre : ajoutés en phase 5c avec leur filtrage interne
+	'adminmembres'     => 'gerer_membres',
+	'adminfichemembre' => 'gerer_membres',
 );
 
 // Vrai si le joueur peut accéder à une page admin (capacité globale OU capitaine
@@ -125,6 +126,29 @@ function peutPourEquipe($Joueur, $capacite, $equipe) {
 		}
 	}
 	return false;
+}
+
+// Pseudonymes des membres gérables par le joueur pour 'gerer_membres' :
+//   null  = tous (droit global : admin)
+//   array = membres des équipes du capitaine (via NPVB_Appartenance)
+//   array() vide = aucun
+function membresGerables($Joueur) {
+	if (peut($Joueur, 'gerer_membres')) return null; // droit global
+	global $CAPACITES_EQUIPE, $sdblink;
+	$estCapitaine = false;
+	foreach (rolesJoueur($Joueur) as $role) {
+		$caps = isset($CAPACITES_EQUIPE[$role]) ? $CAPACITES_EQUIPE[$role] : array();
+		if (in_array('gerer_membres', $caps)) { $estCapitaine = true; break; }
+	}
+	if (!$estCapitaine) return array();
+	$equipes = equipesDuJoueur($Joueur);
+	if (empty($equipes)) return array();
+	$in = array();
+	foreach ($equipes as $eq) { $in[] = "'".mysql_real_escape_string($eq, $sdblink)."'"; }
+	$liste = array();
+	$res = mysql_query("SELECT DISTINCT Joueur FROM NPVB_Appartenance WHERE Equipe IN (".implode(",", $in).")", $sdblink);
+	if ($res) { while ($row = mysql_fetch_object($res)) { $liste[] = $row->Joueur; } }
+	return $liste;
 }
 
 // Vrai si le joueur a un quelconque pouvoir d'administration (affichage menu, etc.)

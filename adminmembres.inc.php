@@ -11,6 +11,14 @@ switch ($Etat){
 	default: $Joueurs = ChargeJoueurs("V", "Nom, Prenom"); $Etat="V";
 }
 
+// Capitaine : ne lister que les membres de ses équipes
+$MembresGerables = membresGerables($Joueur);
+if ($MembresGerables !== null) {
+	foreach ($Joueurs as $pseudo => $unJoueur) {
+		if (!in_array($pseudo, $MembresGerables)) unset($Joueurs[$pseudo]);
+	}
+}
+
 $LettresNoms = array("A"=>false, "B"=>false, "C"=>false, "D"=>false, "E"=>false, "F"=>false, "G"=>false, "H"=>false, "I"=>false, "J"=>false, "K"=>false, "L"=>false, "M"=>false, "N"=>false, "O"=>false, "P"=>false, "Q"=>false, "R"=>false, "S"=>false, "T"=>false, "U"=>false, "V"=>false, "W"=>false, "X"=>false, "Y"=>false, "Z"=>false);
 foreach($Joueurs as $UnJoueur){
 	$LettresNoms[strToUpper(substr($UnJoueur->Nom, 0, 1))]=true;
@@ -24,11 +32,11 @@ foreach($LettresNoms as $Lettre=>$Presente){
 // Note: Le système de réinitialisation de mot de passe se fait maintenant
 // directement depuis la fiche membre (adminfichemembre.inc.php)
 
-?><form action="<?=$PHP_SELF?>" method="get">
+?><?php if ($MembresGerables === null){ ?><form action="<?=$PHP_SELF?>" method="get">
 	<b>Ajout d'un nouveau membre</b>
 	<input type="hidden" name="Page" value="adminfichemembre" />
 	<input type="submit" value="Ajouter" class="Bouton Action" />
-</form>
+</form><?php } ?>
 
 <table id="Membres">
 	<tr>
