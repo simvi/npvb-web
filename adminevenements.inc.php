@@ -10,6 +10,11 @@ $Joueurs = ChargeJoueurs("V", "Nom, Prenom");
 //******************
 //** Récupère et teste les infos de tout le fichier
 //******************
+// L'import CSV en masse est réservé aux droits globaux (pas le capitaine)
+if (($Import=="oui") && !peut($Joueur, 'gerer_evenements')){
+	$Import="";
+	$ErreurDonnees["UPLOAD"] .= "L'import de masse est réservé aux administrateurs<br/>";
+}
 if ($Import=="oui"){
 	$EvenementsImportes=array();
 	if (is_uploaded_file($ImportEvenements)){
@@ -105,6 +110,7 @@ require("calendrier.inc.php");
 
 <div class="Explications">
 	<a href="#HautDePage">Haut de page</a><br/>
+<?php if (peut($Joueur, 'gerer_evenements')){ ?>
 	<form id="formulaireImport" enctype="multipart/form-data" action="<?=$PHP_SELF?>" method="post">
 		<input type="hidden" name="Page" value="adminevenements" />
 		<input type="hidden" name="Import" value="oui" />
@@ -115,5 +121,6 @@ require("calendrier.inc.php");
 		<input type="file" name="ImportEvenements" />
 		<input type="submit" value="Importer" class="Action"/>
 	</form>
+<?php } ?>
 </div>
 

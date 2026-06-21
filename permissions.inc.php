@@ -40,13 +40,39 @@ $CAPACITES_PAGES = array(
 	'adminstats'        => 'voir_stats',
 );
 
-// Vrai si le joueur peut accéder à une page admin.
-// NB phase 3 : capacités GLOBALES seulement. Le capitaine (accès filtré par
-// équipe) sera ajouté en phase 5, en même temps que le filtrage interne.
+// Pages où le capitaine entre (contenu filtré par équipe à l'intérieur de la page).
+// Valeur = capacité par équipe correspondante.
+$PAGES_CAPITAINE = array(
+	'adminevenements'  => 'gerer_evenements',
+	'adminfichejour'   => 'gerer_evenements',
+	// adminmembres / adminfichemembre : ajoutés en phase 5c avec leur filtrage interne
+);
+
+// Vrai si le joueur peut accéder à une page admin (capacité globale OU capitaine
+// gérant au moins une équipe pour les pages filtrées par équipe).
 function peutAccederPage($Joueur, $Page) {
-	global $CAPACITES_PAGES;
+	global $CAPACITES_PAGES, $PAGES_CAPITAINE;
 	if (!isset($CAPACITES_PAGES[$Page])) return true; // page non protégée
-	return peut($Joueur, $CAPACITES_PAGES[$Page]);
+	if (peut($Joueur, $CAPACITES_PAGES[$Page])) return true;
+	if (isset($PAGES_CAPITAINE[$Page])) {
+		$equipes = equipesGerables($Joueur, $PAGES_CAPITAINE[$Page]);
+		if (is_array($equipes) && count($equipes) > 0) return true;
+	}
+	return false;
+}
+
+// Liste des équipes gérables par le joueur pour une capacité :
+//   null  = toutes (droit global : admin, organisateur)
+//   array = liste restreinte (capitaine sur ses équipes)
+//   array() vide = aucune
+function equipesGerables($Joueur, $capacite) {
+	if (peut($Joueur, $capacite)) return null; // droit global
+	global $CAPACITES_EQUIPE;
+	foreach (rolesJoueur($Joueur) as $role) {
+		$caps = isset($CAPACITES_EQUIPE[$role]) ? $CAPACITES_EQUIPE[$role] : array();
+		if (in_array($capacite, $caps)) return equipesDuJoueur($Joueur);
+	}
+	return array();
 }
 
 // Renvoie le tableau des rôles du joueur (au moins 'membre')

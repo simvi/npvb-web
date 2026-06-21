@@ -14,6 +14,8 @@ if (!peutAccederPage($Joueur, 'adminfichejour')){ require("accueil.inc.php"); re
 //$Joueurs = ChargeJoueurs("V", "Nom, Prenom");
 $Equipes = ChargeEquipes();
 
+// Filtrage par équipe : null = toutes (admin/organisateur), array = équipes du capitaine
+$EquipesGerables = equipesGerables($Joueur, 'gerer_evenements');
 
 if ($ModeModif){
 	
@@ -29,6 +31,7 @@ if ($ModeModif){
 	
 	switch ($ModeModif){
 		case "Nouveau":
+			if ($EquipesGerables !== null && !in_array($Equipe, $EquipesGerables)) { $ErreurDonnees["Nouveau"] .= "Vous ne pouvez pas créer d'événement pour cette équipe<br/>"; break; }
 			if ($ErreurDonnees["DateHeure"]) $ErreurDonnees["Nouveau"] = $ErreurDonnees["DateHeure"];
 			if (!$Equipes[$Equipe]) $ErreurDonnees["Nouveau"] .= "Le Type/Equipe est nécéssaire à la création d'un événement<br/>";
 			if ($ErreurDonnees["Nouveau"]) break;
@@ -38,6 +41,7 @@ if ($ModeModif){
 			if (!mySql_query("INSERT INTO NPVB_Evenements (DateHeure, Libelle, Etat, Titre, InscritsMax) VALUES ('".$NouvelleDateHeure."', '".$Equipe."', 'I', '".$Equipe."', '".$InscritsMax."')", $sdblink)) $ErreurDonnees["Enregistrement"] .= "Erreur lors de l'enregistrement: ".mySql_errno($sdblink).":<br/>".mySql_error($sdblink)."<br/>";
 			break;
 		case "Modif":
+			if ($EquipesGerables !== null && (!in_array($Libelle, $EquipesGerables) || !in_array($Equipe, $EquipesGerables))) { $ErreurDonnees["Modif"] .= "Vous ne pouvez modifier que les événements de votre équipe<br/>"; break; }
 			if ($ErreurDonnees["DateHeure"]) $ErreurDonnees["Modif"] = $ErreurDonnees["DateHeure"];
 			if (!$Equipes[$Equipe]) $ErreurDonnees["Modif"] .= "Le Type/Equipe obligatoire<br/>";
 			if (!$Titre){$ErreurDonnees["Modif"] .= "Le Titre est obligatoire<br/>";
@@ -88,6 +92,7 @@ if ($ModeModif){
 			}
 			break;
 		case "Supprime":
+			if ($EquipesGerables !== null && !in_array($Libelle, $EquipesGerables)) { $ErreurDonnees["Supprime"] .= "Vous ne pouvez supprimer que les événements de votre équipe<br/>"; break; }
 			if ($ErreurDonnees["DateHeure"]) $ErreurDonnees["Supprime"] = $ErreurDonnees["DateHeure"];
 			if ($ErreurDonnees["Supprime"]) break;
 			$Modification=true;
@@ -124,7 +129,7 @@ function ConfirmSupprime(NomFormulaire, Evenement){
 	<input type="hidden" name="Mois" value="<?=$Mois?>" />
 	<input type="hidden" name="Annee" value="<?=$Annee?>" />
 	<input type="hidden" name="ModeModif" value="Nouveau" />
-	<b>Ajout d'un événement</b><select name="Equipe"><option value=""></option><?foreach ($Equipes as $Equipe){?><option value="<?=$Equipe->Nom?>"><?=$Equipe->Nom?></option><?}?></select>
+	<b>Ajout d'un événement</b><select name="Equipe"><option value=""></option><?foreach ($Equipes as $Equipe){ if ($EquipesGerables !== null && !in_array($Equipe->Nom, $EquipesGerables)) continue;?><option value="<?=$Equipe->Nom?>"><?=$Equipe->Nom?></option><?}?></select>
 	Date <input type="text" value="<?=substr($Jour, 6, 2)."/".substr($Jour, 4, 2)."/".substr($Jour, 0, 4)?>" size="10"  maxlength="10" disabled="disabled" /><input type="hidden" name="Date" value="<?=substr($Jour, 6, 2)."/".substr($Jour, 4, 2)."/".substr($Jour, 0, 4)?>"/>
 	Heure <input type="text" name="Heure" value="20:00" size="5"  maxlength="5" />
 	<input type="submit" value="Ajouter" class="Action" />
@@ -155,6 +160,8 @@ if ($Evenements[$Jour]){
 
 	foreach ($Evenements[$Jour] as $HeureKey=>$HeureEvent){
 		foreach ($Evenements[$Jour][$HeureKey] as $Key=>$Event){
+			// Capitaine : ne voir/éditer que les événements de ses équipes
+			if ($EquipesGerables !== null && !in_array($Event->Libelle, $EquipesGerables)) continue;
 			$LaDate = ConvertisDate($Event->DateHeure, "PHP");
 			$Date = date("d/m/Y", $LaDate);
 			$Heure = date("H:i", $LaDate);
@@ -194,7 +201,7 @@ if ($Evenements[$Jour]){
 		<input type="hidden" name="Libelle" value="<?=$Event->Libelle?>" />
 		<input type="hidden" name="DateHeure" value="<?=$Event->DateHeure?>" />
 		<p>
-		Type / Equipe <select<?=(($Event->Etat<>"I")?" disabled=\"disabled\"":" name=\"Equipe\"")?>><?foreach ($Equipes as $Equipe){?><option value="<?=$Equipe->Nom?>"<?=(($Event->Libelle==$Equipe->Nom)?" selected=\"selected\"":"")?>><?=$Equipe->Nom?></option><?}?></select>
+		Type / Equipe <select<?=(($Event->Etat<>"I")?" disabled=\"disabled\"":" name=\"Equipe\"")?>><?foreach ($Equipes as $Equipe){ if ($EquipesGerables !== null && !in_array($Equipe->Nom, $EquipesGerables)) continue;?><option value="<?=$Equipe->Nom?>"<?=(($Event->Libelle==$Equipe->Nom)?" selected=\"selected\"":"")?>><?=$Equipe->Nom?></option><?}?></select>
 		Date <input type="text" value="<?=$Date?>" size="10"  maxlength="10"<?=(($Event->Etat<>"I")?" disabled=\"disabled\"":" name=\"Date\"")?> />
 		Heure <input type="text" value="<?=$Heure?>" size="5"  maxlength="5"<?=(($Event->Etat<>"I")?" disabled=\"disabled\"":"  name=\"Heure\"")?> />
 		Etat <select name="Etat"><?foreach ($EtatsEvent as $ValEtatEvent=>$EtatEvent){{?><option value="<?=$ValEtatEvent?>"<?=((substr($Event->Etat, 0, 1)==$ValEtatEvent)?" selected=\"selected\"":"")?><?=((($ValEtatEvent=="I")&&($Event->Etat<>"I"))?" disabled=\"disabled\"":"")?>><?=$EtatEvent?></option><?}}?></select>
