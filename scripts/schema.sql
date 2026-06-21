@@ -8,7 +8,6 @@ SET CHARACTER SET utf8mb4;
 CREATE TABLE IF NOT EXISTS `NPVB_Joueurs` (
   `Pseudonyme`        varchar(30)                  NOT NULL DEFAULT '',
   `Password`          varchar(16)                  NOT NULL,
-  `DieuToutPuissant`  enum('o','n')                NOT NULL DEFAULT 'n',
   `Titre`             varchar(30)                  DEFAULT NULL,
   `Etat`              enum('V','I','E')             NOT NULL DEFAULT 'I',
   `Adhesion`          date                         DEFAULT NULL,

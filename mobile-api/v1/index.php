@@ -95,6 +95,13 @@ mysql_select_db($DB_NAME, $dblink);
 mysql_query("SET CHARACTER SET utf8mb4", $dblink);
 mysql_query("SET NAMES utf8mb4", $dblink);
 
+// Statut admin calculé depuis les rôles (remplace l'ancienne colonne DieuToutPuissant)
+function estAdminParRole($pseudo) {
+    $p = mysql_real_escape_string($pseudo);
+    $r = mysql_query("SELECT 1 FROM NPVB_JoueurRoles WHERE Pseudonyme='$p' AND Role='admin' LIMIT 1");
+    return ($r && mysql_num_rows($r) > 0);
+}
+
 // Récupérer endpoint
 $endpoint = isset($_GET['endpoint']) ? trim($_GET['endpoint'], '/') : '';
 
@@ -134,7 +141,7 @@ if ($resource == 'auth' && isset($segments[1]) && $segments[1] == 'login') {
     }
 
     $username = mysql_real_escape_string($username);
-    $query = "SELECT Pseudonyme, DieuToutPuissant FROM NPVB_Joueurs
+    $query = "SELECT Pseudonyme FROM NPVB_Joueurs
               WHERE etat='V' AND Pseudonyme='$username' AND Password='".old_password_hash($password)."'";
     $result = mysql_query($query);
 
@@ -147,7 +154,7 @@ if ($resource == 'auth' && isset($segments[1]) && $segments[1] == 'login') {
                 'token' => $token,
                 'user' => array(
                     'Pseudonyme' => $user['Pseudonyme'],
-                    'isAdmin' => ($user['DieuToutPuissant'] == 'o')
+                    'isAdmin' => estAdminParRole($user['Pseudonyme'])
                 )
             ),
             'message' => 'Login successful'
@@ -179,7 +186,7 @@ if ($resource == 'members') {
     } elseif ($username) {
         // GET /members/{username}
         $username = mysql_real_escape_string($username);
-        $query = "SELECT Pseudonyme, DieuToutPuissant, Nom, Prenom, Sexe, DateNaissance,
+        $query = "SELECT Pseudonyme, Nom, Prenom, Sexe, DateNaissance,
                          Profession, Adresse, CPVille, Telephones, Email, Accord, NumeroLicence
                   FROM NPVB_Joueurs WHERE etat='V' AND Pseudonyme='$username'";
         $result = mysql_query($query);
@@ -187,7 +194,8 @@ if ($resource == 'members') {
         if ($result && mysql_num_rows($result) > 0) {
             $member = mysql_fetch_assoc($result);
 
-            // Ajouter le nom de fichier Photo (pas stocké en DB)
+            // Statut admin (compat ancienne colonne) + nom de fichier Photo
+            $member['DieuToutPuissant'] = estAdminParRole($member['Pseudonyme']) ? 'o' : 'n';
             $member['Photo'] = $member['Pseudonyme'];
 
             // Récupérer les appartenances pour ce membre
@@ -208,14 +216,15 @@ if ($resource == 'members') {
         }
     } else {
         // GET /members (tous)
-        $query = "SELECT Pseudonyme, DieuToutPuissant, Nom, Prenom, Sexe, DateNaissance,
+        $query = "SELECT Pseudonyme, Nom, Prenom, Sexe, DateNaissance,
                          Profession, Adresse, CPVille, Telephones, Email, Accord, NumeroLicence
                   FROM NPVB_Joueurs WHERE etat='V' ORDER BY Nom, Prenom";
         $result = mysql_query($query);
         $data = array();
 
         while ($row = mysql_fetch_assoc($result)) {
-            // Ajouter le nom de fichier Photo (pas stocké en DB)
+            // Statut admin (compat ancienne colonne) + nom de fichier Photo
+            $row['DieuToutPuissant'] = estAdminParRole($row['Pseudonyme']) ? 'o' : 'n';
             $row['Photo'] = $row['Pseudonyme'];
 
             // Récupérer les appartenances pour ce membre

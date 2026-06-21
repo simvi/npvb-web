@@ -199,7 +199,7 @@ if ((($Mode=="Modif")||($Mode=="Nouveau")) && !isset($_POST['GenererLienReset'])
 				
 			case "Nouveau":
 				//$Etat="V";
-				if (mySql_query("INSERT INTO NPVB_Joueurs (Pseudonyme, Password, DieuToutPuissant, Etat, Adhesion, Nom, Prenom, Sexe, DateNaissance, Profession, Adresse, CPVille, Telephones, Email, Accord, PremiereAdhesion, License) VALUES ('".$Membre."', '".old_password_hash($MotDePasse)."', 'n','".$Etat."', '".$AdhesionMySQL."', '".$Nom."', '".$Prenom."', '".$Sexe."', '".$DateNaissanceMySQL."', '".$Profession."', '".$Adresse."', '".$CPVille."', '".$Telephones."', '".$Email."', '".$Accord."', '".$PremiereAdhesionMySQL."', '".$LicenseMySQL."')", $sdblink)){
+				if (mySql_query("INSERT INTO NPVB_Joueurs (Pseudonyme, Password, Etat, Adhesion, Nom, Prenom, Sexe, DateNaissance, Profession, Adresse, CPVille, Telephones, Email, Accord, PremiereAdhesion, License) VALUES ('".$Membre."', '".old_password_hash($MotDePasse)."', '".$Etat."', '".$AdhesionMySQL."', '".$Nom."', '".$Prenom."', '".$Sexe."', '".$DateNaissanceMySQL."', '".$Profession."', '".$Adresse."', '".$CPVille."', '".$Telephones."', '".$Email."', '".$Accord."', '".$PremiereAdhesionMySQL."', '".$LicenseMySQL."')", $sdblink)){
 					if (($MotDePasse)&&($Email)&&($EnvoiMail)&&(!$ErreurDonnees)) if (!mail ($Email, $SujetMailCreationCompte, $CorpsMailCreationCompte)) $ErreurDonnees["Enregistrement"]="Erreur d'envoi du mail.<br/>"; 
 					$Mode="Modif";
 				}else{

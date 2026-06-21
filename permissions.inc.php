@@ -95,8 +95,6 @@ function rolesJoueur($Joueur) {
 // Vrai si le joueur possède une capacité GLOBALE
 function peut($Joueur, $capacite) {
 	if (!isset($Joueur) || !is_object($Joueur)) return false;
-	// Compatibilité ascendante : l'ancien admin tout-puissant a tout (supprimé en phase 7)
-	if (isset($Joueur->DieuToutPuissant) && $Joueur->DieuToutPuissant == "o") return true;
 	global $CAPACITES_GLOBALES;
 	foreach (rolesJoueur($Joueur) as $role) {
 		$caps = isset($CAPACITES_GLOBALES[$role]) ? $CAPACITES_GLOBALES[$role] : array();

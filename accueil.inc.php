@@ -2,7 +2,7 @@
 if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
 
 // ============================================================
-// Contenu éditable de la page d'accueil (admins DieuToutPuissant)
+// Contenu éditable de la page d'accueil (capacité editer_accueil)
 // ============================================================
 $estAdminAccueil = peut($Joueur, 'editer_accueil');
 
