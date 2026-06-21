@@ -92,4 +92,91 @@ if ($conv) {
 	<p class="Remarque">Seuls les administrateurs et rédacteurs peuvent publier ici.</p>
 <?php } ?>
 
+<script type="text/javascript">
+(function(){
+	var fil = document.getElementById('ChatFil');
+	if (!fil) return;
+	var conv = parseInt(fil.getAttribute('data-conv'), 10);
+	var dernier = parseInt(fil.getAttribute('data-dernier'), 10) || 0;
+	var peutModerer = <?=($peutModerer?'true':'false')?>;
+	var enCours = false;
+
+	function api(params){
+		return fetch('index.php?Page=chatapi&' + params, {credentials:'same-origin'}).then(function(r){return r.json();});
+	}
+	function apiPost(params, body){
+		return fetch('index.php?Page=chatapi&' + params, {method:'POST', credentials:'same-origin',
+			headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:body}).then(function(r){return r.json();});
+	}
+	function majBadge(n){
+		var b = document.getElementById('ChatBadge');
+		if (!b) return;
+		if (n > 0){ b.textContent = n; b.style.display = ''; } else { b.style.display = 'none'; }
+	}
+	function corps(parent, texte){
+		var lignes = texte.split('\n');
+		for (var i=0;i<lignes.length;i++){
+			if (i>0) parent.appendChild(document.createElement('br'));
+			parent.appendChild(document.createTextNode(lignes[i]));
+		}
+	}
+	function ajoute(m){
+		var vide = fil.querySelector('.ChatVide');
+		if (vide) vide.parentNode.removeChild(vide);
+		var div = document.createElement('div');
+		div.className = 'ChatMsg' + (m.moi ? ' ChatMsgMoi' : '');
+		div.setAttribute('data-id', m.id);
+		var ent = document.createElement('div'); ent.className = 'ChatMsgEntete';
+		var a = document.createElement('span'); a.className = 'ChatAuteur'; a.textContent = m.nom;
+		var d = document.createElement('span'); d.className = 'ChatDate'; d.textContent = m.date;
+		ent.appendChild(a); ent.appendChild(document.createTextNode(' ')); ent.appendChild(d);
+		var cps = document.createElement('div'); cps.className = 'ChatMsgCorps'; corps(cps, m.contenu);
+		div.appendChild(ent); div.appendChild(cps);
+		if (peutModerer){
+			var btn = document.createElement('button');
+			btn.className = 'ChatSuppr'; btn.innerHTML = '&#10006;'; btn.title = 'Supprimer';
+			btn.onclick = function(){
+				if (!confirm('Supprimer ce message ?')) return;
+				apiPost('conv='+conv, 'action=delete&id='+m.id).then(function(){ div.parentNode.removeChild(div); });
+			};
+			var wrap = document.createElement('div'); wrap.className = 'ChatSupprForm'; wrap.appendChild(btn);
+			div.appendChild(wrap);
+		}
+		fil.appendChild(div);
+	}
+	function poll(){
+		if (enCours) return; enCours = true;
+		api('action=poll&conv='+conv+'&since='+dernier).then(function(data){
+			enCours = false;
+			if (!data || !data.ok) return;
+			var auBas = (fil.scrollTop + fil.clientHeight >= fil.scrollHeight - 30);
+			if (data.messages && data.messages.length){
+				data.messages.forEach(function(m){ ajoute(m); if (m.id > dernier) dernier = m.id; });
+				if (auBas) fil.scrollTop = fil.scrollHeight;
+				// marque comme lu (on est sur la page)
+				apiPost('conv='+conv, 'action=markread&lastid='+dernier).then(function(r){ if (r && r.ok) majBadge(r.nonlus); });
+			}
+		}).catch(function(){ enCours = false; });
+	}
+
+	// Envoi sans rechargement
+	var form = document.getElementById('ChatForm');
+	if (form){
+		form.addEventListener('submit', function(e){
+			e.preventDefault();
+			var ta = document.getElementById('ChatContenu');
+			var txt = ta.value.trim();
+			if (txt === '') return;
+			apiPost('conv='+conv, 'action=send&contenu='+encodeURIComponent(txt)).then(function(r){
+				if (r && r.ok){ ta.value = ''; poll(); } else { alert((r && r.err) ? r.err : 'Erreur'); }
+			});
+		});
+	}
+
+	fil.scrollTop = fil.scrollHeight;
+	majBadge(0); // on vient de lire à l'ouverture
+	setInterval(poll, 4000);
+})();
+</script>
+
 <?php } ?>

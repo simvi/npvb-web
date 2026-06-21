@@ -71,7 +71,7 @@ if (!isset($Page) || empty($Page)) {
 }
 
 // Ne pas générer le HTML pour les endpoints AJAX/API
-$pages_api = array('adminaccueilimage');
+$pages_api = array('adminaccueilimage', 'chatapi');
 $is_api_endpoint = in_array($Page, $pages_api);
 
 if ($is_api_endpoint) {
@@ -88,7 +88,7 @@ $pages_autorisees = array(
 	'accueil', 'calendrier', 'jour', 'membres', 'Erreur404', 'maintenance',
 	'adminstats', 'adminfichejour', 'adminevenements', 'adminequipes',
 	'adminmembres', 'adminnewmessage', 'adminfichemembre', 'adminmessages',
-	'adminaccueilimage', 'resetmotdepasse', 'chat'
+	'adminaccueilimage', 'resetmotdepasse', 'chat', 'chatapi'
 );
 
 // Vérifier que la page demandée est autorisée
