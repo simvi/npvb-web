@@ -72,6 +72,15 @@ CREATE TABLE IF NOT EXISTS `NPVB_Presence` (
   PRIMARY KEY (`Joueur`, `DateHeure`, `Libelle`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `NPVB_ListeAttente` (
+  `Joueur`          varchar(30) NOT NULL,
+  `DateHeure`       varchar(14) NOT NULL,
+  `Libelle`         varchar(10) NOT NULL,
+  `DateInscription` datetime    NOT NULL,
+  PRIMARY KEY (`Joueur`, `DateHeure`, `Libelle`),
+  KEY `idx_file` (`DateHeure`, `Libelle`, `DateInscription`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `NPVB_News` (
   `id`       int(11)   NOT NULL,
   `title`    text      NOT NULL,
