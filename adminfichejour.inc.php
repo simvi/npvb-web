@@ -5,7 +5,7 @@
 
 
 if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
-if ($Joueur->DieuToutPuissant=="n"){ require("accueil.inc.php"); return;}
+if (!peutAccederPage($Joueur, 'adminfichejour')){ require("accueil.inc.php"); return;}
 
 		
 //******************************************************************

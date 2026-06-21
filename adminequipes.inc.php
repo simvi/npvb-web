@@ -1,6 +1,6 @@
 <?
 if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
-if ($Joueur->DieuToutPuissant=="n"){ require("accueil.inc.php"); return;}
+if (!peutAccederPage($Joueur, 'adminequipes')){ require("accueil.inc.php"); return;}
 
 $Equipes = ChargeEquipes();
 $Joueurs = ChargeJoueurs("V", "Nom, Prenom");

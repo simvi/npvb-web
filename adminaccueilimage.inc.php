@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json');
 
-if (!isset($Joueur) || !is_object($Joueur) || $Joueur->DieuToutPuissant != "o") {
+if (!peut($Joueur, 'editer_accueil')) {
     http_response_code(403);
     echo json_encode(array('ok' => false, 'err' => 'Accès refusé'));
     exit;

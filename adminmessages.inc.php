@@ -5,8 +5,8 @@
 // Date: 2026-01-24
 // ============================================================
 
-if (!$PasseParIndex) { header('Location: index2.php?Page=Erreur404'); return; }
-if ($Joueur->DieuToutPuissant != "o") { header('Location: index2.php?Page=accueil'); return; }
+if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return; }
+if (!peutAccederPage($Joueur, 'adminmessages')){ require("accueil.inc.php"); return; }
 
 // ============================================================
 // TRAITEMENT DES ACTIONS (POST)

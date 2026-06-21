@@ -26,6 +26,29 @@ $CAPACITES_EQUIPE = array(
 	'capitaine' => array('gerer_evenements', 'saisir_presences', 'cloturer_evenements', 'gerer_membres'),
 );
 
+// Capacité globale requise pour accéder à chaque page admin
+$CAPACITES_PAGES = array(
+	'adminequipes'      => 'gerer_equipes',
+	'adminevenements'   => 'gerer_evenements',
+	'adminfichejour'    => 'gerer_evenements',
+	'adminmembres'      => 'gerer_membres',
+	'adminfichemembre'  => 'gerer_membres',
+	'adminmessages'     => 'gerer_messages',
+	'adminnewmessage'   => 'gerer_messages',
+	'adminaccueil'      => 'editer_accueil',
+	'adminaccueilimage' => 'editer_accueil',
+	'adminstats'        => 'voir_stats',
+);
+
+// Vrai si le joueur peut accéder à une page admin.
+// NB phase 3 : capacités GLOBALES seulement. Le capitaine (accès filtré par
+// équipe) sera ajouté en phase 5, en même temps que le filtrage interne.
+function peutAccederPage($Joueur, $Page) {
+	global $CAPACITES_PAGES;
+	if (!isset($CAPACITES_PAGES[$Page])) return true; // page non protégée
+	return peut($Joueur, $CAPACITES_PAGES[$Page]);
+}
+
 // Renvoie le tableau des rôles du joueur (au moins 'membre')
 function rolesJoueur($Joueur) {
 	if (!isset($Joueur) || !is_object($Joueur)) return array();

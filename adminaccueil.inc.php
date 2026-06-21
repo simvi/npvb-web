@@ -1,6 +1,6 @@
 <?
 if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
-if ($Joueur->DieuToutPuissant=="n"){ require("accueil.inc.php"); return;}
+if (!peutAccederPage($Joueur, 'adminaccueil')){ require("accueil.inc.php"); return;}
 
 
 
@@ -79,7 +79,7 @@ foreach($Joueurs as $UnJoueur){
 				<tr>	
 					<td colspan="2" class="Colonne">
 					<table>
-<?	if ($Joueurs[$Membre]->DateNaissance<>"0000-00-00") {?>						<tr><td colspan="2">Né<?=($Joueurs[$Membre]->Sexe=="f")?"e":""?> le <?=substr($Joueurs[$Membre]->DateNaissance, 8, 2)?> <?=$montharray[(int)substr($Joueurs[$Membre]->DateNaissance, 5, 2)]?> <?=substr($Joueurs[$Membre]->DateNaissance, 0, 4)?></td></tr><?}?>
+<?	if ($Joueurs[$Membre]->DateNaissance<>"0000-00-00") {?>						<tr><td colspan="2">Nï¿½<?=($Joueurs[$Membre]->Sexe=="f")?"e":""?> le <?=substr($Joueurs[$Membre]->DateNaissance, 8, 2)?> <?=$montharray[(int)substr($Joueurs[$Membre]->DateNaissance, 5, 2)]?> <?=substr($Joueurs[$Membre]->DateNaissance, 0, 4)?></td></tr><?}?>
 <?	if ($Joueurs[$Membre]->Adresse<>"") {?>						<tr><td>Adresse: </td><td><?=$Joueurs[$Membre]->Adresse."<br/>".$Joueurs[$Membre]->CPVille?></td></tr><?}?>
 
 <?	if ($Joueurs[$Membre]->Profession<>"") {?>						

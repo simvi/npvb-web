@@ -96,16 +96,9 @@ if (!in_array($Page, $pages_autorisees)) {
 	$Page = "accueil";
 }
 
-// CORRECTIF SÉCURITÉ #3: Contrôle d'accès corrigé avec break appropriés
-$pages_admin = array('adminstats', 'adminfichejour', 'adminevenements',
-                     'adminequipes', 'adminmembres',
-                     'adminnewmessage', 'adminfichemembre', 'adminmessages');
-
-if (in_array($Page, $pages_admin)) {
-	// Vérification admin stricte
-	if (!isset($Joueur) || !is_object($Joueur) || $Joueur->DieuToutPuissant != "o") {
-		$Page = "accueil";
-	}
+// CORRECTIF SÉCURITÉ #3: Contrôle d'accès par capacité (voir permissions.inc.php)
+if (!peutAccederPage($Joueur, $Page)) {
+	$Page = "accueil";
 }
 
 $pages_membres = array('jour', 'membres');
