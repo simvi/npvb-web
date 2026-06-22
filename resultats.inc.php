@@ -52,7 +52,7 @@ $FiltreSaison = isset($_GET['Saison']) ? $_GET['Saison'] : '';
 </form>
 
 <table id="Accueil" class="TableResultats">
-	<tr>
+	<tr class="EnteteResultats">
 		<th>Date</th><th>Équipe</th><th>Rencontre</th><th>Adversaire</th><th>Score</th><th>Détail des sets</th>
 	</tr>
 <?php
@@ -70,12 +70,12 @@ foreach ($matchs as $m) {
 	foreach ($d['sets'] as $s) { $detail .= ($detail?" · ":"").$s['L']."-".$s['V']; }
 ?>
 	<tr class="<?=($gagne?"MatchGagne":"MatchPerdu")?>">
-		<td><?=$date?></td>
-		<td><?=htmlspecialchars($m->Libelle, ENT_QUOTES)?></td>
-		<td><?=htmlspecialchars($m->Intitule, ENT_QUOTES)?><?=($lieu?" <em>(".$lieu.")</em>":"")?></td>
-		<td><?=htmlspecialchars($m->Adversaire, ENT_QUOTES)?></td>
-		<td class="ScoreResultat"><?=$score?></td>
-		<td><?=$detail?></td>
+		<td data-label="Date"><?=$date?></td>
+		<td data-label="Équipe"><?=htmlspecialchars($m->Libelle, ENT_QUOTES)?></td>
+		<td data-label="Rencontre"><?=htmlspecialchars($m->Intitule, ENT_QUOTES)?><?=($lieu?" <em>(".$lieu.")</em>":"")?></td>
+		<td data-label="Adversaire"><?=htmlspecialchars($m->Adversaire, ENT_QUOTES)?></td>
+		<td class="ScoreResultat" data-label="Score"><?=$score?></td>
+		<td data-label="Sets"><?=$detail?></td>
 	</tr>
 <?php } ?>
 <?php if ($nb == 0) { ?>

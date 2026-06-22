@@ -590,3 +590,51 @@ textarea:focus, input:focus {
 .TableResultats .MatchGagne .ScoreResultat { color: var(--couleur-succes); }
 .TableResultats .MatchPerdu .ScoreResultat { color: var(--couleur-danger); }
 .TableResultats tr:hover { background: #f0f4ff; }
+
+/* Version mobile : chaque match devient une carte empilée */
+@media (max-width: 600px) {
+	.TableResultats { display: block; }
+	.TableResultats tbody { display: block; }
+	.TableResultats .EnteteResultats { display: none; } /* en-têtes masqués */
+
+	.TableResultats tr {
+		display: block;
+		margin: 0 0 12px;
+		padding: 8px 10px;
+		border: 1px solid #e0e0e0;
+		border-left: 5px solid #ccc;
+		border-radius: 8px;
+		background: #fff;
+	}
+	.TableResultats tr.MatchGagne { border-left-color: var(--couleur-succes); }
+	.TableResultats tr.MatchPerdu { border-left-color: var(--couleur-danger); }
+	.TableResultats tr:hover { background: #fff; }
+
+	.TableResultats td {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		gap: 12px;
+		padding: 4px 0;
+		border: none;
+		border-bottom: 1px solid #f0f0f0;
+		text-align: right;
+	}
+	.TableResultats td:last-child { border-bottom: none; }
+	.TableResultats td::before {
+		content: attr(data-label);
+		font-weight: bold;
+		color: var(--couleur-primaire);
+		text-align: left;
+		flex-shrink: 0;
+	}
+	/* Score mis en avant dans la carte */
+	.TableResultats td.ScoreResultat { font-size: 20px; }
+
+	/* Filtres : champs plus accessibles au doigt */
+	#Corps form.Explications select {
+		display: block;
+		width: 100%;
+		margin: 4px 0;
+	}
+}
