@@ -81,6 +81,7 @@ do{
 					if (($Mode<>"Admin")&($Event->Etat=="I")) continue;
 					$Presence="";
 					$BullePresence="";
+					$ScoreInline="";
 					if (substr($Event->Etat, 0 ,1) == "A"){
 						$Style="Annule";
 						$MessageBulle = "&lt;p&gt;".$Event->Intitule."&lt;/p&gt;&lt;ul&gt;";  
@@ -109,7 +110,10 @@ do{
 							$nombreJoueursPresents = (($Event->Etat=="O")||($Event->Etat=="F"))?$Event->nombreJoueursPresents():$Event->NombreJoueursEtaientPresents;
 							$Style = ($nombreJoueursPresents >= $EquipeComplete)?"RencontreComplet":"RencontreIncomplet";
 							$MessageBulle .= "&lt;li&gt;Rencontre à ".(($Event->Domicile == "o")?"domicile":"l'extérieur")."&lt;/li&gt;";
-							if ($Event->Resultat) $MessageBulle .= "&lt;li&gt;Résultat: ".substr($Event->Resultat, 0, 1)." / ".substr($Event->Resultat, 1, 1)."&lt;/li&gt;";
+							if ($Event->Resultat) {
+								$MessageBulle .= "&lt;li&gt;Résultat: ".substr($Event->Resultat, 0, 1)." / ".substr($Event->Resultat, 1, 1)."&lt;/li&gt;";
+								$ScoreInline = "<span class=\"ScoreCalendrier\">".resultatSetsGagnes($Event->Resultat)."</span>";
+							}
 							
 						} else continue;//Ce n'est pas une evènement reconnu
 						
@@ -119,7 +123,7 @@ do{
 						if ($Joueur) $MessageBulle .= "&lt;em&gt;(Cliquez pour voir plus de détails)&lt;/em&gt;";
 					}
 					$MessageBulle=str_replace("'", "\'", $MessageBulle);
-					print("<p class=\"".$Style."\" onmouseover=\"bulle('".$MessageBulle."', event, 3)\" onmouseout=\"couic()\"> ".$Presence.$Event->Titre.$Presence." </p>");
+					print("<p class=\"".$Style."\" onmouseover=\"bulle('".$MessageBulle."', event, 3)\" onmouseout=\"couic()\"> ".$Presence.$Event->Titre.$Presence.$ScoreInline." </p>");
 				}
 			}
 		}
