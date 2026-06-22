@@ -576,3 +576,17 @@ textarea:focus, input:focus {
 	font-style: italic;
 	color: var(--couleur-primaire);
 }
+
+/* Page Résultats */
+.TableResultats { width: 100%; border-collapse: collapse; }
+.TableResultats th, .TableResultats td {
+	padding: 7px 9px;
+	border-bottom: 1px solid #e0e0e0;
+	text-align: left;
+	font-size: 14px;
+}
+.TableResultats th { background: var(--couleur-primaire); color: #fff; }
+.TableResultats .ScoreResultat { font-weight: bold; font-size: 16px; white-space: nowrap; }
+.TableResultats .MatchGagne .ScoreResultat { color: var(--couleur-succes); }
+.TableResultats .MatchPerdu .ScoreResultat { color: var(--couleur-danger); }
+.TableResultats tr:hover { background: #f0f4ff; }

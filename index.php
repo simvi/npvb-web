@@ -89,7 +89,7 @@ $pages_autorisees = array(
 	'accueil', 'calendrier', 'jour', 'membres', 'Erreur404', 'maintenance',
 	'adminstats', 'adminfichejour', 'adminevenements', 'adminequipes',
 	'adminmembres', 'adminnewmessage', 'adminfichemembre', 'adminmessages',
-	'adminaccueilimage', 'resetmotdepasse', 'chat', 'chatapi', 'adminchat'
+	'adminaccueilimage', 'resetmotdepasse', 'chat', 'chatapi', 'adminchat', 'resultats'
 );
 
 // Vérifier que la page demandée est autorisée
@@ -102,7 +102,7 @@ if (!peutAccederPage($Joueur, $Page)) {
 	$Page = "accueil";
 }
 
-$pages_membres = array('jour', 'membres', 'chat');
+$pages_membres = array('jour', 'membres', 'chat', 'resultats');
 if (in_array($Page, $pages_membres)) {
 	// Vérification connexion
 	if (!isset($Joueur) || !is_object($Joueur)) {
@@ -251,6 +251,7 @@ if (isset($Joueur) && is_object($Joueur)) {
 <li<?php echo (($Page=="accueil")?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=accueil">Accueil</a></li>
 		<li<?php echo ((($Page=="calendrier")||($Page=="jour"))?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=calendrier">Le calendrier</a></li>
 		<li<?php echo (($Page=="membres")?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=membres">Les membres</a></li>
+		<li<?php echo (($Page=="resultats")?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=resultats">Résultats</a></li>
 		<li<?php echo (($Page=="chat")?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=chat">Discussion<?php $nl=compterNonLus($Joueur, $sdblink); if ($nl>0) echo ' <span class="ChatBadge" id="ChatBadge">'.$nl.'</span>'; else echo '<span class="ChatBadge" id="ChatBadge" style="display:none"></span>'; ?></a></li>
 		<li><a href="<?php echo $script_name; ?>?Page=accueil&amp;Action=deloguer">Fermer session</a></li>
 <?php
