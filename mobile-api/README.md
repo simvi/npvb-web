@@ -39,13 +39,48 @@ GET /mobile-api/v1/index.php?endpoint=events
 GET /mobile-api/v1/index.php?endpoint=events/{dateHeure}/{libelle}
 GET /mobile-api/v1/index.php?endpoint=events/{dateHeure}/presences
 ```
+Note : `endpoint=events` est filtré (DateHeure > 2019) pour rester léger
+(calendrier/accueil). Pour l'historique complet des résultats, voir ci-dessous.
+
+### Résultats
+```
+GET /mobile-api/v1/index.php?endpoint=results
+```
+Renvoie tous les matchs ayant un résultat (`Resultat <> ''`, hors ASSO/SEANCE),
+sans filtre de date, triés du plus récent au plus ancien. Mêmes colonnes que
+`events` (le champ `Resultat` est la chaîne encodée sur 22 caractères).
 
 ### Présences
 ```
 POST /mobile-api/v1/index.php?endpoint=presences
-Body: {"dateHeure":"20250125200000","joueur":"pseudo","libelle":"MATCH","presence":"o"}
-Valeurs presence: "o" (présent), "n" (désinscription), "!" (absent)
+Body: {"dateHeure":"20250125200000","joueur":"pseudo","libelle":"MATCH","statut":"inscrit"}
 ```
+Le client envoie un **statut cible** ; le serveur en déduit l'opération et renvoie
+toujours le **statut résultant**.
+
+Statuts demandés : `inscrit` | `indisponible` | `absent_reponse` | `liste_attente`
+```
+Réponse : {"success":true,"data":{"statut":"...","positionAttente":N|null},"message":"..."}
+```
+Statut résultant : `inscrit` | `indisponible` | `absent_reponse` | `liste_attente` | `complet`
+
+- `inscrit` → écrit Prevue='o'. Si l'événement est **complet** (et pas déjà inscrit),
+  renvoie `statut:"complet"` sans effet : l'app propose alors `liste_attente`.
+- `indisponible` → écrit Prevue='n' (ligne conservée), libère une place → promotion auto.
+- `absent_reponse` → efface la réponse (supprime la ligne) + sort de la liste d'attente
+  + promotion auto.
+- `liste_attente` → rejoint la file (idempotent), renvoie `positionAttente`.
+
+Le GET présences renvoie aussi un champ dérivé `statut` (`inscrit`/`indisponible`)
+en plus de `Prevue`.
+
+### Liste d'attente (statut)
+```
+GET /mobile-api/v1/index.php?endpoint=events/{dateHeure}/{libelle}/waitlist?username=XXX
+→ {"success":true,"data":{"count":N,"onWaitlist":bool,"position":P}}
+```
+Permet de restaurer l'état « en liste d'attente (position P) » à l'ouverture d'un
+événement. `position` vaut 0 si l'utilisateur n'est pas dans la file.
 
 ### Ressources
 ```

@@ -30,3 +30,7 @@ DEPOT/
 # OS
 .DS_Store
 Thumbs.db
+
+# Clones des apps mobiles (repos git séparés)
+npvb-android/
+npvb-ios/
