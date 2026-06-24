@@ -54,8 +54,23 @@ sans filtre de date, triés du plus récent au plus ancien. Mêmes colonnes que
 ```
 POST /mobile-api/v1/index.php?endpoint=presences
 Body: {"dateHeure":"20250125200000","joueur":"pseudo","libelle":"MATCH","presence":"o"}
-Valeurs presence: "o" (présent), "n" (désinscription), "!" (absent)
+Valeurs presence: "o" (présent), "n" (désinscription), "!" (absent), "w" (liste d'attente)
 ```
+Comportement liste d'attente :
+- `o` sur un événement **complet** → `success:false, error.code:"EVENT_FULL"` (aucun
+  effet). L'app rafraîchit l'événement puis propose de rejoindre la liste d'attente.
+- `w` → rejoint la liste d'attente (action explicite) →
+  `data:{status:"waitlisted","position":N}`. Idempotent.
+- `n` → désinscription : retire de la présence **et** de la liste d'attente, et
+  promeut automatiquement le premier en attente s'il reste une place.
+
+### Liste d'attente (statut)
+```
+GET /mobile-api/v1/index.php?endpoint=events/{dateHeure}/{libelle}/waitlist?username=XXX
+→ {"success":true,"data":{"count":N,"onWaitlist":bool,"position":P}}
+```
+Permet de restaurer l'état « en liste d'attente (position P) » à l'ouverture d'un
+événement. `position` vaut 0 si l'utilisateur n'est pas dans la file.
 
 ### Ressources
 ```

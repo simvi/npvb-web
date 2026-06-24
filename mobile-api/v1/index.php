@@ -389,6 +389,22 @@ if ($resource == 'events') {
         while ($row = mysql_fetch_assoc($result)) $data[] = $row;
 
         echo json_encode(array('success' => true, 'data' => $data));
+    } elseif ($dateHeure && isset($segments[3]) && $segments[3] == 'waitlist') {
+        // GET /events/{date}/{libelle}/waitlist?username=XXX
+        // Statut de la liste d'attente (pour restaurer l'état à l'ouverture).
+        $libelle = isset($segments[2]) ? mysql_real_escape_string($segments[2]) : '';
+        $dateHeure = mysql_real_escape_string($dateHeure);
+        $username = isset($_GET['username']) ? mysql_real_escape_string($_GET['username']) : '';
+
+        $count = function_exists('nbListeAttente') ? nbListeAttente($dateHeure, $libelle, $dblink) : 0;
+        $onList = ($username && function_exists('estEnListeAttente'))
+                  ? estEnListeAttente($username, $dateHeure, $libelle, $dblink) : false;
+        $pos = ($onList && function_exists('positionListeAttente'))
+               ? positionListeAttente($username, $dateHeure, $libelle, $dblink) : 0;
+
+        echo json_encode(array('success' => true, 'data' => array(
+            'count' => $count, 'onWaitlist' => $onList, 'position' => $pos
+        )));
     } elseif ($dateHeure) {
         // GET /events/{date}/{libelle}
         $libelle = isset($segments[2]) ? $segments[2] : '';
@@ -488,9 +504,15 @@ if ($resource == 'presences' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     $exists = mysql_num_rows(mysql_query($checkQuery)) > 0;
 
     if ($presence == 'n') {
-        // DESINSCRIPTION
-        if ($exists) {
-            mysql_query("DELETE FROM NPVB_Presence WHERE Joueur='$joueur' AND DateHeure='$dateHeure' AND Libelle='$libelle'");
+        // DÉSINSCRIPTION (présence ET/OU liste d'attente)
+        $surListe = function_exists('estEnListeAttente') && estEnListeAttente($joueur, $dateHeure, $libelle, $dblink);
+        if ($exists || $surListe) {
+            if ($exists) {
+                mysql_query("DELETE FROM NPVB_Presence WHERE Joueur='$joueur' AND DateHeure='$dateHeure' AND Libelle='$libelle'");
+            }
+            // Sortie de la liste d'attente si l'utilisateur y était.
+            if (function_exists('retirerListeAttente')) retirerListeAttente($joueur, $dateHeure, $libelle, $dblink);
+            // Une place s'est peut-être libérée : promotion auto du premier en attente.
             if (function_exists('promouvoirListeAttente')) promouvoirListeAttente($dateHeure, $libelle, $dblink);
             echo json_encode(array('success' => true, 'data' => array('status' => true), 'message' => 'Désinscription réussie'));
         } else {
@@ -507,12 +529,11 @@ if ($resource == 'presences' && $_SERVER['REQUEST_METHOD'] == 'POST') {
         if (function_exists('promouvoirListeAttente')) promouvoirListeAttente($dateHeure, $libelle, $dblink);
         echo json_encode(array('success' => true, 'data' => array('status' => true), 'message' => 'Absence enregistrée'));
     } elseif ($presence == 'o') {
-        // PRÉSENT — si l'événement est complet (InscritsMax>0 atteint), liste d'attente
+        // PRÉSENT — refus si complet (aucun effet de bord). L'app proposera alors
+        // de rejoindre la liste d'attente via une action explicite (presence='w'),
+        // ce qui évite qu'un client non à jour se croie inscrit à tort.
         if (!$exists && function_exists('estComplet') && estComplet($dateHeure, $libelle, $dblink)) {
-            ajouterListeAttente($joueur, $dateHeure, $libelle, $dblink);
-            $pos = positionListeAttente($joueur, $dateHeure, $libelle, $dblink);
-            echo json_encode(array('success' => true, 'data' => array('status' => 'waitlisted', 'position' => $pos),
-                'message' => "Événement complet : vous êtes en liste d'attente (position " . $pos . ")"));
+            echo json_encode(array('success' => false, 'error' => array('code' => 'EVENT_FULL', 'message' => "Événement complet")));
             mysql_close($dblink);
             exit;
         }
@@ -526,6 +547,13 @@ if ($resource == 'presences' && $_SERVER['REQUEST_METHOD'] == 'POST') {
         // S'il était en liste d'attente, l'en retirer (désormais inscrit)
         if (function_exists('retirerListeAttente')) retirerListeAttente($joueur, $dateHeure, $libelle, $dblink);
         echo json_encode(array('success' => true, 'data' => array('status' => true), 'message' => 'Inscription réussie'));
+    } elseif ($presence == 'w') {
+        // REJOINDRE LA LISTE D'ATTENTE (action explicite, déclenchée par l'app
+        // après un EVENT_FULL). Idempotent (INSERT IGNORE côté ajouterListeAttente).
+        if (function_exists('ajouterListeAttente')) ajouterListeAttente($joueur, $dateHeure, $libelle, $dblink);
+        $pos = function_exists('positionListeAttente') ? positionListeAttente($joueur, $dateHeure, $libelle, $dblink) : 0;
+        echo json_encode(array('success' => true, 'data' => array('status' => 'waitlisted', 'position' => $pos),
+            'message' => "Vous êtes en liste d'attente (position " . $pos . ")"));
     } else {
         echo json_encode(array('success' => false, 'error' => array('code' => 'INVALID_INPUT', 'message' => 'Valeur presence invalide')));
     }
