@@ -53,16 +53,26 @@ sans filtre de date, triés du plus récent au plus ancien. Mêmes colonnes que
 ### Présences
 ```
 POST /mobile-api/v1/index.php?endpoint=presences
-Body: {"dateHeure":"20250125200000","joueur":"pseudo","libelle":"MATCH","presence":"o"}
-Valeurs presence: "o" (présent), "n" (désinscription), "!" (absent), "w" (liste d'attente)
+Body: {"dateHeure":"20250125200000","joueur":"pseudo","libelle":"MATCH","statut":"inscrit"}
 ```
-Comportement liste d'attente :
-- `o` sur un événement **complet** → `success:false, error.code:"EVENT_FULL"` (aucun
-  effet). L'app rafraîchit l'événement puis propose de rejoindre la liste d'attente.
-- `w` → rejoint la liste d'attente (action explicite) →
-  `data:{status:"waitlisted","position":N}`. Idempotent.
-- `n` → désinscription : retire de la présence **et** de la liste d'attente, et
-  promeut automatiquement le premier en attente s'il reste une place.
+Le client envoie un **statut cible** ; le serveur en déduit l'opération et renvoie
+toujours le **statut résultant**.
+
+Statuts demandés : `inscrit` | `indisponible` | `absent_reponse` | `liste_attente`
+```
+Réponse : {"success":true,"data":{"statut":"...","positionAttente":N|null},"message":"..."}
+```
+Statut résultant : `inscrit` | `indisponible` | `absent_reponse` | `liste_attente` | `complet`
+
+- `inscrit` → écrit Prevue='o'. Si l'événement est **complet** (et pas déjà inscrit),
+  renvoie `statut:"complet"` sans effet : l'app propose alors `liste_attente`.
+- `indisponible` → écrit Prevue='n' (ligne conservée), libère une place → promotion auto.
+- `absent_reponse` → efface la réponse (supprime la ligne) + sort de la liste d'attente
+  + promotion auto.
+- `liste_attente` → rejoint la file (idempotent), renvoie `positionAttente`.
+
+Le GET présences renvoie aussi un champ dérivé `statut` (`inscrit`/`indisponible`)
+en plus de `Prevue`.
 
 ### Liste d'attente (statut)
 ```

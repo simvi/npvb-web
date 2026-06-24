@@ -386,7 +386,11 @@ if ($resource == 'events') {
 
         $result = mysql_query($query);
         $data = array();
-        while ($row = mysql_fetch_assoc($result)) $data[] = $row;
+        while ($row = mysql_fetch_assoc($result)) {
+            // Statut lisible dérivé de Prevue ('o'→inscrit, 'n'→indisponible).
+            $row['statut'] = ($row['Prevue'] === 'o') ? 'inscrit' : 'indisponible';
+            $data[] = $row;
+        }
 
         echo json_encode(array('success' => true, 'data' => $data));
     } elseif ($dateHeure && isset($segments[3]) && $segments[3] == 'waitlist') {
@@ -456,20 +460,21 @@ if ($resource == 'presences' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     preg_match('/"dateHeure"\s*:\s*"([^"]+)"/', $input, $date_match);
     preg_match('/"joueur"\s*:\s*"([^"]+)"/', $input, $joueur_match);
     preg_match('/"libelle"\s*:\s*"([^"]+)"/', $input, $libelle_match);
-    preg_match('/"presence"\s*:\s*"([^"]+)"/', $input, $pres_match);
+    preg_match('/"statut"\s*:\s*"([^"]+)"/', $input, $statut_match);
 
     $dateHeure = isset($date_match[1]) ? mysql_real_escape_string($date_match[1]) : '';
     $joueur = isset($joueur_match[1]) ? mysql_real_escape_string($joueur_match[1]) : '';
     $libelle = isset($libelle_match[1]) ? mysql_real_escape_string($libelle_match[1]) : '';
-    $presence = isset($pres_match[1]) ? $pres_match[1] : '';
+    $statut = isset($statut_match[1]) ? $statut_match[1] : '';
 
-    // Validation des champs requis pour rétrocompatibilité
-    if (empty($dateHeure) || empty($joueur) || empty($presence)) {
+    // Le client envoie un STATUT cible explicite ; le serveur en déduit l'opération.
+    // Statuts acceptés : inscrit | indisponible | absent_reponse | liste_attente
+    if (empty($dateHeure) || empty($joueur) || empty($statut)) {
         echo json_encode(array(
             'success' => false,
             'error' => array(
                 'code' => 'MISSING_FIELDS',
-                'message' => 'Champs requis manquants: dateHeure, joueur, presence'
+                'message' => 'Champs requis manquants: dateHeure, joueur, statut'
             )
         ));
         mysql_close($dblink);
@@ -499,63 +504,66 @@ if ($resource == 'presences' && $_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // Vérifier existence
-    $checkQuery = "SELECT * FROM NPVB_Presence WHERE Joueur='$joueur' AND DateHeure='$dateHeure' AND Libelle='$libelle'";
-    $exists = mysql_num_rows(mysql_query($checkQuery)) > 0;
+    // État courant du membre (Prevue) pour décider de l'opération.
+    $cur = mysql_query("SELECT Prevue FROM NPVB_Presence WHERE Joueur='$joueur' AND DateHeure='$dateHeure' AND Libelle='$libelle'");
+    $exists = $cur && mysql_num_rows($cur) > 0;
+    $dejaPresent = false;
+    if ($exists) { $crow = mysql_fetch_assoc($cur); $dejaPresent = ($crow['Prevue'] === 'o'); }
 
-    if ($presence == 'n') {
-        // DÉSINSCRIPTION (présence ET/OU liste d'attente)
-        $surListe = function_exists('estEnListeAttente') && estEnListeAttente($joueur, $dateHeure, $libelle, $dblink);
-        if ($exists || $surListe) {
-            if ($exists) {
-                mysql_query("DELETE FROM NPVB_Presence WHERE Joueur='$joueur' AND DateHeure='$dateHeure' AND Libelle='$libelle'");
-            }
-            // Sortie de la liste d'attente si l'utilisateur y était.
-            if (function_exists('retirerListeAttente')) retirerListeAttente($joueur, $dateHeure, $libelle, $dblink);
-            // Une place s'est peut-être libérée : promotion auto du premier en attente.
-            if (function_exists('promouvoirListeAttente')) promouvoirListeAttente($dateHeure, $libelle, $dblink);
-            echo json_encode(array('success' => true, 'data' => array('status' => true), 'message' => 'Désinscription réussie'));
-        } else {
-            echo json_encode(array('success' => false, 'error' => array('code' => 'NOT_REGISTERED', 'message' => 'Présence non enregistrée')));
-        }
-    } elseif ($presence == '!') {
-        // ABSENT
-        $prevue = 'n';
-        if ($exists) {
-            mysql_query("UPDATE NPVB_Presence SET Prevue='$prevue' WHERE Joueur='$joueur' AND DateHeure='$dateHeure' AND Libelle='$libelle'");
-        } else {
-            mysql_query("INSERT INTO NPVB_Presence (Joueur, DateHeure, Libelle, Prevue) VALUES ('$joueur', '$dateHeure', '$libelle', '$prevue')");
-        }
-        if (function_exists('promouvoirListeAttente')) promouvoirListeAttente($dateHeure, $libelle, $dblink);
-        echo json_encode(array('success' => true, 'data' => array('status' => true), 'message' => 'Absence enregistrée'));
-    } elseif ($presence == 'o') {
-        // PRÉSENT — refus si complet (aucun effet de bord). L'app proposera alors
-        // de rejoindre la liste d'attente via une action explicite (presence='w'),
-        // ce qui évite qu'un client non à jour se croie inscrit à tort.
-        if (!$exists && function_exists('estComplet') && estComplet($dateHeure, $libelle, $dblink)) {
-            echo json_encode(array('success' => false, 'error' => array('code' => 'EVENT_FULL', 'message' => "Événement complet")));
-            mysql_close($dblink);
-            exit;
-        }
+    // Réponse normalisée : on renvoie toujours le statut RÉSULTANT (le client ne devine pas).
+    function reponsePresence($statut, $position, $message) {
+        global $dblink;
+        echo json_encode(array(
+            'success' => true,
+            'data' => array('statut' => $statut, 'positionAttente' => $position),
+            'message' => $message
+        ));
+        mysql_close($dblink);
+        exit;
+    }
 
-        $prevue = 'o';
-        if ($exists) {
-            mysql_query("UPDATE NPVB_Presence SET Prevue='$prevue' WHERE Joueur='$joueur' AND DateHeure='$dateHeure' AND Libelle='$libelle'");
-        } else {
-            mysql_query("INSERT INTO NPVB_Presence (Joueur, DateHeure, Libelle, Prevue) VALUES ('$joueur', '$dateHeure', '$libelle', '$prevue')");
+    if ($statut == 'inscrit') {
+        // S'inscrire (Prevue='o'). Refusé si complet et pas déjà présent →
+        // statut résultant 'complet' (l'app proposera la liste d'attente).
+        if (!$dejaPresent && function_exists('estComplet') && estComplet($dateHeure, $libelle, $dblink)) {
+            reponsePresence('complet', null, 'Événement complet');
         }
-        // S'il était en liste d'attente, l'en retirer (désormais inscrit)
+        if ($exists) {
+            mysql_query("UPDATE NPVB_Presence SET Prevue='o' WHERE Joueur='$joueur' AND DateHeure='$dateHeure' AND Libelle='$libelle'");
+        } else {
+            mysql_query("INSERT INTO NPVB_Presence (Joueur, DateHeure, Libelle, Prevue) VALUES ('$joueur', '$dateHeure', '$libelle', 'o')");
+        }
         if (function_exists('retirerListeAttente')) retirerListeAttente($joueur, $dateHeure, $libelle, $dblink);
-        echo json_encode(array('success' => true, 'data' => array('status' => true), 'message' => 'Inscription réussie'));
-    } elseif ($presence == 'w') {
-        // REJOINDRE LA LISTE D'ATTENTE (action explicite, déclenchée par l'app
-        // après un EVENT_FULL). Idempotent (INSERT IGNORE côté ajouterListeAttente).
+        reponsePresence('inscrit', null, 'Inscription réussie');
+
+    } elseif ($statut == 'indisponible') {
+        // Se déclarer indisponible (Prevue='n', la ligne est conservée).
+        if ($exists) {
+            mysql_query("UPDATE NPVB_Presence SET Prevue='n' WHERE Joueur='$joueur' AND DateHeure='$dateHeure' AND Libelle='$libelle'");
+        } else {
+            mysql_query("INSERT INTO NPVB_Presence (Joueur, DateHeure, Libelle, Prevue) VALUES ('$joueur', '$dateHeure', '$libelle', 'n')");
+        }
+        if (function_exists('retirerListeAttente')) retirerListeAttente($joueur, $dateHeure, $libelle, $dblink);
+        if (function_exists('promouvoirListeAttente')) promouvoirListeAttente($dateHeure, $libelle, $dblink);
+        reponsePresence('indisponible', null, 'Indisponibilité enregistrée');
+
+    } elseif ($statut == 'absent_reponse') {
+        // Effacer la réponse (supprime la ligne) et sortir de la liste d'attente.
+        if ($exists) {
+            mysql_query("DELETE FROM NPVB_Presence WHERE Joueur='$joueur' AND DateHeure='$dateHeure' AND Libelle='$libelle'");
+        }
+        if (function_exists('retirerListeAttente')) retirerListeAttente($joueur, $dateHeure, $libelle, $dblink);
+        if (function_exists('promouvoirListeAttente')) promouvoirListeAttente($dateHeure, $libelle, $dblink);
+        reponsePresence('absent_reponse', null, 'Réponse effacée');
+
+    } elseif ($statut == 'liste_attente') {
+        // Rejoindre la liste d'attente (action explicite). Idempotent.
         if (function_exists('ajouterListeAttente')) ajouterListeAttente($joueur, $dateHeure, $libelle, $dblink);
         $pos = function_exists('positionListeAttente') ? positionListeAttente($joueur, $dateHeure, $libelle, $dblink) : 0;
-        echo json_encode(array('success' => true, 'data' => array('status' => 'waitlisted', 'position' => $pos),
-            'message' => "Vous êtes en liste d'attente (position " . $pos . ")"));
+        reponsePresence('liste_attente', $pos, "Vous êtes en liste d'attente (position " . $pos . ")");
+
     } else {
-        echo json_encode(array('success' => false, 'error' => array('code' => 'INVALID_INPUT', 'message' => 'Valeur presence invalide')));
+        echo json_encode(array('success' => false, 'error' => array('code' => 'INVALID_INPUT', 'message' => 'Statut invalide')));
     }
     mysql_close($dblink);
     exit;
