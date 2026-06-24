@@ -347,6 +347,24 @@ if ($resource == 'memberships') {
     exit;
 }
 
+// === RESULTS (matchs avec résultat, tout l'historique, sans filtre de date) ===
+if ($resource == 'results') {
+    // Mêmes colonnes que /events pour que les apps réutilisent le même modèle.
+    // Inscrits=0 (non pertinent pour un match passé, évite une jointure inutile).
+    $query = "SELECT DateHeure, Libelle, Etat, Titre, Intitule, Lieu, Adresse,
+                     Adversaire, Domicile, Resultat, Analyse, InscritsMax, 0 AS Inscrits
+              FROM NPVB_Evenements
+              WHERE Resultat <> '' AND Libelle NOT IN ('ASSO','SEANCE')
+              ORDER BY DateHeure DESC";
+    $result = mysql_query($query);
+    $data = array();
+    while ($row = mysql_fetch_assoc($result)) $data[] = $row;
+
+    echo json_encode(array('success' => true, 'data' => $data));
+    mysql_close($dblink);
+    exit;
+}
+
 // === EVENTS ===
 if ($resource == 'events') {
     $dateHeure = isset($segments[1]) ? $segments[1] : null;

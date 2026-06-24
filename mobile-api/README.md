@@ -39,6 +39,16 @@ GET /mobile-api/v1/index.php?endpoint=events
 GET /mobile-api/v1/index.php?endpoint=events/{dateHeure}/{libelle}
 GET /mobile-api/v1/index.php?endpoint=events/{dateHeure}/presences
 ```
+Note : `endpoint=events` est filtré (DateHeure > 2019) pour rester léger
+(calendrier/accueil). Pour l'historique complet des résultats, voir ci-dessous.
+
+### Résultats
+```
+GET /mobile-api/v1/index.php?endpoint=results
+```
+Renvoie tous les matchs ayant un résultat (`Resultat <> ''`, hors ASSO/SEANCE),
+sans filtre de date, triés du plus récent au plus ancien. Mêmes colonnes que
+`events` (le champ `Resultat` est la chaîne encodée sur 22 caractères).
 
 ### Présences
 ```
