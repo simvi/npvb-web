@@ -123,9 +123,9 @@ function notifierPlaceLiberee($pseudo, $dh, $lib, $sdblink) {
 	$pe = mysql_real_escape_string($pseudo, $sdblink);
 	$j = mySql_fetch_object(mySql_query("SELECT Email FROM NPVB_Joueurs WHERE Pseudonyme='".$pe."'", $sdblink));
 	if ($j && $j->Email) {
-		include_once(dirname(__FILE__).'/smtp_gmail.inc.php');
-		if (function_exists('EnvoyerEmailGmail')) {
-			EnvoyerEmailGmail($j->Email, $titre, $corps);
+		include_once(dirname(__FILE__).'/brevo_api.inc.php');
+		if (function_exists('EnvoyerEmailBrevo')) {
+			EnvoyerEmailBrevo($j->Email, $titre, $corps);
 		}
 	}
 }

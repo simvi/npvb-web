@@ -1,9 +1,8 @@
 <?
 if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
 
-// Envoi email via Gmail SMTP (smtp_gmail.inc.php)
-// Sur OVH : remplacer par include('brevo_api.inc.php') et EnvoyerEmailBrevo()
-include('smtp_gmail.inc.php');
+// Envoi email via API Brevo
+include('brevo_api.inc.php');
 
 // Empecher l'acces si deja connecte
 if (isset($Joueur) && is_object($Joueur)) {
@@ -71,7 +70,7 @@ if (isset($_POST['DemandeReset']) && $_POST['DemandeReset'] == 'o') {
 					$CorpsEmail = str_replace('$DureeValiditeTokenHeures', $DureeValiditeTokenHeures, $CorpsEmail);
 
 					// Envoyer l'email via Brevo API
-					if (EnvoyerEmailGmail($Email, $SujetMailDemandeReset, $CorpsEmail, $config['smtp_from'], $config['club_sigle'])) {
+					if (EnvoyerEmailBrevo($Email, $SujetMailDemandeReset, $CorpsEmail, $config['smtp_from'], $config['club_sigle'])) {
 						// Succes - Message generique pour ne pas reveler l'existence du compte
 						$MessageConfirmation = "Si votre compte existe et possede une adresse email valide, vous recevrez un lien de reinitialisation dans quelques minutes.";
 					} else {
