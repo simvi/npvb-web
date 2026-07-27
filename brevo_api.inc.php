@@ -16,7 +16,6 @@ if (!$PasseParIndex) { header('Location: index.php?Page=Erreur404'); return;}
 //      - remplacer EnvoyerEmailGmail() par EnvoyerEmailBrevo()
 // ============================================================================
 
-/*
 function EnvoyerEmailBrevo($destinataire, $sujet, $contenu, $expediteur = "", $nomExpediteur = "") {
     global $config;
 
@@ -46,5 +45,4 @@ function EnvoyerEmailBrevo($destinataire, $sujet, $contenu, $expediteur = "", $n
 
     return ($httpCode >= 200 && $httpCode < 300);
 }
-*/
 ?>

@@ -252,7 +252,7 @@ if (isset($Joueur) && is_object($Joueur)) {
 		<li<?php echo ((($Page=="calendrier")||($Page=="jour"))?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=calendrier">Le calendrier</a></li>
 		<li<?php echo (($Page=="membres")?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=membres">Les membres</a></li>
 		<li<?php echo (($Page=="resultats")?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=resultats">Résultats</a></li>
-		<li<?php echo (($Page=="chat")?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=chat">Discussion<?php $nl=compterNonLus($Joueur, $sdblink); if ($nl>0) echo ' <span class="ChatBadge" id="ChatBadge">'.$nl.'</span>'; else echo '<span class="ChatBadge" id="ChatBadge" style="display:none"></span>'; ?></a></li>
+		<li<?php echo (($Page=="chat")?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=chat">Chat<?php $nl=compterNonLus($Joueur, $sdblink); if ($nl>0) echo ' <span class="ChatBadge" id="ChatBadge">'.$nl.'</span>'; else echo '<span class="ChatBadge" id="ChatBadge" style="display:none"></span>'; ?></a></li>
 		<li><a href="<?php echo $script_name; ?>?Page=accueil&amp;Action=deloguer">Fermer session</a></li>
 <?php
 }
