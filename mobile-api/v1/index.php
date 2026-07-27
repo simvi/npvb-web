@@ -572,102 +572,120 @@ if ($resource == 'presences' && $_SERVER['REQUEST_METHOD'] == 'POST') {
 // === CHAT ===
 if ($resource == 'chat') {
     $sousRes = isset($segments[1]) ? $segments[1] : '';
+    $username = '';
+    $convId = 0;
 
-    // Conversation : param conv, défaut = conversation 'generale'
-    $convId = isset($_GET['conv']) ? (int)$_GET['conv'] : 0;
-    if (!$convId) {
-        $cr = mysql_query("SELECT Id FROM NPVB_Conversations WHERE Type='generale' ORDER BY Id LIMIT 1");
-        if ($cr && mysql_num_rows($cr) > 0) { $crow = mysql_fetch_assoc($cr); $convId = (int)$crow['Id']; }
-    }
-
-    // GET /chat/conversations?username=XXX  (toutes les conversations accessibles)
+    // GET /chat/conversations?username=XXX
     if ($sousRes == 'conversations' && $_SERVER['REQUEST_METHOD'] != 'POST') {
-        $username = isset($_GET['username']) ? $_GET['username'] : '';
-        $convs = $username ? mobileConvsAccessibles($username) : array();
-        echo json_encode(array('success' => true, 'data' => $convs));
+        $username = isset($_GET['username']) ? trim($_GET['username']) : '';
+        if (!$username) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'username requis')));
+            mysql_close($dblink); exit;
+        }
+        $convs = mobileConvsAccessibles($username);
+        $result = array();
+        foreach ($convs as $c) {
+            $cid = (int)$c['id'];
+            $lr = mysql_query("SELECT Contenu, DateEnvoi FROM NPVB_MessagesChat WHERE Conversation=$cid AND Supprime='n' ORDER BY Id DESC LIMIT 1");
+            $lastMessage = null; $lastDate = null;
+            if ($lr && mysql_num_rows($lr) > 0) {
+                $lrow = mysql_fetch_assoc($lr);
+                $lastMessage = $lrow['Contenu'];
+                $lastDate = $lrow['DateEnvoi'];
+            }
+            $result[] = array(
+                'id' => $cid,
+                'nom' => $c['nom'],
+                'lastMessage' => $lastMessage,
+                'lastDate' => $lastDate,
+                'unread' => (int)$c['nonlus']
+            );
+        }
+        echo json_encode(array('success' => true, 'data' => $result));
         mysql_close($dblink); exit;
     }
 
-    // GET /chat/messages?conv=&since=&username=
+    // GET /chat/messages?conv=X&since=Y&username=Z
     if ($sousRes == 'messages' && $_SERVER['REQUEST_METHOD'] != 'POST') {
+        $convId = isset($_GET['conv']) ? (int)$_GET['conv'] : 0;
         $since = isset($_GET['since']) ? (int)$_GET['since'] : 0;
-        $username = isset($_GET['username']) ? $_GET['username'] : '';
-        if (!$username || !mobileConvAccessible($username, $convId)) {
-            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Accès refusé à cette conversation')));
+        $username = isset($_GET['username']) ? trim($_GET['username']) : '';
+        if (!$username || !$convId) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'conv et username requis')));
             mysql_close($dblink); exit;
         }
-        $q = "SELECT m.Id, m.Auteur, m.Contenu, m.DateEnvoi, j.Prenom, j.Nom
-              FROM NPVB_MessagesChat m LEFT JOIN NPVB_Joueurs j ON j.Pseudonyme=m.Auteur
-              WHERE m.Conversation=$convId AND m.Supprime='n' AND m.Id > $since
-              ORDER BY m.Id ASC";
+        if (!mobileConvAccessible($username, $convId)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Accès refusé')));
+            mysql_close($dblink); exit;
+        }
+        $q = "SELECT Id, Conversation AS conv, Auteur AS auteur, Contenu AS contenu, DateEnvoi AS dateEnvoi
+              FROM NPVB_MessagesChat
+              WHERE Conversation=$convId AND Supprime='n' AND Id > $since
+              ORDER BY Id ASC";
         $r = mysql_query($q);
         $msgs = array();
         while ($row = mysql_fetch_assoc($r)) {
-            $nom = trim($row['Prenom'].' '.$row['Nom']); if ($nom == '') $nom = $row['Auteur'];
             $msgs[] = array(
-                'id' => (int)$row['Id'], 'auteur' => $row['Auteur'], 'nom' => $nom,
-                'contenu' => $row['Contenu'], 'dateEnvoi' => $row['DateEnvoi'],
-                'moi' => ($username && $row['Auteur'] == $username)
+                'id' => (int)$row['Id'],
+                'conv' => (int)$row['conv'],
+                'auteur' => $row['auteur'],
+                'contenu' => $row['contenu'],
+                'dateEnvoi' => $row['dateEnvoi']
             );
         }
-        echo json_encode(array('success' => true, 'data' => array(
-            'conversation' => $convId, 'messages' => $msgs,
-            'nonlus' => $username ? chatNonLus($username, $convId) : 0
-        )));
+        echo json_encode(array('success' => true, 'data' => array('messages' => $msgs)));
         mysql_close($dblink); exit;
     }
 
-    // POST /chat/messages  (body: conv, contenu, username)
+    // POST /chat/messages  body: {conv, contenu, username}
     if ($sousRes == 'messages' && $_SERVER['REQUEST_METHOD'] == 'POST') {
         $input = file_get_contents('php://input');
         preg_match('/"username"\s*:\s*"([^"]+)"/', $input, $u);
-        preg_match('/"contenu"\s*:\s*"(.*?)"\s*[,}]/s', $input, $c);
+        preg_match('/"contenu"\s*:\s*"(.*?)(?<!\\\\)"\s*[,}]/s', $input, $c);
         preg_match('/"conv"\s*:\s*(\d+)/', $input, $cv);
-        $username = isset($u[1]) ? $u[1] : '';
-        $contenu = isset($c[1]) ? trim($c[1]) : '';
-        if (isset($cv[1])) $convId = (int)$cv[1];
-        if (empty($username) || $contenu == '') {
-            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'username et contenu requis')));
+        $username = isset($u[1]) ? trim($u[1]) : '';
+        $contenu  = isset($c[1]) ? trim($c[1]) : '';
+        $convId   = isset($cv[1]) ? (int)$cv[1] : 0;
+        if (empty($username) || $contenu === '' || !$convId) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'conv, contenu et username requis')));
             mysql_close($dblink); exit;
         }
         if (!mobilePeutPoster($username, $convId)) {
-            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Publication non autorisée dans cette conversation')));
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Publication non autorisée')));
             mysql_close($dblink); exit;
         }
         $ue = mysql_real_escape_string($username);
         $ce = mysql_real_escape_string($contenu);
         if (mysql_query("INSERT INTO NPVB_MessagesChat (Conversation, Auteur, Contenu, DateEnvoi) VALUES ($convId, '$ue', '$ce', NOW())")) {
             $newId = mysql_insert_id();
-            // Notification push aux autres membres (no-op si FCM non configuré)
-            include_once(__DIR__ . '/../../push.inc.php');
-            $cr = mysql_query("SELECT Nom FROM NPVB_Conversations WHERE Id=$convId");
-            $cn = ($cr && mysql_num_rows($cr) > 0) ? mysql_fetch_assoc($cr) : array('Nom' => 'Annonce');
-            $apercu = (strlen($contenu) > 80) ? substr($contenu, 0, 77) . '...' : $contenu;
-            envoyerPush(destinatairesChat($convId, $username, $dblink), $cn['Nom'], $apercu, $dblink, array('conv' => $convId, 'type' => 'chat'));
-            echo json_encode(array('success' => true, 'data' => array('id' => $newId)));
+            echo json_encode(array('success' => true, 'data' => array('success' => true, 'id' => $newId)));
         } else {
             echo json_encode(array('success' => false, 'error' => array('code' => 'DB_ERROR', 'message' => 'Enregistrement impossible')));
         }
         mysql_close($dblink); exit;
     }
 
-    // POST /chat/read  (body: conv, lastid, username)
+    // POST /chat/read  body: {conv, lastid, username}
     if ($sousRes == 'read' && $_SERVER['REQUEST_METHOD'] == 'POST') {
         $input = file_get_contents('php://input');
         preg_match('/"username"\s*:\s*"([^"]+)"/', $input, $u);
         preg_match('/"lastid"\s*:\s*(\d+)/', $input, $li);
         preg_match('/"conv"\s*:\s*(\d+)/', $input, $cv);
-        $username = isset($u[1]) ? $u[1] : '';
-        $lastid = isset($li[1]) ? (int)$li[1] : 0;
-        if (isset($cv[1])) $convId = (int)$cv[1];
-        if (empty($username) || !mobileConvAccessible($username, $convId)) {
-            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Accès refusé à cette conversation')));
+        $username = isset($u[1]) ? trim($u[1]) : '';
+        $lastid   = isset($li[1]) ? (int)$li[1] : 0;
+        $convId   = isset($cv[1]) ? (int)$cv[1] : 0;
+        if (empty($username) || !$convId) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'conv et username requis')));
+            mysql_close($dblink); exit;
+        }
+        if (!mobileConvAccessible($username, $convId)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Accès refusé')));
             mysql_close($dblink); exit;
         }
         $ue = mysql_real_escape_string($username);
         mysql_query("INSERT INTO NPVB_MessagesLus (Joueur, Conversation, DernierLuId) VALUES ('$ue', $convId, $lastid)
                      ON DUPLICATE KEY UPDATE DernierLuId=GREATEST(DernierLuId, $lastid)");
-        echo json_encode(array('success' => true, 'data' => array('nonlus' => chatNonLus($username, $convId))));
+        echo json_encode(array('success' => true, 'data' => array('success' => true)));
         mysql_close($dblink); exit;
     }
 
