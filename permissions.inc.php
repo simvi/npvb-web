@@ -178,18 +178,35 @@ function peutPosterConversation($Joueur, $posterCapacite) {
 
 // Vrai si le joueur participe (a accès) à une conversation. $conv = ligne NPVB_Conversations.
 //   generale : tous les connectés
-//   equipe   : membre de l'équipe (appartenance) ou responsable/suppléant
-//   bureau/prive : membre explicite (NPVB_ConversationMembres)
+//   equipe   : membre de l'équipe (appartenance) ou responsable/suppléant, OU admin (sauf privées)
+//   bureau   : membre explicite OU admin (sauf privées)
+//   prive    : seulement membres explicites (pas d'exception admin)
 function peutAccederConversation($Joueur, $conv, $sdblink) {
 	if (!isset($Joueur) || !is_object($Joueur) || !$conv) return false;
 	$pseudo = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
+
+	// Type générale: accessible à tous les connectés
 	if ($conv->Type == 'generale') return true;
+
+	// Type équipe
 	if ($conv->Type == 'equipe') {
+		// Admin peut accéder à toutes les équipes
+		if (peut($Joueur, 'gerer_roles')) return true;
+		// Sinon vérifier membership
 		$eq = mysql_real_escape_string($conv->Equipe, $sdblink);
 		$r = mysql_query("SELECT 1 FROM NPVB_Appartenance WHERE Joueur='".$pseudo."' AND Equipe='".$eq."'
-		                  UNION SELECT 1 FROM NPVB_Equipes WHERE Nom='".$eq."' AND (Responsable='".$pseudo."' OR Supleant='".$pseudo."') LIMIT 1", $sdblink);
+		                  UNION SELECT 1 FROM NPVB_Equipes WHERE Nom='".$eq."' AND (Responsable='".$pseudo."' OR Supleant='".$pseudo."')
+		                  UNION SELECT 1 FROM NPVB_ConversationMembres WHERE Conversation=".(int)$conv->Id." AND Joueur='".$pseudo."'
+		                  LIMIT 1", $sdblink);
 		return ($r && mysql_num_rows($r) > 0);
 	}
+
+	// Type bureau: admin peut accéder + membres explicites
+	if ($conv->Type == 'bureau') {
+		if (peut($Joueur, 'gerer_roles')) return true;
+	}
+
+	// Type prive: seulement membres explicites, pas d'exception admin
 	$r = mysql_query("SELECT 1 FROM NPVB_ConversationMembres WHERE Conversation=".(int)$conv->Id." AND Joueur='".$pseudo."' LIMIT 1", $sdblink);
 	return ($r && mysql_num_rows($r) > 0);
 }
@@ -197,8 +214,59 @@ function peutAccederConversation($Joueur, $conv, $sdblink) {
 // Vrai si le joueur peut poster dans cette conversation (non archivée + accès + capacité).
 function peutPosterDansConv($Joueur, $conv, $sdblink) {
 	if (!$conv || (isset($conv->Archive) && $conv->Archive == 'o')) return false;
+	// Admin peut poster partout (sauf archivé)
+	if (peut($Joueur, 'gerer_roles')) return true;
+	// Membre normal : vérifier accès et capacité
 	if (!peutAccederConversation($Joueur, $conv, $sdblink)) return false;
 	return peutPosterConversation($Joueur, $conv->PosterCapacite);
+}
+
+// Axe 3a : Peut supprimer un message (admin ou auteur du message)
+function peutSupprimerMessage($Joueur, $message, $sdblink) {
+	if (!$Joueur || !$message) return false;
+	if (peut($Joueur, 'gerer_roles')) return true;
+	if (isset($message->Auteur) && $message->Auteur == $Joueur->Pseudonyme) return true;
+	return false;
+}
+
+// Axe 3b : Peut éditer un message (auteur uniquement, dans une fenêtre de 15min)
+function peutEditerMessage($Joueur, $message, $sdblink) {
+	if (!$Joueur || !$message) return false;
+	if (!isset($message->Auteur) || $message->Auteur != $Joueur->Pseudonyme) return false;
+	if (isset($message->Supprime) && $message->Supprime == 'o') return false;
+	$EDIT_WINDOW_MIN = 15;
+	if (isset($message->DateEnvoi)) {
+		$sent = strtotime($message->DateEnvoi);
+		$now = time();
+		if (($now - $sent) > ($EDIT_WINDOW_MIN * 60)) return false;
+	}
+	return true;
+}
+
+// Axe 1b : Qui a lu un message (retourne deux listes : lecteurs et non-lecteurs)
+function lecteursMessage($convId, $msgId, $sdblink) {
+	$convId = (int)$convId;
+	$msgId = (int)$msgId;
+	$lecteurs = array();
+	$nonLecteurs = array();
+
+	$conv = mysql_fetch_object(mysql_query("SELECT * FROM NPVB_Conversations WHERE Id=".$convId, $sdblink));
+	$participants = participantsConversation($conv, $sdblink);
+
+	foreach ($participants as $pseudo) {
+		$pe = mysql_real_escape_string($pseudo, $sdblink);
+		$r = mysql_query("SELECT DernierLuId FROM NPVB_MessagesLus WHERE Joueur='".$pe."' AND Conversation=".$convId, $sdblink);
+		$row = mysql_fetch_object($r);
+		$dernierLu = $row ? (int)$row->DernierLuId : 0;
+
+		if ($dernierLu >= $msgId) {
+			$lecteurs[] = $pseudo;
+		} else {
+			$nonLecteurs[] = $pseudo;
+		}
+	}
+
+	return array('lu' => $lecteurs, 'nonlu' => $nonLecteurs);
 }
 
 // Nom affiché d'une conversation pour un joueur donné.
@@ -233,9 +301,11 @@ function trouverOuCreerPrive($a, $b, $sdblink) {
 // Crée une conversation d'équipe active pour chaque équipe qui n'en a pas
 // (idempotent ; appelé à l'ouverture du chat). Inclut ASSO/SEANCE/CODIR.
 function assurerConversationsEquipes($sdblink) {
+	// Créer une conversation pour chaque équipe qui a des membres et n'a pas déjà une conversation active
 	mysql_query("INSERT INTO NPVB_Conversations (Type, Nom, Equipe, DateCreation)
 	             SELECT 'equipe', e.Nom, e.Nom, NOW() FROM NPVB_Equipes e
-	             WHERE NOT EXISTS (SELECT 1 FROM NPVB_Conversations c
+	             WHERE EXISTS (SELECT 1 FROM NPVB_Appartenance WHERE Equipe=e.Nom)
+	               AND NOT EXISTS (SELECT 1 FROM NPVB_Conversations c
 	                               WHERE c.Type='equipe' AND c.Equipe=e.Nom AND c.Archive='n')", $sdblink);
 }
 
@@ -271,13 +341,33 @@ function nonLusConversation($Joueur, $convId, $sdblink) {
 }
 
 // Conversations accessibles au joueur (objets NPVB_Conversations + ->nonlus).
+// Admins : voient équipes, générales, bureau, SEANCE — PAS les conversations privées
+// Membres : voient seulement leurs équipes, générales, privées, bureau
 function conversationsAccessibles($Joueur, $sdblink) {
 	if (!isset($Joueur) || !is_object($Joueur)) return array();
 	$pseudo = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
+
+	// Admin : voir toutes les conversations SAUF privées, triées par activité récente
+	if (peut($Joueur, 'gerer_roles')) {
+		$res = mysql_query("SELECT c.*, COALESCE(MAX(m.DateEnvoi), c.DateCreation) AS dernierMsg
+		                    FROM NPVB_Conversations c
+		                    LEFT JOIN NPVB_MessagesChat m ON m.Conversation = c.Id
+		                    WHERE c.Type != 'prive'
+		                    GROUP BY c.Id
+		                    ORDER BY c.Archive ASC, dernierMsg DESC", $sdblink);
+		$convs = array();
+		if ($res) { while ($c = mysql_fetch_object($res)) {
+			$c->nonlus = ($c->Archive == 'o') ? 0 : nonLusConversation($Joueur, $c->Id, $sdblink);
+			$convs[] = $c;
+		} }
+		return $convs;
+	}
+
+	// Membre normal : accès restreint, triés par activité récente
 	$ids = array();
 	$r = mysql_query("SELECT Id FROM NPVB_Conversations WHERE Type='generale'", $sdblink);
 	if ($r) while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
-	$r = mysql_query("SELECT c.Id FROM NPVB_Conversations c WHERE c.Type='equipe' AND c.Archive='n' AND (
+	$r = mysql_query("SELECT c.Id FROM NPVB_Conversations c WHERE c.Type='equipe' AND (
 	                    c.Equipe IN (SELECT Equipe FROM NPVB_Appartenance WHERE Joueur='".$pseudo."')
 	                    OR c.Equipe IN (SELECT Nom FROM NPVB_Equipes WHERE Responsable='".$pseudo."' OR Supleant='".$pseudo."'))", $sdblink);
 	if ($r) while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
@@ -285,7 +375,12 @@ function conversationsAccessibles($Joueur, $sdblink) {
 	if ($r) while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
 	if (empty($ids)) return array();
 	$in = implode(',', array_keys($ids));
-	$res = mysql_query("SELECT * FROM NPVB_Conversations WHERE Id IN (".$in.") ORDER BY Archive, FIELD(Type,'generale','equipe','bureau','prive'), Nom", $sdblink);
+	$res = mysql_query("SELECT c.*, COALESCE(MAX(m.DateEnvoi), c.DateCreation) AS dernierMsg
+	                    FROM NPVB_Conversations c
+	                    LEFT JOIN NPVB_MessagesChat m ON m.Conversation = c.Id
+	                    WHERE c.Id IN (".$in.")
+	                    GROUP BY c.Id
+	                    ORDER BY c.Archive ASC, dernierMsg DESC", $sdblink);
 	$convs = array();
 	if ($res) { while ($c = mysql_fetch_object($res)) {
 		$c->nonlus = ($c->Archive == 'o') ? 0 : nonLusConversation($Joueur, $c->Id, $sdblink);

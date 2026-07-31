@@ -21,6 +21,9 @@
 }
 #ChatPanneau { flex: 1 1 auto; min-width: 0; }
 
+/* Wrapper pour les icônes d'action au hover */
+.ChatConvWrap { position: relative; }
+
 .ChatConv {
 	display: block;
 	position: relative;
@@ -47,29 +50,164 @@
 .ChatConvNom { font-weight: bold; font-size: 13px; vertical-align: middle; }
 .ChatConv .ChatBadge { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
 
+/* Icônes d'action : visibles au survol du wrapper */
+.ChatConvActions {
+	position: absolute;
+	right: 4px;
+	top: 50%;
+	transform: translateY(-50%);
+	display: none;
+	align-items: center;
+	gap: 1px;
+	background: rgba(255,255,255,0.95);
+	border-radius: 4px;
+	padding: 1px 2px;
+	z-index: 1;
+}
+.ChatConvWrap:hover .ChatConvActions { display: flex; }
+.ChatConvWrap:hover .ChatBadge { opacity: 0; }
+
+.ChatBtnEdit, .ChatBtnArch {
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 2px 5px;
+	border-radius: 3px;
+	font-size: 13px;
+	line-height: 1;
+}
+.ChatBtnEdit { color: var(--couleur-primaire); }
+.ChatBtnEdit:hover { background: #e0e8ff; }
+.ChatBtnArch { color: #dc3545; }
+.ChatBtnArch:hover { background: #fde8ea; }
+
+/* Panneau d'édition inline */
+.ChatEditPanel {
+	background: #f8f9ff;
+	border: 1px solid #d0d8ec;
+	border-radius: 6px;
+	padding: 10px;
+	margin: 2px 0 6px;
+	font-size: 13px;
+}
+.ChatEditRow {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 8px;
+}
+.ChatEditNom {
+	flex: 1;
+	padding: 4px 6px;
+	border: 1px solid #c0c8e0;
+	border-radius: 3px;
+	font-size: 13px;
+	font-family: inherit;
+}
+.ChatEditMembresLabel {
+	display: block;
+	font-weight: bold;
+	margin-bottom: 4px;
+}
+.ChatEditMembres { margin-bottom: 8px; }
+.ChatMembreAuto, .ChatMembreManuel {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	background: #fff;
+	border: 1px solid #d0d8ec;
+	border-radius: 12px;
+	padding: 2px 8px;
+	margin: 2px;
+	font-size: 12px;
+}
+.ChatMembreAuto { color: #888; }
+.ChatBtnRetirer {
+	background: none;
+	border: none;
+	color: #dc3545;
+	cursor: pointer;
+	font-size: 13px;
+	padding: 0 2px;
+	line-height: 1;
+	font-weight: bold;
+}
+.ChatEditAjouter {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+.ChatEditSelMembre {
+	flex: 1;
+	padding: 4px;
+	border: 1px solid #c0c8e0;
+	border-radius: 3px;
+	font-size: 12px;
+	font-family: inherit;
+}
+.ChatEditFermer { text-align: right; margin-top: 8px; }
+.ChatEditGeneraleNote { font-size: 12px; margin: 4px 0; }
+
+/* Zone admin en bas du menu */
+.ChatAdminZone {
+	margin-top: 10px;
+	padding-top: 8px;
+	border-top: 1px solid #e0e0e0;
+	margin-left: -8px;
+	margin-right: -8px;
+	padding-left: 8px;
+	padding-right: 8px;
+}
+#ChatNouveauGroupe {
+	background: #f8f9ff;
+	border: 1px solid #d0d8ec;
+	border-radius: 6px;
+	padding: 8px;
+	margin-bottom: 6px;
+}
+#ChatNouveauGroupe input[type=text] {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 4px 6px;
+	font-size: 13px;
+	border: 1px solid #c0c8e0;
+	border-radius: 3px;
+	margin-bottom: 6px;
+	font-family: inherit;
+}
+#ChatNouveauGroupe .btnRow { display: flex; gap: 6px; }
+
 .ChatArchTitre {
-	margin: 12px 6px 4px;
+	margin: 12px 0 4px 0;
 	font-size: 12px;
 	text-transform: uppercase;
 	color: #999;
 	border-top: 1px solid #e0e0e0;
 	padding-top: 8px;
+	padding-left: 6px;
+	padding-right: 6px;
 }
 .ChatConvArchive { opacity: 0.6; }
 .ChatConvArchive .ChatConvType { background: #999; }
 .ChatArchForm { margin: 12px 4px 4px; }
 .ChatArchForm button { font-size: 12px; width: 100%; }
 .ChatGererGroupes {
-	display: block;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
 	margin: 6px 4px;
 	font-size: 12px;
 	text-align: center;
 	color: var(--couleur-secondaire);
+	height: 30px !important;
+	line-height: 1;
+	padding-top: 0 !important;
+	padding-bottom: 0 !important;
 }
 .ChatArchivesToggle {
 	margin-top: 8px;
 	border-top: 1px solid #e0e0e0;
-	padding-top: 8px;
+	display: flex !important;
 }
 #ChatArchivesListe {
 	border-top: 1px solid #e8e8e8;
@@ -80,11 +218,39 @@
 #ChatTitre {
 	text-align: center;
 	color: var(--couleur-primaire);
+	padding: 0 10px;
 }
 
 @media (max-width: 700px) {
-	#ChatLayout { flex-direction: column; }
-	#ChatListe { flex: none; width: auto; }
+	#ChatTitre {
+		padding: 10px;
+		margin: 0 auto;
+		background: #f8f9ff;
+		border-bottom: 1px solid #d0d8ec;
+		width: 280px;
+	}
+}
+
+@media (max-width: 700px) {
+	#ChatLayout {
+		flex-direction: column;
+		max-width: 90%;
+		margin: 8px auto;
+		gap: 8px;
+		align-items: center;
+	}
+	#ChatListe {
+		flex: none;
+		width: 280px;
+		margin: 0 auto;
+		border-radius: 0;
+	}
+	#ChatPanneau {
+		width: 280px;
+	}
+	#ChatListe > button.ChatGererGroupes { background: #ccffcc !important; }
+	.ChatAdminZone .ChatGererGroupes { background: #ccccff !important; }
+	.ChatArchivesToggle { background: #ffffcc !important; }
 }
 
 #ChatFil {
@@ -97,6 +263,16 @@
 	border-radius: 8px;
 	max-height: 60vh;
 	overflow-y: auto;
+}
+
+@media (max-width: 700px) {
+	#ChatFil {
+		width: 280px;
+		margin: 0 auto;
+		border-radius: 0;
+		max-height: 50vh;
+		padding: 8px;
+	}
 }
 
 .ChatVide {
@@ -163,6 +339,14 @@
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
+}
+
+@media (max-width: 700px) {
+	#ChatForm {
+		width: 280px;
+		margin: 8px auto;
+		border-radius: 0;
+	}
 }
 
 #ChatContenu {
