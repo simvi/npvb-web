@@ -323,9 +323,23 @@ function nonLusConversation($Joueur, $convId, $sdblink) {
 }
 
 // Conversations accessibles au joueur (objets NPVB_Conversations + ->nonlus).
+// Les admins voient TOUTES les conversations, les autres ne voient que celles auxquelles ils ont accès.
 function conversationsAccessibles($Joueur, $sdblink) {
 	if (!isset($Joueur) || !is_object($Joueur)) return array();
 	$pseudo = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
+
+	// Admin : voir toutes les conversations
+	if (peut($Joueur, 'gerer_roles')) {
+		$res = mysql_query("SELECT * FROM NPVB_Conversations ORDER BY Archive, FIELD(Type,'generale','equipe','bureau','prive'), Nom", $sdblink);
+		$convs = array();
+		if ($res) { while ($c = mysql_fetch_object($res)) {
+			$c->nonlus = ($c->Archive == 'o') ? 0 : nonLusConversation($Joueur, $c->Id, $sdblink);
+			$convs[] = $c;
+		} }
+		return $convs;
+	}
+
+	// Membre normal : accès restreint
 	$ids = array();
 	$r = mysql_query("SELECT Id FROM NPVB_Conversations WHERE Type='generale'", $sdblink);
 	if ($r) while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
