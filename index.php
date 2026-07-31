@@ -155,6 +155,7 @@ print ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 	<meta name="owner" content="<?php echo htmlspecialchars($config['club_nom']); ?>" />
 	<meta name="Rating" content="General" />
     	<meta name="verify-v1" content="FSYeF8Wwa0ABLnMB8SFSvXigw4CQ/JX3wf7yEIGOfsw=" />
+	<meta name="google-site-verification" content="u7a79KGMxnyXzWVGwi8oBWcaoN7Lev3jAc3QA53J9CQ" />
 	<meta name="apple-itunes-app" content="app-id=793137223, app-argument=http%3A%2F%2Fyousite.com%2Fsomepath%3Fquery%3Da%2Cb" />
 	<meta name='viewport' content='width=device-width, initial-scale=1.0' >
 
