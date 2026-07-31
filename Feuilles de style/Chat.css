@@ -215,7 +215,7 @@
 		margin: 0 auto;
 		background: #f8f9ff;
 		border-bottom: 1px solid #d0d8ec;
-		max-width: 90%;
+		width: 280px;
 	}
 }
 
@@ -225,15 +225,16 @@
 		max-width: 90%;
 		margin: 8px auto;
 		gap: 8px;
+		align-items: center;
 	}
 	#ChatListe {
 		flex: none;
-		width: 100%;
+		width: 280px;
 		margin: 0 auto;
 		border-radius: 0;
 	}
 	#ChatPanneau {
-		width: 100%;
+		width: 280px;
 	}
 }
 
@@ -251,7 +252,7 @@
 
 @media (max-width: 700px) {
 	#ChatFil {
-		max-width: 90%;
+		width: 280px;
 		margin: 0 auto;
 		border-radius: 0;
 		max-height: 50vh;
@@ -327,7 +328,7 @@
 
 @media (max-width: 700px) {
 	#ChatForm {
-		max-width: 90%;
+		width: 280px;
 		margin: 8px auto;
 		border-radius: 0;
 	}
