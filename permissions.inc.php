@@ -329,9 +329,14 @@ function conversationsAccessibles($Joueur, $sdblink) {
 	if (!isset($Joueur) || !is_object($Joueur)) return array();
 	$pseudo = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
 
-	// Admin : voir toutes les conversations SAUF privées
+	// Admin : voir toutes les conversations SAUF privées, triées par activité récente
 	if (peut($Joueur, 'gerer_roles')) {
-		$res = mysql_query("SELECT * FROM NPVB_Conversations WHERE Type != 'prive' ORDER BY Archive, FIELD(Type,'generale','equipe','bureau'), Nom", $sdblink);
+		$res = mysql_query("SELECT c.*, COALESCE(MAX(m.DateEnvoi), c.DateCreation) AS dernierMsg
+		                    FROM NPVB_Conversations c
+		                    LEFT JOIN NPVB_MessagesChat m ON m.Conversation = c.Id
+		                    WHERE c.Type != 'prive'
+		                    GROUP BY c.Id
+		                    ORDER BY c.Archive ASC, dernierMsg DESC", $sdblink);
 		$convs = array();
 		if ($res) { while ($c = mysql_fetch_object($res)) {
 			$c->nonlus = ($c->Archive == 'o') ? 0 : nonLusConversation($Joueur, $c->Id, $sdblink);
@@ -340,7 +345,7 @@ function conversationsAccessibles($Joueur, $sdblink) {
 		return $convs;
 	}
 
-	// Membre normal : accès restreint
+	// Membre normal : accès restreint, triés par activité récente
 	$ids = array();
 	$r = mysql_query("SELECT Id FROM NPVB_Conversations WHERE Type='generale'", $sdblink);
 	if ($r) while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
@@ -352,7 +357,12 @@ function conversationsAccessibles($Joueur, $sdblink) {
 	if ($r) while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
 	if (empty($ids)) return array();
 	$in = implode(',', array_keys($ids));
-	$res = mysql_query("SELECT * FROM NPVB_Conversations WHERE Id IN (".$in.") ORDER BY Archive, FIELD(Type,'generale','equipe','bureau','prive'), Nom", $sdblink);
+	$res = mysql_query("SELECT c.*, COALESCE(MAX(m.DateEnvoi), c.DateCreation) AS dernierMsg
+	                    FROM NPVB_Conversations c
+	                    LEFT JOIN NPVB_MessagesChat m ON m.Conversation = c.Id
+	                    WHERE c.Id IN (".$in.")
+	                    GROUP BY c.Id
+	                    ORDER BY c.Archive ASC, dernierMsg DESC", $sdblink);
 	$convs = array();
 	if ($res) { while ($c = mysql_fetch_object($res)) {
 		$c->nonlus = ($c->Archive == 'o') ? 0 : nonLusConversation($Joueur, $c->Id, $sdblink);
