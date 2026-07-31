@@ -324,7 +324,7 @@ if (!count($memAuto) && !count($memManuel)) { ?>
 				<form method="post" action="<?=$PHP_SELF?>">
 					<input type="hidden" name="Page" value="chat" />
 					<input type="hidden" name="Action" value="CreerGroupe" />
-					<input type="text" name="NomGroupe" placeholder="Nom du groupe..." maxlength="60" />
+					<input type="text" name="NomGroupe" placeholder="Nom de la conversation..." maxlength="60" />
 					<div class="btnRow">
 						<button type="submit" class="PetitBouton Action">Créer</button>
 						<button type="button" class="PetitBouton" onclick="document.getElementById('ChatNouveauGroupe').style.display='none'">Annuler</button>
@@ -332,22 +332,16 @@ if (!count($memAuto) && !count($memManuel)) { ?>
 				</form>
 			</div>
 			<button class="ChatGererGroupes" style="background:none;border:none;width:100%;cursor:pointer;text-align:center"
-				onclick="var z=document.getElementById('ChatNouveauGroupe');z.style.display=z.style.display==='none'?'block':'none'">＋ Nouveau groupe</button>
-			<form method="post" action="<?=$PHP_SELF?>" class="ChatArchForm"
-				onsubmit="return confirm('Archiver toutes les conversations d\'équipe ?\n\nL\'historique est conservé en lecture seule et de nouvelles conversations vierges sont recréées.');">
-				<input type="hidden" name="Page" value="chat" />
-				<input type="hidden" name="Action" value="ChatArchiveEquipes" />
-				<button type="submit" class="PetitBouton Annule">Archiver les équipes</button>
-			</form>
+				onclick="var z=document.getElementById('ChatNouveauGroupe');z.style.display=z.style.display==='none'?'block':'none'">＋ Nouvelle conversation</button>
 		</div>
 <?php } ?>
 
-<?php $archivesOuvertes = ($conv && $conv->Archive == 'o'); ?>
+
 <?php if (count($conversationsArchives)) { ?>
 		<a class="ChatGererGroupes ChatArchivesToggle" href="#"
 			onclick="var p=document.getElementById('ChatArchivesListe');var o=p.style.display!=='none';p.style.display=o?'none':'block';this.textContent=o?'Afficher les archives':'Masquer les archives';return false;"
-			><?=($archivesOuvertes?'Masquer les archives':'Afficher les archives')?></a>
-		<div id="ChatArchivesListe" style="display:<?=($archivesOuvertes?'block':'none')?>;">
+			>Afficher les archives</a>
+		<div id="ChatArchivesListe" style="display:none;">
 <?php foreach ($conversationsArchives as $c) {
 	$actif = ($c->Id == $convId);
 ?>
