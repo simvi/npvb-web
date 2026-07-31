@@ -201,12 +201,12 @@
 	color: var(--couleur-secondaire);
 	height: 30px !important;
 	line-height: 1;
-	padding: 0 !important;
+	padding-top: 0 !important;
+	padding-bottom: 0 !important;
 }
 .ChatArchivesToggle {
 	margin-top: 8px;
 	border-top: 1px solid #e0e0e0;
-	padding-top: 8px;
 	display: block;
 	margin-left: -8px;
 	margin-right: -8px;
@@ -252,6 +252,9 @@
 	#ChatPanneau {
 		width: 280px;
 	}
+	#ChatListe > button.ChatGererGroupes { background: #ccffcc; }
+	.ChatAdminZone .ChatGererGroupes { background: #ccccff; }
+	.ChatArchivesToggle { background: #ffffcc; }
 }
 
 #ChatFil {
