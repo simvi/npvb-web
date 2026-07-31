@@ -63,8 +63,15 @@ if ($peutModerer && isset($_POST['Action']) && $_POST['Action']=="CreerGroupe") 
 	if ($nom !== '') {
 		$ne = mysql_real_escape_string($nom, $sdblink);
 		mySql_query("INSERT INTO NPVB_Conversations (Type, Nom, DateCreation) VALUES ('bureau', '".$ne."', NOW())", $sdblink);
+		$newConvId = mysql_insert_id($sdblink);
+		if ($newConvId) {
+			$createur = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
+			mySql_query("INSERT IGNORE INTO NPVB_ConversationMembres (Conversation, Joueur) VALUES (".$newConvId.", '".$createur."')", $sdblink);
+		}
+		header('Location: '.$PHP_SELF.'?Page=chat&conv='.$newConvId.'&edit='.$newConvId);
+	} else {
+		header('Location: '.$PHP_SELF.'?Page=chat');
 	}
-	header('Location: '.$PHP_SELF.'?Page=chat');
 	return;
 }
 
