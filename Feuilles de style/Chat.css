@@ -196,7 +196,13 @@
 	height: 30px !important;
 	line-height: 1;
 	padding: 0 !important;
+	background: #ffcccc !important;
 }
+
+/* Diagnostic: different colors for each button */
+#ChatListe > button.ChatGererGroupes { background: #ccffcc !important; }
+.ChatAdminZone .ChatGererGroupes { background: #ccccff !important; }
+.ChatArchivesToggle { background: #ffffcc !important; }
 .ChatArchivesToggle {
 	margin-top: 8px;
 	border-top: 1px solid #e0e0e0;
