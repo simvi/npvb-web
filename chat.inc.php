@@ -62,6 +62,20 @@ if ($conv && isset($_POST['Action']) && $_POST['Action']=="ChatSupprime" && $peu
 	mySql_query("UPDATE NPVB_MessagesChat SET Supprime='o' WHERE Id=".$mid." AND Conversation=".$convId, $sdblink);
 }
 
+// --- Suppression définitive d'une conversation archivée (admin uniquement) ---
+if ($peutModerer && isset($_POST['Action']) && $_POST['Action']=="SupprimerConversation") {
+	$sid = (int)$_POST['conv'];
+	$cible = mySql_fetch_object(mySql_query("SELECT Id FROM NPVB_Conversations WHERE Id=".$sid." AND Archive='o'", $sdblink));
+	if ($cible) {
+		mySql_query("DELETE FROM NPVB_MessagesLus WHERE Conversation=".$sid, $sdblink);
+		mySql_query("DELETE FROM NPVB_MessagesChat WHERE Conversation=".$sid, $sdblink);
+		mySql_query("DELETE FROM NPVB_ConversationMembres WHERE Conversation=".$sid, $sdblink);
+		mySql_query("DELETE FROM NPVB_Conversations WHERE Id=".$sid, $sdblink);
+		header('Location: '.$PHP_SELF.'?Page=chat');
+		return;
+	}
+}
+
 // --- Chargement des messages de la conversation active ---
 $messages = array();
 if ($conv) {
@@ -129,6 +143,16 @@ $archivesOuvertes = ($conv && $conv->Archive == 'o');
 				<span class="ChatConvType"><?=chatTypeLabel($c->Type)?></span>
 				<span class="ChatConvNom"><?=htmlspecialchars(nomConversationPourJoueur($c, $Joueur, $sdblink), ENT_QUOTES)?></span>
 			</a>
+<?php if ($peutModerer) { ?>
+			<form method="post" action="<?=$PHP_SELF?>" style="display:inline;float:right"
+			      onsubmit="return confirm('Supprimer définitivement « <?=htmlspecialchars($c->Nom, ENT_QUOTES)?> » et tous ses messages ?');">
+				<input type="hidden" name="Page" value="chat" />
+				<input type="hidden" name="Action" value="SupprimerConversation" />
+				<input type="hidden" name="conv" value="<?=(int)$c->Id?>" />
+				<button type="submit" title="Supprimer définitivement"
+				        style="background:none;border:none;color:#dc3545;cursor:pointer;font-size:14px;padding:0 4px;line-height:1">&#10006;</button>
+			</form>
+<?php } ?>
 <?php } ?>
 		</div>
 <?php } ?>
