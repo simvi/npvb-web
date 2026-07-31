@@ -252,9 +252,9 @@
 	#ChatPanneau {
 		width: 280px;
 	}
-	#ChatListe > button.ChatGererGroupes { background: #ccffcc; }
-	.ChatAdminZone .ChatGererGroupes { background: #ccccff; }
-	.ChatArchivesToggle { background: #ffffcc; }
+	#ChatListe > button.ChatGererGroupes { background: #ccffcc !important; }
+	.ChatAdminZone .ChatGererGroupes { background: #ccccff !important; }
+	.ChatArchivesToggle { background: #ffffcc !important; }
 }
 
 #ChatFil {
