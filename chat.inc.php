@@ -25,6 +25,14 @@ if (isset($_REQUEST['Prive']) && $_REQUEST['Prive'] != '' && $_REQUEST['Prive'] 
 // Conversations accessibles au membre (avec non-lus)
 $conversations = conversationsAccessibles($Joueur, $sdblink);
 
+// Séparer les conversations actives et archivées
+$conversationsActives  = array();
+$conversationsArchives = array();
+foreach ($conversations as $c) {
+	if ($c->Archive == 'o') { $conversationsArchives[] = $c; }
+	else                    { $conversationsActives[]  = $c; }
+}
+
 // Conversation sélectionnée (Prive prioritaire, sinon ?conv, sinon 1ère accessible)
 $convSel = $convForce ? $convForce : (isset($_REQUEST['conv']) ? (int)$_REQUEST['conv'] : 0);
 $conv = null;
@@ -52,6 +60,20 @@ if ($conv && isset($_POST['Action']) && $_POST['Action']=="ChatEnvoi" && $peutPo
 if ($conv && isset($_POST['Action']) && $_POST['Action']=="ChatSupprime" && $peutModerer && isset($_POST['MsgId'])) {
 	$mid = (int)$_POST['MsgId'];
 	mySql_query("UPDATE NPVB_MessagesChat SET Supprime='o' WHERE Id=".$mid." AND Conversation=".$convId, $sdblink);
+}
+
+// --- Suppression définitive d'une conversation archivée (admin uniquement) ---
+if ($peutModerer && isset($_POST['Action']) && $_POST['Action']=="SupprimerConversation") {
+	$sid = (int)$_POST['conv'];
+	$cible = mySql_fetch_object(mySql_query("SELECT Id FROM NPVB_Conversations WHERE Id=".$sid." AND Archive='o'", $sdblink));
+	if ($cible) {
+		mySql_query("DELETE FROM NPVB_MessagesLus WHERE Conversation=".$sid, $sdblink);
+		mySql_query("DELETE FROM NPVB_MessagesChat WHERE Conversation=".$sid, $sdblink);
+		mySql_query("DELETE FROM NPVB_ConversationMembres WHERE Conversation=".$sid, $sdblink);
+		mySql_query("DELETE FROM NPVB_Conversations WHERE Id=".$sid, $sdblink);
+		header('Location: '.$PHP_SELF.'?Page=chat');
+		return;
+	}
 }
 
 // --- Chargement des messages de la conversation active ---
@@ -89,15 +111,12 @@ function chatTypeLabel($t) {
 
 	<div id="ChatListe">
 		<h3>Conversations</h3>
-<?php if (!count($conversations)) { ?>
+<?php if (!count($conversationsActives)) { ?>
 		<p class="Remarque">Aucune conversation.</p>
-<?php } $sectionArchive = false; foreach ($conversations as $c) {
-		if ($c->Archive == 'o' && !$sectionArchive) { $sectionArchive = true; ?>
-		<h3 class="ChatArchTitre">Archives</h3>
-<?php }
+<?php } foreach ($conversationsActives as $c) {
 		$actif = ($c->Id == $convId);
 ?>
-		<a class="ChatConv<?=($actif?' ChatConvActif':'')?><?=($c->Archive=='o'?' ChatConvArchive':'')?>" href="<?=$PHP_SELF?>?Page=chat&amp;conv=<?=(int)$c->Id?>">
+		<a class="ChatConv<?=($actif?' ChatConvActif':'')?>" href="<?=$PHP_SELF?>?Page=chat&amp;conv=<?=(int)$c->Id?>">
 			<span class="ChatConvType"><?=chatTypeLabel($c->Type)?></span>
 			<span class="ChatConvNom"><?=htmlspecialchars(nomConversationPourJoueur($c, $Joueur, $sdblink), ENT_QUOTES)?></span>
 <?php if ($c->nonlus > 0) { ?><span class="ChatBadge"><?=(int)$c->nonlus?></span><?php } ?>
@@ -110,6 +129,32 @@ function chatTypeLabel($t) {
 			<button type="submit" class="PetitBouton Annule">Archiver les conversations d'équipe</button>
 		</form>
 		<a class="ChatGererGroupes" href="<?=$PHP_SELF?>?Page=adminchat">Gérer les groupes bureau</a>
+<?php } ?>
+<?php
+$archivesOuvertes = ($conv && $conv->Archive == 'o');
+?>
+<?php if (count($conversationsArchives)) { ?>
+		<a class="ChatGererGroupes ChatArchivesToggle" href="#" onclick="var p=document.getElementById('ChatArchivesListe');var ouvert=p.style.display!=='none';p.style.display=ouvert?'none':'block';this.textContent=ouvert?'Afficher les archives':'Masquer les archives';return false;"><?=($archivesOuvertes?'Masquer les archives':'Afficher les archives')?></a>
+		<div id="ChatArchivesListe" style="display:<?=($archivesOuvertes?'block':'none')?>;">
+<?php foreach ($conversationsArchives as $c) {
+		$actif = ($c->Id == $convId);
+?>
+			<a class="ChatConv ChatConvArchive<?=($actif?' ChatConvActif':'')?>" href="<?=$PHP_SELF?>?Page=chat&amp;conv=<?=(int)$c->Id?>">
+				<span class="ChatConvType"><?=chatTypeLabel($c->Type)?></span>
+				<span class="ChatConvNom"><?=htmlspecialchars(nomConversationPourJoueur($c, $Joueur, $sdblink), ENT_QUOTES)?></span>
+			</a>
+<?php if ($peutModerer) { ?>
+			<form method="post" action="<?=$PHP_SELF?>" style="display:inline;float:right"
+			      onsubmit="return confirm('Supprimer définitivement « <?=htmlspecialchars($c->Nom, ENT_QUOTES)?> » et tous ses messages ?');">
+				<input type="hidden" name="Page" value="chat" />
+				<input type="hidden" name="Action" value="SupprimerConversation" />
+				<input type="hidden" name="conv" value="<?=(int)$c->Id?>" />
+				<button type="submit" title="Supprimer définitivement"
+				        style="background:none;border:none;color:#dc3545;cursor:pointer;font-size:14px;padding:0 4px;line-height:1">&#10006;</button>
+			</form>
+<?php } ?>
+<?php } ?>
+		</div>
 <?php } ?>
 	</div>
 

@@ -17,14 +17,14 @@ $ROLES_ASSIGNABLES = array(
 	'admin'        => 'Administrateur (tous les droits)',
 	'organisateur' => 'Organisateur (événements, toutes équipes)',
 	'capitaine'    => 'Capitaine (événements + membres de son équipe)',
-	'redacteur'    => 'Rédacteur (accueil, messages, actualités)',
+	'redacteur'    => 'Rédacteur (accueil, actualités)',
 );
 
 // Capacités GLOBALES (toutes équipes confondues)
 $CAPACITES_GLOBALES = array(
 	'admin'        => array('*'),  // tout
 	'organisateur' => array('gerer_evenements', 'saisir_presences', 'cloturer_evenements', 'voir_stats'),
-	'redacteur'    => array('editer_accueil', 'gerer_messages', 'poster_annonce'),
+	'redacteur'    => array('editer_accueil', 'poster_annonce'),
 	'capitaine'    => array(),     // rien en global — uniquement par équipe
 	'membre'       => array(),
 );
@@ -41,8 +41,6 @@ $CAPACITES_PAGES = array(
 	'adminfichejour'    => 'gerer_evenements',
 	'adminmembres'      => 'gerer_membres',
 	'adminfichemembre'  => 'gerer_membres',
-	'adminmessages'     => 'gerer_messages',
-	'adminnewmessage'   => 'gerer_messages',
 	'adminaccueil'      => 'editer_accueil',
 	'adminaccueilimage' => 'editer_accueil',
 	'adminstats'        => 'voir_stats',
@@ -163,7 +161,6 @@ function estAdminQuelconque($Joueur) {
 	return peut($Joueur, 'gerer_evenements')
 		|| peut($Joueur, 'gerer_membres')
 		|| peut($Joueur, 'editer_accueil')
-		|| peut($Joueur, 'gerer_messages')
 		|| peut($Joueur, 'gerer_roles')
 		|| (isset($Joueur->Roles) && in_array('capitaine', $Joueur->Roles));
 }
@@ -280,7 +277,7 @@ function conversationsAccessibles($Joueur, $sdblink) {
 	$ids = array();
 	$r = mysql_query("SELECT Id FROM NPVB_Conversations WHERE Type='generale'", $sdblink);
 	if ($r) while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
-	$r = mysql_query("SELECT c.Id FROM NPVB_Conversations c WHERE c.Type='equipe' AND (
+	$r = mysql_query("SELECT c.Id FROM NPVB_Conversations c WHERE c.Type='equipe' AND c.Archive='n' AND (
 	                    c.Equipe IN (SELECT Equipe FROM NPVB_Appartenance WHERE Joueur='".$pseudo."')
 	                    OR c.Equipe IN (SELECT Nom FROM NPVB_Equipes WHERE Responsable='".$pseudo."' OR Supleant='".$pseudo."'))", $sdblink);
 	if ($r) while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
