@@ -27,7 +27,11 @@ ksort($equipesDispo);
 krsort($saisonsDispo);
 
 $FiltreEquipe = isset($_GET['Equipe']) ? $_GET['Equipe'] : '';
-$FiltreSaison = isset($_GET['Saison']) ? $_GET['Saison'] : '';
+
+// Saison courante par défaut (sept→août)
+$_annee = (int)date('Y'); $_mois = (int)date('n');
+$saisonCourante = ($_mois >= 9) ? ($_annee."-".($_annee+1)) : (($_annee-1)."-".$_annee);
+$FiltreSaison = isset($_GET['Saison']) ? $_GET['Saison'] : $saisonCourante;
 ?>
 
 <h2>Résultats des rencontres</h2>
@@ -44,7 +48,11 @@ $FiltreSaison = isset($_GET['Saison']) ? $_GET['Saison'] : '';
 	Saison
 	<select name="Saison">
 		<option value="">Toutes</option>
-<?php foreach ($saisonsDispo as $sa => $v) { ?>
+<?php
+// Inclure la saison courante dans la liste même si aucun résultat n'existe encore
+$saisonsAffichees = $saisonsDispo;
+if (!isset($saisonsAffichees[$saisonCourante])) { $saisonsAffichees[$saisonCourante] = true; krsort($saisonsAffichees); }
+foreach ($saisonsAffichees as $sa => $v) { ?>
 		<option value="<?=htmlspecialchars($sa, ENT_QUOTES)?>"<?=($FiltreSaison==$sa?" selected=\"selected\"":"")?>><?=htmlspecialchars($sa, ENT_QUOTES)?></option>
 <?php } ?>
 	</select>
