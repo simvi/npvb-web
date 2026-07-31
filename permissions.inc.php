@@ -277,7 +277,7 @@ function conversationsAccessibles($Joueur, $sdblink) {
 	$ids = array();
 	$r = mysql_query("SELECT Id FROM NPVB_Conversations WHERE Type='generale'", $sdblink);
 	if ($r) while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
-	$r = mysql_query("SELECT c.Id FROM NPVB_Conversations c WHERE c.Type='equipe' AND (
+	$r = mysql_query("SELECT c.Id FROM NPVB_Conversations c WHERE c.Type='equipe' AND c.Archive='n' AND (
 	                    c.Equipe IN (SELECT Equipe FROM NPVB_Appartenance WHERE Joueur='".$pseudo."')
 	                    OR c.Equipe IN (SELECT Nom FROM NPVB_Equipes WHERE Responsable='".$pseudo."' OR Supleant='".$pseudo."'))", $sdblink);
 	if ($r) while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
