@@ -101,6 +101,9 @@ if (isset($_REQUEST['Prive']) && $_REQUEST['Prive'] != '' && $_REQUEST['Prive'] 
 	}
 }
 
+// Axe 2b : Paramètre de navigation (depuis quel message afficher)
+$depuisMsgId = isset($_REQUEST['depuis']) ? (int)$_REQUEST['depuis'] : 0;
+
 // ============================================================
 // Conversations
 // ============================================================
@@ -222,12 +225,41 @@ if ($conv && isset($_POST['Action']) && $_POST['Action']=="ChatEditer" && isset(
 // ============================================================
 $messages = array();
 $messageEpingle = null;
+$plusAncienId = 0;
+$plusieursPlusAnciens = false;
 if ($conv) {
-	$res = mySql_query("SELECT m.Id, m.Auteur, m.Contenu, m.DateEnvoi, m.DateModif, m.Epingle, j.Prenom, j.Nom
-	                    FROM NPVB_MessagesChat m LEFT JOIN NPVB_Joueurs j ON j.Pseudonyme = m.Auteur
-	                    WHERE m.Conversation=".$convId." AND m.Supprime='n'
-	                    ORDER BY m.Id ASC", $sdblink);
-	while ($row = mySql_fetch_object($res)) { $messages[] = $row; }
+	if ($depuisMsgId) {
+		// Axe 2a : Charger une fenêtre centrée autour de depuisMsgId (25 avant/après)
+		$res = mySql_query("SELECT * FROM (
+			SELECT m.Id, m.Auteur, m.Contenu, m.DateEnvoi, m.DateModif, m.Epingle, j.Prenom, j.Nom
+			FROM NPVB_MessagesChat m LEFT JOIN NPVB_Joueurs j ON j.Pseudonyme = m.Auteur
+			WHERE m.Conversation=".$convId." AND m.Supprime='n' AND m.Id <= ".$depuisMsgId."
+			ORDER BY m.Id DESC LIMIT 26
+		) t ORDER BY t.Id ASC", $sdblink);
+		while ($row = mySql_fetch_object($res)) { $messages[] = $row; }
+		// Charger aussi 25 après
+		$res2 = mySql_query("SELECT m.Id, m.Auteur, m.Contenu, m.DateEnvoi, m.DateModif, m.Epingle, j.Prenom, j.Nom
+		                     FROM NPVB_MessagesChat m LEFT JOIN NPVB_Joueurs j ON j.Pseudonyme = m.Auteur
+		                     WHERE m.Conversation=".$convId." AND m.Supprime='n' AND m.Id > ".$depuisMsgId."
+		                     ORDER BY m.Id ASC LIMIT 25", $sdblink);
+		while ($row = mySql_fetch_object($res2)) { $messages[] = $row; }
+	} else {
+		// Chargement normal : 50 derniers messages
+		$res = mySql_query("SELECT * FROM (
+			SELECT m.Id, m.Auteur, m.Contenu, m.DateEnvoi, m.DateModif, m.Epingle, j.Prenom, j.Nom
+			FROM NPVB_MessagesChat m LEFT JOIN NPVB_Joueurs j ON j.Pseudonyme = m.Auteur
+			WHERE m.Conversation=".$convId." AND m.Supprime='n'
+			ORDER BY m.Id DESC LIMIT 50
+		) t ORDER BY t.Id ASC", $sdblink);
+		while ($row = mySql_fetch_object($res)) { $messages[] = $row; }
+
+		// Vérifier s'il y a plus de messages
+		$res_count = mySql_query("SELECT COUNT(*) AS n FROM NPVB_MessagesChat WHERE Conversation=".$convId." AND Supprime='n' AND Id < ".(count($messages) ? $messages[0]->Id : 999999), $sdblink);
+		$row_count = mySql_fetch_object($res_count);
+		$plusieursPlusAnciens = $row_count && $row_count->n > 0;
+	}
+
+	if (count($messages)) $plusAncienId = $messages[0]->Id;
 
 	// Charger le message épinglé pour l'affichage
 	$res2 = mySql_query("SELECT m.Id, m.Auteur, m.Contenu, m.DateEnvoi, j.Prenom, j.Nom
@@ -265,6 +297,11 @@ function highlightMentions($texte) {
 
 	<div id="ChatListe">
 		<h3>Conversations</h3>
+
+		<div style="margin-bottom:8px">
+			<input type="text" id="ChatRecherche" placeholder="Rechercher..." style="width:100%;box-sizing:border-box;padding:6px 8px;font-size:12px;border:1px solid #d0d8ec;border-radius:4px" />
+			<div id="ChatResultatsRecherche" style="display:none;position:absolute;background:#fff;border:1px solid #d0d8ec;border-radius:4px;max-height:200px;overflow-y:auto;width:200px;z-index:100;font-size:12px;box-shadow:0 2px 4px rgba(0,0,0,0.1)"></div>
+		</div>
 
 <?php if ($peutModerer) { ?>
 		<form id="ChatMbrForm" method="post" action="<?=$PHP_SELF?>" style="display:none">
@@ -457,7 +494,12 @@ if (!count($memAuto) && !count($memManuel)) { ?>
 		</div>
 <?php } ?>
 
-		<div id="ChatFil" data-conv="<?=(int)$convId?>" data-dernier="<?=(int)$dernierId?>">
+		<div id="ChatFil" data-conv="<?=(int)$convId?>" data-dernier="<?=(int)$dernierId?>" data-plus-ancien="<?=(int)$plusAncienId?>">
+<?php if ($plusieursPlusAnciens) { ?>
+			<div style="text-align:center;margin:10px 0">
+				<button id="ChatChargerPlus" style="padding:6px 12px;background:#f0f4ff;border:1px solid #d0d8ec;border-radius:4px;cursor:pointer;font-size:13px">↑ Charger les messages précédents</button>
+			</div>
+<?php } ?>
 <?php
 		if (!count($messages)) {
 			echo '<p class="ChatVide">Aucun message pour le moment.</p>';
@@ -615,6 +657,38 @@ if (!count($memAuto) && !count($memManuel)) { ?>
 		});
 	}
 
+	// Axe 2b - Recherche
+	var inputRecherche = document.getElementById('ChatRecherche');
+	var divsResultats = document.getElementById('ChatResultatsRecherche');
+	if (inputRecherche) {
+		inputRecherche.addEventListener('keyup', function(e){
+			var q = this.value.trim();
+			if (q.length < 2) {
+				divsResultats.style.display = 'none';
+				return;
+			}
+			fetch('index.php?Page=chatapi&action=search&q=' + encodeURIComponent(q), {credentials:'same-origin'})
+				.then(function(r){ return r.json(); })
+				.then(function(data){
+					if (!data || !data.ok || !data.resultats) {
+						divsResultats.style.display = 'none';
+						return;
+					}
+					var html = '';
+					for (var i = 0; i < data.resultats.length; i++) {
+						var r = data.resultats[i];
+						html += '<div style="padding:6px 8px;border-bottom:1px solid #eee;cursor:pointer" onclick="window.location.href=\'?Page=chat&conv='+r.conv+'&depuis='+r.id+'\'"><strong>'+r.nomConv+'</strong><br><em style="color:#999">'+r.apercu+'</em><br><span style="font-size:11px;color:#999">'+r.date+'</span></div>';
+					}
+					divsResultats.innerHTML = html;
+					divsResultats.style.display = 'block';
+				})
+				.catch(function(){});
+		});
+		document.addEventListener('click', function(e){
+			if (e.target !== inputRecherche) divsResultats.style.display = 'none';
+		});
+	}
+
 	// Exposition globale
 	window.chatEdit = chatEdit;
 	window.chatArchiver = chatArchiver;
@@ -699,6 +773,40 @@ if (!count($memAuto) && !count($memManuel)) { ?>
 				apiPost('conv='+conv, 'action=markread&lastid='+dernier).then(function(r){ if (r && r.ok) majBadge(r.nonlus); });
 			}
 		}).catch(function(){ enCours = false; });
+	}
+
+	// Axe 2a : Charger historique
+	var btnChargerPlus = document.getElementById('ChatChargerPlus');
+	if (btnChargerPlus) {
+		btnChargerPlus.addEventListener('click', function(){
+			var plusAncien = parseInt(fil.getAttribute('data-plus-ancien'), 10);
+			if (!plusAncien) return;
+			var oldScrollHeight = fil.scrollHeight;
+			api('action=historique&conv='+conv+'&avant='+plusAncien).then(function(data){
+				if (!data || !data.ok || !data.messages || !data.messages.length) return;
+				// Insérer les messages en haut (dans l'ordre inverse pour insertBefore)
+				var container = fil;
+				var firstMsg = container.querySelector('[data-id]');
+				for (var i = data.messages.length - 1; i >= 0; i--) {
+					var m = data.messages[i];
+					ajoute(m);
+				}
+				// Reordonner : les messages doivent être en ordre croissant d'ID
+				// Pour simplifier, refaire le tri via une réinsertion
+				var allMsgs = Array.from(container.querySelectorAll('[data-id]'));
+				allMsgs.sort(function(a, b){ return parseInt(a.getAttribute('data-id'), 10) - parseInt(b.getAttribute('data-id'), 10); });
+				for (var j = 0; j < allMsgs.length; j++) {
+					container.appendChild(allMsgs[j]);
+				}
+				// Préserver la position de scroll
+				var newScrollHeight = fil.scrollHeight;
+				fil.scrollTop += (newScrollHeight - oldScrollHeight);
+				// Mettre à jour le plus ancien
+				if (data.messages.length > 0) fil.setAttribute('data-plus-ancien', data.messages[0].id);
+				// Masquer le bouton si moins de 50 messages
+				if (data.messages.length < 50) btnChargerPlus.style.display = 'none';
+			}).catch(function(){});
+		});
 	}
 
 	var form = document.getElementById('ChatForm');

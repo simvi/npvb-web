@@ -22,6 +22,31 @@ if (!peutAccederConversation($Joueur, $conv, $sdblink)) {
 
 $pseudoEcap = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
 
+// --- Charger l'historique : messages avant un id donné (Axe 2a) ---
+if ($action == 'historique') {
+	$avant = isset($_REQUEST['avant']) ? (int)$_REQUEST['avant'] : 0;
+	if (!$avant) { echo json_encode(array('ok' => false)); exit; }
+	$res = mySql_query("SELECT m.Id, m.Auteur, m.Contenu, m.DateEnvoi, m.DateModif, j.Prenom, j.Nom
+	                    FROM NPVB_MessagesChat m LEFT JOIN NPVB_Joueurs j ON j.Pseudonyme=m.Auteur
+	                    WHERE m.Conversation=".$convId." AND m.Supprime='n' AND m.Id < ".$avant."
+	                    ORDER BY m.Id DESC LIMIT 50", $sdblink);
+	$msgs = array();
+	while ($row = mySql_fetch_object($res)) {
+		$nom = trim($row->Prenom.' '.$row->Nom);
+		if ($nom == '') $nom = $row->Auteur;
+		$msgs[] = array(
+			'id'      => (int)$row->Id,
+			'nom'     => $nom,
+			'contenu' => $row->Contenu,
+			'date'    => substr($row->DateEnvoi, 8, 2).'/'.substr($row->DateEnvoi, 5, 2).' '.substr($row->DateEnvoi, 11, 5),
+			'modifie' => (!empty($row->DateModif)),
+			'moi'     => ($row->Auteur == $Joueur->Pseudonyme)
+		);
+	}
+	echo json_encode(array('ok' => true, 'messages' => $msgs));
+	exit;
+}
+
 // --- Récupérer les nouveaux messages depuis un id donné ---
 if ($action == 'poll') {
 	$since = isset($_REQUEST['since']) ? (int)$_REQUEST['since'] : 0;
@@ -135,6 +160,37 @@ if ($action == 'lecteurs') {
 		$nonLectList[] = $nom;
 	}
 	echo json_encode(array('ok' => true, 'lu' => $lectList, 'nonlu' => $nonLectList, 'total_lu' => count($lectList), 'total' => count($lectList) + count($nonLectList)));
+	exit;
+}
+
+// --- Recherche globale dans les messages (Axe 2b) ---
+if ($action == 'search') {
+	$q = isset($_REQUEST['q']) ? trim($_REQUEST['q']) : '';
+	if ($q == '' || strlen($q) < 2) { echo json_encode(array('ok' => false)); exit; }
+
+	$ids = conversationsAccessibles($Joueur, $sdblink);
+	if (!count($ids)) { echo json_encode(array('ok' => true, 'resultats' => array())); exit; }
+
+	$convIds = array_map(function($c){ return (int)$c->Id; }, $ids);
+	$convList = implode(',', $convIds);
+	$q_escaped = mysql_real_escape_string('%' . $q . '%', $sdblink);
+
+	$res = mySql_query("SELECT m.Id, m.Conversation, m.Auteur, m.Contenu, m.DateEnvoi, c.Nom AS ConvNom
+	                    FROM NPVB_MessagesChat m JOIN NPVB_Conversations c ON c.Id=m.Conversation
+	                    WHERE m.Conversation IN (".$convList.") AND m.Supprime='n' AND m.Contenu LIKE '".$q_escaped."'
+	                    ORDER BY m.DateEnvoi DESC LIMIT 30", $sdblink);
+	$resultats = array();
+	while ($row = mySql_fetch_object($res)) {
+		$apercu = strlen($row->Contenu) > 60 ? substr($row->Contenu, 0, 57).'...' : $row->Contenu;
+		$resultats[] = array(
+			'id'      => (int)$row->Id,
+			'conv'    => (int)$row->Conversation,
+			'nomConv' => $row->ConvNom,
+			'apercu'  => $apercu,
+			'date'    => substr($row->DateEnvoi, 0, 10)
+		);
+	}
+	echo json_encode(array('ok' => true, 'resultats' => $resultats));
 	exit;
 }
 
