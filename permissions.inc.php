@@ -187,7 +187,9 @@ function peutAccederConversation($Joueur, $conv, $sdblink) {
 	if ($conv->Type == 'equipe') {
 		$eq = mysql_real_escape_string($conv->Equipe, $sdblink);
 		$r = mysql_query("SELECT 1 FROM NPVB_Appartenance WHERE Joueur='".$pseudo."' AND Equipe='".$eq."'
-		                  UNION SELECT 1 FROM NPVB_Equipes WHERE Nom='".$eq."' AND (Responsable='".$pseudo."' OR Supleant='".$pseudo."') LIMIT 1", $sdblink);
+		                  UNION SELECT 1 FROM NPVB_Equipes WHERE Nom='".$eq."' AND (Responsable='".$pseudo."' OR Supleant='".$pseudo."')
+		                  UNION SELECT 1 FROM NPVB_ConversationMembres WHERE Conversation=".(int)$conv->Id." AND Joueur='".$pseudo."'
+		                  LIMIT 1", $sdblink);
 		return ($r && mysql_num_rows($r) > 0);
 	}
 	$r = mysql_query("SELECT 1 FROM NPVB_ConversationMembres WHERE Conversation=".(int)$conv->Id." AND Joueur='".$pseudo."' LIMIT 1", $sdblink);
