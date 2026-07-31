@@ -35,8 +35,9 @@ function enregistrerAppareilPush($pseudo, $token, $plateforme, $dblink) {
 // Obtient un access token OAuth2 (Bearer) pour FCM, mis en cache fichier ~1h
 function fcmAccessToken() {
 	global $config;
+	error_log("[FCM] fcmAccessToken — fichier=" . $config['fcm_service_account'] . " lisible=" . (is_readable($config['fcm_service_account']) ? 'oui' : 'NON'));
 	$sa = @json_decode(@file_get_contents($config['fcm_service_account']), true);
-	if (!$sa || empty($sa['client_email']) || empty($sa['private_key'])) return null;
+	if (!$sa || empty($sa['client_email']) || empty($sa['private_key'])) { error_log("[FCM] service account illisible ou invalide"); return null; }
 
 	$cache = sys_get_temp_dir().'/fcm_'.md5($config['fcm_project_id']).'.tok';
 	if (is_file($cache)) {
@@ -87,6 +88,7 @@ function base64url($data) {
 // $silencieux=true : push "data-only" (réveille l'app pour sync, sans bannière)
 function envoyerPush($pseudos, $titre, $corps, $dblink, $data = array(), $silencieux = false) {
 	global $config;
+	error_log("[FCM] envoyerPush — destinataires=" . count($pseudos) . " pushActif=" . (pushActif() ? 'oui' : 'NON'));
 	if (!pushActif() || empty($pseudos)) return;
 	$access = fcmAccessToken();
 	if (!$access) return;

@@ -188,90 +188,8 @@ function mobileConvsAccessibles($pseudo) {
     return $out;
 }
 
-// === FCM push helpers ===
-
-function base64url_encode(string $data): string {
-    return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
-}
-
-function buildServiceAccountJWT(array $sa): string {
-    $now    = time();
-    $header = base64url_encode(json_encode(['alg' => 'RS256', 'typ' => 'JWT']));
-    $claim  = base64url_encode(json_encode([
-        'iss'   => $sa['client_email'],
-        'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
-        'aud'   => 'https://oauth2.googleapis.com/token',
-        'iat'   => $now,
-        'exp'   => $now + 3600,
-    ]));
-    $unsigned = "$header.$claim";
-    openssl_sign($unsigned, $sig, $sa['private_key'], 'SHA256');
-    return $unsigned . '.' . base64url_encode($sig);
-}
-
-function exchangeJWTForAccessToken(string $jwt): ?string {
-    $ch = curl_init('https://oauth2.googleapis.com/token');
-    curl_setopt_array($ch, [
-        CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => http_build_query([
-            'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-            'assertion'  => $jwt,
-        ]),
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT        => 5,
-    ]);
-    $resp = json_decode(curl_exec($ch), true);
-    curl_close($ch);
-    return $resp['access_token'] ?? null;
-}
-
-function sendFCMToConvMembers($convId, $auteur, $convNom, $contenu) {
-    global $config;
-    if (empty($config['fcm_project_id']) || empty($config['fcm_service_account'])) return;
-    if (!file_exists($config['fcm_service_account'])) return;
-
-    $c = (int)$convId;
-    $a = mysql_real_escape_string($auteur);
-    $r = mysql_query("SELECT DISTINCT t.Token FROM NPVB_FCMTokens t
-                      JOIN NPVB_Joueurs j ON j.Pseudonyme=t.Pseudonyme
-                      WHERE j.Etat='V' AND t.Pseudonyme<>'$a'");
-    $tokens = [];
-    while ($row = mysql_fetch_assoc($r)) $tokens[] = $row['Token'];
-    if (empty($tokens)) return;
-
-    $sa = json_decode(file_get_contents($config['fcm_service_account']), true);
-    if (!$sa) return;
-    $oauthToken = exchangeJWTForAccessToken(buildServiceAccountJWT($sa));
-    if (!$oauthToken) return;
-
-    $projectId = $config['fcm_project_id'];
-    $body      = mb_substr($contenu, 0, 100) . (mb_strlen($contenu) > 100 ? '…' : '');
-    $preview   = $auteur . ' : ' . $body;
-
-    foreach ($tokens as $token) {
-        $payload = json_encode([
-            'message' => [
-                'token'        => $token,
-                'notification' => ['title' => $convNom, 'body' => $preview],
-                'data'         => ['conv_id' => (string)$convId, 'conv_nom' => $convNom],
-                'apns'         => ['payload' => ['aps' => ['badge' => 1]]],
-            ]
-        ]);
-        $ch = curl_init("https://fcm.googleapis.com/v1/projects/$projectId/messages:send");
-        curl_setopt_array($ch, [
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => $payload,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER     => [
-                'Authorization: Bearer ' . $oauthToken,
-                'Content-Type: application/json',
-            ],
-            CURLOPT_TIMEOUT        => 5,
-        ]);
-        curl_exec($ch);
-        curl_close($ch);
-    }
-}
+// Fonctions push mutualisées (NPVB_AppareilsPush + FCM HTTP v1)
+include_once(__DIR__ . '/../../push.inc.php');
 
 // Récupérer endpoint
 $endpoint = isset($_GET['endpoint']) ? trim($_GET['endpoint'], '/') : '';
@@ -746,7 +664,9 @@ if ($resource == 'chat') {
             echo json_encode(array('success' => true, 'data' => array('success' => true, 'id' => $newId)));
             $convRow = mysql_fetch_object(mysql_query("SELECT Nom FROM NPVB_Conversations WHERE Id=$convId"));
             $convNom = $convRow ? $convRow->Nom : 'Chat';
-            sendFCMToConvMembers($convId, $username, $convNom, $contenu);
+            $dest = destinatairesChat($convId, $username, $dblink);
+            $apercu = mb_substr($contenu, 0, 80) . (mb_strlen($contenu) > 80 ? '…' : '');
+            envoyerPush($dest, $convNom, $username . ' : ' . $apercu, $dblink, array('conv_id' => (string)$convId, 'type' => 'chat'));
         } else {
             echo json_encode(array('success' => false, 'error' => array('code' => 'DB_ERROR', 'message' => 'Enregistrement impossible')));
         }
@@ -790,12 +710,8 @@ if ($resource == 'chat') {
             echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'token et username requis')));
             mysql_close($dblink); exit;
         }
-        $p  = mysql_real_escape_string($uname);
-        $t  = mysql_real_escape_string($token);
-        $pf = mysql_real_escape_string($platform);
-        mysql_query("INSERT INTO NPVB_FCMTokens (Pseudonyme, Token, Platform) VALUES ('$p','$t','$pf')
-                     ON DUPLICATE KEY UPDATE Pseudonyme='$p', Platform='$pf', UpdatedAt=NOW()");
-        echo json_encode(array('success' => true, 'data' => array('ok' => true)));
+        $ok = enregistrerAppareilPush($uname, $token, $platform, $dblink);
+        echo json_encode(array('success' => (bool)$ok, 'data' => array('ok' => (bool)$ok)));
         mysql_close($dblink); exit;
     }
 
