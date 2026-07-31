@@ -207,8 +207,6 @@ function chatTypeLabel($t) {
 	switch ($t) {
 		case 'generale': return 'Général';
 		case 'equipe':   return 'Équipe';
-		case 'bureau':   return 'Bureau';
-		case 'prive':    return 'Privé';
 	}
 	return '';
 }
@@ -241,7 +239,7 @@ foreach ($conversationsActives as $c) {
 ?>
 		<div class="ChatConvWrap">
 			<a class="ChatConv<?=($actif?' ChatConvActif':'')?>" href="<?=$PHP_SELF?>?Page=chat&amp;conv=<?=$cid?>">
-				<span class="ChatConvType"><?=chatTypeLabel($c->Type)?></span>
+<?php $typeLabel = chatTypeLabel($c->Type); if ($typeLabel !== '') { ?><span class="ChatConvType"><?=$typeLabel?></span><?php } ?>
 				<span class="ChatConvNom"><?=$nomAff?></span>
 <?php if ($c->nonlus > 0) { ?><span class="ChatBadge"><?=(int)$c->nonlus?></span><?php } ?>
 			</a>
@@ -355,7 +353,7 @@ if (!count($memAuto) && !count($memManuel)) { ?>
 ?>
 			<div style="position:relative">
 				<a class="ChatConv ChatConvArchive<?=($actif?' ChatConvActif':'')?>" href="<?=$PHP_SELF?>?Page=chat&amp;conv=<?=(int)$c->Id?>">
-					<span class="ChatConvType"><?=chatTypeLabel($c->Type)?></span>
+<?php $typeLabel = chatTypeLabel($c->Type); if ($typeLabel !== '') { ?><span class="ChatConvType"><?=$typeLabel?></span><?php } ?>
 					<span class="ChatConvNom"><?=htmlspecialchars(nomConversationPourJoueur($c, $Joueur, $sdblink), ENT_QUOTES)?></span>
 				</a>
 <?php if ($peutModerer) { ?>
