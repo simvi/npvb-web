@@ -199,6 +199,9 @@ function peutAccederConversation($Joueur, $conv, $sdblink) {
 // Vrai si le joueur peut poster dans cette conversation (non archivée + accès + capacité).
 function peutPosterDansConv($Joueur, $conv, $sdblink) {
 	if (!$conv || (isset($conv->Archive) && $conv->Archive == 'o')) return false;
+	// Admin peut poster partout (sauf archivé)
+	if (peut($Joueur, 'gerer_roles')) return true;
+	// Membre normal : vérifier accès et capacité
 	if (!peutAccederConversation($Joueur, $conv, $sdblink)) return false;
 	return peutPosterConversation($Joueur, $conv->PosterCapacite);
 }
