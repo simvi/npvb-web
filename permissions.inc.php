@@ -178,13 +178,21 @@ function peutPosterConversation($Joueur, $posterCapacite) {
 
 // Vrai si le joueur participe (a accès) à une conversation. $conv = ligne NPVB_Conversations.
 //   generale : tous les connectés
-//   equipe   : membre de l'équipe (appartenance) ou responsable/suppléant
-//   bureau/prive : membre explicite (NPVB_ConversationMembres)
+//   equipe   : membre de l'équipe (appartenance) ou responsable/suppléant, OU admin (sauf privées)
+//   bureau   : membre explicite OU admin (sauf privées)
+//   prive    : seulement membres explicites (pas d'exception admin)
 function peutAccederConversation($Joueur, $conv, $sdblink) {
 	if (!isset($Joueur) || !is_object($Joueur) || !$conv) return false;
 	$pseudo = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
+
+	// Type générale: accessible à tous les connectés
 	if ($conv->Type == 'generale') return true;
+
+	// Type équipe
 	if ($conv->Type == 'equipe') {
+		// Admin peut accéder à toutes les équipes
+		if (peut($Joueur, 'gerer_roles')) return true;
+		// Sinon vérifier membership
 		$eq = mysql_real_escape_string($conv->Equipe, $sdblink);
 		$r = mysql_query("SELECT 1 FROM NPVB_Appartenance WHERE Joueur='".$pseudo."' AND Equipe='".$eq."'
 		                  UNION SELECT 1 FROM NPVB_Equipes WHERE Nom='".$eq."' AND (Responsable='".$pseudo."' OR Supleant='".$pseudo."')
@@ -192,6 +200,13 @@ function peutAccederConversation($Joueur, $conv, $sdblink) {
 		                  LIMIT 1", $sdblink);
 		return ($r && mysql_num_rows($r) > 0);
 	}
+
+	// Type bureau: admin peut accéder + membres explicites
+	if ($conv->Type == 'bureau') {
+		if (peut($Joueur, 'gerer_roles')) return true;
+	}
+
+	// Type prive: seulement membres explicites, pas d'exception admin
 	$r = mysql_query("SELECT 1 FROM NPVB_ConversationMembres WHERE Conversation=".(int)$conv->Id." AND Joueur='".$pseudo."' LIMIT 1", $sdblink);
 	return ($r && mysql_num_rows($r) > 0);
 }
