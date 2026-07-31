@@ -229,6 +229,7 @@
 	#ChatListe {
 		flex: none;
 		width: 100%;
+		margin: 0 auto;
 		border-radius: 0;
 	}
 	#ChatPanneau {
