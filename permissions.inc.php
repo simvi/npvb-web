@@ -203,6 +203,54 @@ function peutPosterDansConv($Joueur, $conv, $sdblink) {
 	return peutPosterConversation($Joueur, $conv->PosterCapacite);
 }
 
+// Axe 3a : Peut supprimer un message (admin ou auteur du message)
+function peutSupprimerMessage($Joueur, $message, $sdblink) {
+	if (!$Joueur || !$message) return false;
+	if (peut($Joueur, 'gerer_roles')) return true;
+	if (isset($message->Auteur) && $message->Auteur == $Joueur->Pseudonyme) return true;
+	return false;
+}
+
+// Axe 3b : Peut éditer un message (auteur uniquement, dans une fenêtre de 15min)
+function peutEditerMessage($Joueur, $message, $sdblink) {
+	if (!$Joueur || !$message) return false;
+	if (!isset($message->Auteur) || $message->Auteur != $Joueur->Pseudonyme) return false;
+	if (isset($message->Supprime) && $message->Supprime == 'o') return false;
+	$EDIT_WINDOW_MIN = 15;
+	if (isset($message->DateEnvoi)) {
+		$sent = strtotime($message->DateEnvoi);
+		$now = time();
+		if (($now - $sent) > ($EDIT_WINDOW_MIN * 60)) return false;
+	}
+	return true;
+}
+
+// Axe 1b : Qui a lu un message (retourne deux listes : lecteurs et non-lecteurs)
+function lecteursMessage($convId, $msgId, $sdblink) {
+	$convId = (int)$convId;
+	$msgId = (int)$msgId;
+	$lecteurs = array();
+	$nonLecteurs = array();
+
+	$conv = mysql_fetch_object(mysql_query("SELECT * FROM NPVB_Conversations WHERE Id=".$convId, $sdblink));
+	$participants = participantsConversation($conv, $sdblink);
+
+	foreach ($participants as $pseudo) {
+		$pe = mysql_real_escape_string($pseudo, $sdblink);
+		$r = mysql_query("SELECT DernierLuId FROM NPVB_MessagesLus WHERE Joueur='".$pe."' AND Conversation=".$convId, $sdblink);
+		$row = mysql_fetch_object($r);
+		$dernierLu = $row ? (int)$row->DernierLuId : 0;
+
+		if ($dernierLu >= $msgId) {
+			$lecteurs[] = $pseudo;
+		} else {
+			$nonLecteurs[] = $pseudo;
+		}
+	}
+
+	return array('lu' => $lecteurs, 'nonlu' => $nonLecteurs);
+}
+
 // Nom affiché d'une conversation pour un joueur donné.
 // Pour un privé : le nom de l'AUTRE participant.
 function nomConversationPourJoueur($conv, $Joueur, $sdblink) {

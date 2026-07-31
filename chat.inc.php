@@ -176,22 +176,66 @@ if ($conv && isset($_POST['Action']) && $_POST['Action']=="ChatEnvoi" && $peutPo
 	}
 }
 
-// Suppression d'un message (admin)
-if ($conv && isset($_POST['Action']) && $_POST['Action']=="ChatSupprime" && $peutModerer && isset($_POST['MsgId'])) {
+// Suppression d'un message (admin ou auteur)
+if ($conv && isset($_POST['Action']) && $_POST['Action']=="ChatSupprime" && isset($_POST['MsgId'])) {
 	$mid = (int)$_POST['MsgId'];
-	mySql_query("UPDATE NPVB_MessagesChat SET Supprime='o' WHERE Id=".$mid." AND Conversation=".$convId, $sdblink);
+	$msg = mySql_fetch_object(mySql_query("SELECT Auteur FROM NPVB_MessagesChat WHERE Id=".$mid." AND Conversation=".$convId, $sdblink));
+	if ($msg && peutSupprimerMessage($Joueur, $msg, $sdblink)) {
+		mySql_query("UPDATE NPVB_MessagesChat SET Supprime='o' WHERE Id=".$mid." AND Conversation=".$convId, $sdblink);
+	}
+}
+
+// Épingler un message (Axe 1a)
+if ($peutModerer && isset($_POST['Action']) && $_POST['Action']=="EpinglerMessage" && isset($_POST['MsgId'])) {
+	$mid = (int)$_POST['MsgId'];
+	mySql_query("UPDATE NPVB_MessagesChat SET Epingle='n' WHERE Conversation=".$convId." AND Epingle='o'", $sdblink);
+	mySql_query("UPDATE NPVB_MessagesChat SET Epingle='o' WHERE Id=".$mid." AND Conversation=".$convId, $sdblink);
+	header('Location: '.$PHP_SELF.'?Page=chat&conv='.$convId);
+	return;
+}
+
+// Désépingler un message (Axe 1a)
+if ($peutModerer && isset($_POST['Action']) && $_POST['Action']=="DesepinglerMessage" && isset($_POST['MsgId'])) {
+	$mid = (int)$_POST['MsgId'];
+	mySql_query("UPDATE NPVB_MessagesChat SET Epingle='n' WHERE Id=".$mid." AND Conversation=".$convId, $sdblink);
+	header('Location: '.$PHP_SELF.'?Page=chat&conv='.$convId);
+	return;
+}
+
+// Éditer un message (Axe 3b)
+if ($conv && isset($_POST['Action']) && $_POST['Action']=="ChatEditer" && isset($_POST['MsgId']) && isset($_POST['Contenu'])) {
+	$mid = (int)$_POST['MsgId'];
+	$contenu = isset($_POST['Contenu']) ? trim($_POST['Contenu']) : '';
+	if ($contenu !== '') {
+		$msg = mySql_fetch_object(mySql_query("SELECT Auteur, DateEnvoi, Supprime FROM NPVB_MessagesChat WHERE Id=".$mid." AND Conversation=".$convId, $sdblink));
+		if ($msg && peutEditerMessage($Joueur, $msg, $sdblink)) {
+			$cc = mysql_real_escape_string($contenu, $sdblink);
+			mySql_query("UPDATE NPVB_MessagesChat SET Contenu='".$cc."', DateModif=NOW() WHERE Id=".$mid." AND Conversation=".$convId, $sdblink);
+		}
+	}
+	header('Location: '.$PHP_SELF.'?Page=chat&conv='.$convId);
+	return;
 }
 
 // ============================================================
 // Chargement des messages
 // ============================================================
 $messages = array();
+$messageEpingle = null;
 if ($conv) {
-	$res = mySql_query("SELECT m.Id, m.Auteur, m.Contenu, m.DateEnvoi, j.Prenom, j.Nom
+	$res = mySql_query("SELECT m.Id, m.Auteur, m.Contenu, m.DateEnvoi, m.DateModif, m.Epingle, j.Prenom, j.Nom
 	                    FROM NPVB_MessagesChat m LEFT JOIN NPVB_Joueurs j ON j.Pseudonyme = m.Auteur
 	                    WHERE m.Conversation=".$convId." AND m.Supprime='n'
 	                    ORDER BY m.Id ASC", $sdblink);
 	while ($row = mySql_fetch_object($res)) { $messages[] = $row; }
+
+	// Charger le message épinglé pour l'affichage
+	$res2 = mySql_query("SELECT m.Id, m.Auteur, m.Contenu, m.DateEnvoi, j.Prenom, j.Nom
+	                     FROM NPVB_MessagesChat m LEFT JOIN NPVB_Joueurs j ON j.Pseudonyme = m.Auteur
+	                     WHERE m.Conversation=".$convId." AND m.Epingle='o' AND m.Supprime='n' LIMIT 1", $sdblink);
+	if ($res2 && ($row2 = mySql_fetch_object($res2))) {
+		$messageEpingle = $row2;
+	}
 }
 
 // Marquer comme lu
@@ -209,6 +253,11 @@ function chatTypeLabel($t) {
 		case 'equipe':   return 'Équipe';
 	}
 	return '';
+}
+
+// Axe 3c : Highlight des mentions @pseudo (regex simple, pas de validation)
+function highlightMentions($texte) {
+	return preg_replace('/\@(\w+)/', '<strong style="color:#0066cc">@$1</strong>', htmlspecialchars($texte, ENT_QUOTES));
 }
 ?>
 
@@ -318,6 +367,18 @@ if (!count($memAuto) && !count($memManuel)) { ?>
 		</div>
 <?php } ?>
 
+		<div id="ChatNouveauMessage" style="display:none">
+			<select id="ChatMessageSelect" class="ChatEditSelMembre">
+				<option value="">— Sélectionner un membre —</option>
+			</select>
+			<div style="display:flex;gap:6px;margin-top:6px">
+				<button type="button" class="PetitBouton Action" onclick="chatChargerMessageSelect()">Démarrer</button>
+				<button type="button" class="PetitBouton" onclick="document.getElementById('ChatNouveauMessage').style.display='none'">Annuler</button>
+			</div>
+		</div>
+		<button class="ChatGererGroupes" style="background:none;border:none;width:100%;cursor:pointer;text-align:center;margin-bottom:8px;"
+			onclick="chatOuvrirNouveauMessage()">＋ Nouveau message</button>
+
 <?php if ($peutModerer) { ?>
 		<div class="ChatAdminZone">
 			<div id="ChatNouveauGroupe" style="display:none">
@@ -372,6 +433,30 @@ if (!count($memAuto) && !count($memManuel)) { ?>
 <?php } else { ?>
 		<h2 id="ChatTitre"><?=htmlspecialchars(nomConversationPourJoueur($conv, $Joueur, $sdblink), ENT_QUOTES)?></h2>
 
+<?php if ($messageEpingle) { ?>
+		<div id="ChatEpingle" style="background:#fffacd;border:1px solid #f0e68c;border-radius:6px;padding:10px;margin-bottom:10px;position:sticky;top:0;z-index:10">
+			<div style="font-size:12px;color:#999;margin-bottom:4px">📌 Message épinglé</div>
+			<div style="font-weight:bold;font-size:13px;margin-bottom:4px">
+<?php $nomPin = trim($messageEpingle->Prenom." ".$messageEpingle->Nom); if ($nomPin=="") $nomPin = $messageEpingle->Auteur; echo htmlspecialchars($nomPin, ENT_QUOTES); ?>
+				<span style="color:#999;font-weight:normal;margin-left:8px"><?=substr($messageEpingle->DateEnvoi, 8, 2)."/".substr($messageEpingle->DateEnvoi, 5, 2)?></span>
+			</div>
+			<div style="margin-bottom:8px"><?=nl2br(htmlspecialchars($messageEpingle->Contenu, ENT_QUOTES))?></div>
+			<div style="font-size:11px">
+				<span id="ChatEpingLecteurs" style="cursor:pointer;color:#0066cc;text-decoration:underline">Voir lecteurs</span>
+<?php if ($peutModerer) { ?>
+				<form method="post" action="<?=$PHP_SELF?>" style="display:inline;margin-left:8px">
+					<input type="hidden" name="Page" value="chat" />
+					<input type="hidden" name="conv" value="<?=(int)$convId?>" />
+					<input type="hidden" name="Action" value="DesepinglerMessage" />
+					<input type="hidden" name="MsgId" value="<?=(int)$messageEpingle->Id?>" />
+					<button type="submit" style="background:none;border:none;color:#0066cc;cursor:pointer;text-decoration:underline">Désépingler</button>
+				</form>
+<?php } ?>
+			</div>
+			<div id="ChatEpingLecteursPopup" style="display:none;background:#f5f5f5;border-radius:4px;padding:8px;margin-top:8px;font-size:12px"></div>
+		</div>
+<?php } ?>
+
 		<div id="ChatFil" data-conv="<?=(int)$convId?>" data-dernier="<?=(int)$dernierId?>">
 <?php
 		if (!count($messages)) {
@@ -382,11 +467,21 @@ if (!count($memAuto) && !count($memManuel)) { ?>
 			$nom = trim($m->Prenom." ".$m->Nom);
 			if ($nom=="") $nom = $m->Auteur;
 			$heure = substr($m->DateEnvoi, 8, 2)."/".substr($m->DateEnvoi, 5, 2)." ".substr($m->DateEnvoi, 11, 5);
+			$modifie = isset($m->DateModif) && $m->DateModif ? " <em style='font-size:11px;color:#999'>(modifié)</em>" : "";
 ?>
-			<div class="ChatMsg<?=($estMoi?" ChatMsgMoi":"")?>" data-id="<?=(int)$m->Id?>">
-				<div class="ChatMsgEntete"><span class="ChatAuteur"><?=htmlspecialchars($nom, ENT_QUOTES)?></span> <span class="ChatDate"><?=$heure?></span></div>
-				<div class="ChatMsgCorps"><?=nl2br(htmlspecialchars($m->Contenu, ENT_QUOTES))?></div>
+			<div class="ChatMsg<?=($estMoi?" ChatMsgMoi":"")?>" data-id="<?=(int)$m->Id?>" style="position:relative">
+				<div class="ChatMsgEntete"><span class="ChatAuteur"><?=htmlspecialchars($nom, ENT_QUOTES)?></span> <span class="ChatDate"><?=$heure?><?=$modifie?></span></div>
+				<div class="ChatMsgCorps"><?=nl2br(highlightMentions($m->Contenu))?></div>
 <?php if ($peutModerer) { ?>
+				<form method="post" action="<?=$PHP_SELF?>" style="position:absolute;top:6px;right:26px">
+					<input type="hidden" name="Page" value="chat" />
+					<input type="hidden" name="conv" value="<?=(int)$convId?>" />
+					<input type="hidden" name="Action" value="<?=($m->Epingle=='o'?'DesepinglerMessage':'EpinglerMessage')?>" />
+					<input type="hidden" name="MsgId" value="<?=(int)$m->Id?>" />
+					<button type="submit" class="ChatSuppr" title="<?=($m->Epingle=='o'?'Désépingler':'Épingler')?>">📌</button>
+				</form>
+<?php } ?>
+<?php if ($peutModerer || $estMoi) { ?>
 				<form method="post" action="<?=$PHP_SELF?>" class="ChatSupprForm" onsubmit="return confirm('Supprimer ce message ?');">
 					<input type="hidden" name="Page" value="chat" />
 					<input type="hidden" name="conv" value="<?=(int)$convId?>" />
@@ -447,11 +542,86 @@ if (!count($memAuto) && !count($memManuel)) { ?>
 		document.getElementById('ChatMbrForm').submit();
 	}
 
+	// Axe 4 - Nouveau message privé
+	function chatOuvrirNouveauMessage() {
+		var panel = document.getElementById('ChatNouveauMessage');
+		var isOpen = panel.style.display !== 'none';
+		if (!isOpen) {
+			chatChargerMembres();
+		}
+		panel.style.display = isOpen ? 'none' : 'block';
+	}
+
+	function chatChargerMembres() {
+		var sel = document.getElementById('ChatMessageSelect');
+		if (!sel || sel.children.length > 1) return; // Déjà chargé
+		fetch('index.php?Page=chatapi&action=membres', {credentials:'same-origin'})
+			.then(function(r){ return r.json(); })
+			.then(function(data){
+				if (!data || !data.ok || !data.membres) return;
+				data.membres.forEach(function(m){
+					var opt = document.createElement('option');
+					opt.value = m.pseudo;
+					opt.textContent = m.nom;
+					sel.appendChild(opt);
+				});
+			})
+			.catch(function(){});
+	}
+
+	function chatChargerMessageSelect() {
+		var sel = document.getElementById('ChatMessageSelect');
+		if (!sel || !sel.value) return;
+		var pseudo = sel.value;
+		window.location.href = window.location.pathname + '?Page=chat&Prive=' + encodeURIComponent(pseudo);
+	}
+
+	// Axe 1b - Afficher les lecteurs du message épinglé
+	var epingleMsgId = null;
+	var lecteursBtnElem = document.getElementById('ChatEpingLecteurs');
+	if (lecteursBtnElem) {
+		var fil = document.getElementById('ChatFil');
+		if (fil) {
+			epingleMsgId = parseInt(fil.getAttribute('data-conv'), 10);
+			// Chercher l'id du message épinglé depuis les messages
+			var msgs = fil.querySelectorAll('[data-id]');
+			for (var i = 0; i < msgs.length; i++) {
+				var m = msgs[i];
+				var btn = m.querySelector('button[title*="épingler"]') || m.querySelector('button[title*="Épingler"]') || m.querySelector('button[title*="Désépingler"]');
+				if (btn) {
+					epingleMsgId = parseInt(m.getAttribute('data-id'), 10);
+					break;
+				}
+			}
+		}
+		lecteursBtnElem.addEventListener('click', function(){
+			var popup = document.getElementById('ChatEpingLecteursPopup');
+			if (popup.style.display !== 'none') {
+				popup.style.display = 'none';
+				return;
+			}
+			if (!epingleMsgId || !fil) return;
+			fetch('index.php?Page=chatapi&action=lecteurs&id=' + epingleMsgId + '&conv=' + parseInt(fil.getAttribute('data-conv'), 10), {credentials:'same-origin'})
+				.then(function(r){ return r.json(); })
+				.then(function(data){
+					if (!data || !data.ok) return;
+					var html = '<strong>Lu par (' + data.total_lu + '/' + data.total + ') :</strong><br>';
+					if (data.lu.length) html += '✓ ' + data.lu.join(', ') + '<br>';
+					if (data.nonlu.length) html += '<strong style="color:#dc3545">✗ Pas lu par (' + data.nonlu.length + ') :</strong><br>✗ ' + data.nonlu.join(', ');
+					popup.innerHTML = html;
+					popup.style.display = 'block';
+				})
+				.catch(function(){});
+		});
+	}
+
 	// Exposition globale
 	window.chatEdit = chatEdit;
 	window.chatArchiver = chatArchiver;
 	window.chatRetirerMembre = chatRetirerMembre;
 	window.chatAjouterMembre = chatAjouterMembre;
+	window.chatOuvrirNouveauMessage = chatOuvrirNouveauMessage;
+	window.chatChargerMessageSelect = chatChargerMessageSelect;
 
 	// Auto-ouvrir le panneau d'édition après un ajout/retrait de membre
 	var autoEdit = <?=($editOuvert?$editOuvert:'0')?>;
@@ -482,18 +652,32 @@ if (!count($memAuto) && !count($memManuel)) { ?>
 		var lignes = texte.split('\n');
 		for (var i=0;i<lignes.length;i++){ if (i>0) parent.appendChild(document.createElement('br')); parent.appendChild(document.createTextNode(lignes[i])); }
 	}
+	function highlightMentionsJS(texte){
+		return texte.replace(/\@(\w+)/g, '<strong style="color:#0066cc">@$1</strong>');
+	}
+	function corpsAvecMentions(parent, texte){
+		var lignes = texte.split('\n');
+		for (var i=0;i<lignes.length;i++){
+			if (i>0) parent.appendChild(document.createElement('br'));
+			var span = document.createElement('span');
+			span.innerHTML = highlightMentionsJS(texte.split('\n')[i].replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'));
+			parent.appendChild(span);
+		}
+	}
 	function ajoute(m){
 		var vide = fil.querySelector('.ChatVide'); if (vide) vide.parentNode.removeChild(vide);
 		var div = document.createElement('div');
 		div.className = 'ChatMsg' + (m.moi ? ' ChatMsgMoi' : '');
 		div.setAttribute('data-id', m.id);
+		div.style.position = 'relative';
 		var ent = document.createElement('div'); ent.className = 'ChatMsgEntete';
 		var a = document.createElement('span'); a.className = 'ChatAuteur'; a.textContent = m.nom;
-		var d = document.createElement('span'); d.className = 'ChatDate'; d.textContent = m.date;
+		var d = document.createElement('span'); d.className = 'ChatDate'; d.textContent = m.date + (m.modifie ? ' <em style="font-size:11px;color:#999">(modifié)</em>' : '');
+		d.innerHTML = m.date + (m.modifie ? ' <em style="font-size:11px;color:#999">(modifié)</em>' : '');
 		ent.appendChild(a); ent.appendChild(document.createTextNode(' ')); ent.appendChild(d);
-		var cps = document.createElement('div'); cps.className = 'ChatMsgCorps'; corps(cps, m.contenu);
+		var cps = document.createElement('div'); cps.className = 'ChatMsgCorps'; corpsAvecMentions(cps, m.contenu);
 		div.appendChild(ent); div.appendChild(cps);
-		if (peutModerer){
+		if (peutModerer || m.moi){
 			var btn = document.createElement('button');
 			btn.className = 'ChatSuppr'; btn.innerHTML = '&#10006;'; btn.title = 'Supprimer';
 			btn.onclick = function(){ if (!confirm('Supprimer ce message ?')) return;
