@@ -75,10 +75,10 @@ if ($peutModerer && isset($_POST['Action']) && $_POST['Action']=="CreerGroupe") 
 	return;
 }
 
-// Suppression définitive d'une conversation archivée
+// Suppression définitive d'une conversation archivée (bureau/prive uniquement, pas les équipes auto-créées)
 if ($peutModerer && isset($_POST['Action']) && $_POST['Action']=="SupprimerConversation") {
 	$sid = (int)$_POST['conv'];
-	$cible = mySql_fetch_object(mySql_query("SELECT Id FROM NPVB_Conversations WHERE Id=".$sid." AND Archive='o'", $sdblink));
+	$cible = mySql_fetch_object(mySql_query("SELECT Type FROM NPVB_Conversations WHERE Id=".$sid." AND Archive='o' AND Type IN ('bureau','prive')", $sdblink));
 	if ($cible) {
 		mySql_query("DELETE FROM NPVB_MessagesLus WHERE Conversation=".$sid, $sdblink);
 		mySql_query("DELETE FROM NPVB_MessagesChat WHERE Conversation=".$sid, $sdblink);
@@ -448,7 +448,7 @@ if (!count($memAuto) && !count($memManuel)) { ?>
 <?php $typeLabel = chatTypeLabel($c->Type); if ($typeLabel !== '') { ?><span class="ChatConvType"><?=$typeLabel?></span><?php } ?>
 					<span class="ChatConvNom"><?=htmlspecialchars(nomConversationPourJoueur($c, $Joueur, $sdblink), ENT_QUOTES)?></span>
 				</a>
-<?php if ($peutModerer) { ?>
+<?php if ($peutModerer && $c->Type != 'equipe') { ?>
 				<form method="post" action="<?=$PHP_SELF?>" style="position:absolute;right:4px;top:50%;transform:translateY(-50%)"
 					onsubmit="return confirm('Supprimer définitivement « <?=htmlspecialchars($c->Nom, ENT_QUOTES)?> » et tous ses messages ?');">
 					<input type="hidden" name="Page" value="chat" />
