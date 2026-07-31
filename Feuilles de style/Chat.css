@@ -212,17 +212,18 @@
 @media (max-width: 700px) {
 	#ChatTitre {
 		padding: 10px;
-		margin: 0;
+		margin: 0 auto;
 		background: #f8f9ff;
 		border-bottom: 1px solid #d0d8ec;
+		max-width: 90%;
 	}
 }
 
 @media (max-width: 700px) {
 	#ChatLayout {
 		flex-direction: column;
-		max-width: 100%;
-		margin: 8px 0;
+		max-width: 90%;
+		margin: 8px auto;
 		gap: 8px;
 	}
 	#ChatListe {
@@ -251,8 +252,8 @@
 
 @media (max-width: 700px) {
 	#ChatFil {
-		max-width: 100%;
-		margin: 0;
+		max-width: 90%;
+		margin: 0 auto;
 		border-radius: 0;
 		max-height: 50vh;
 		padding: 8px;
@@ -327,8 +328,8 @@
 
 @media (max-width: 700px) {
 	#ChatForm {
-		max-width: 100%;
-		margin: 8px 0;
+		max-width: 90%;
+		margin: 8px auto;
 		border-radius: 0;
 	}
 }
