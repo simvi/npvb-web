@@ -78,8 +78,8 @@
 }
 .ChatBtnEdit { color: var(--couleur-primaire); }
 .ChatBtnEdit:hover { background: #e0e8ff; }
-.ChatBtnArch { color: #e67e22; }
-.ChatBtnArch:hover { background: #fef0e0; }
+.ChatBtnArch { color: #dc3545; }
+.ChatBtnArch:hover { background: #fde8ea; }
 
 /* Panneau d'édition inline */
 .ChatEditPanel {
