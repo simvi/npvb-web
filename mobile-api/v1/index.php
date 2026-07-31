@@ -188,6 +188,9 @@ function mobileConvsAccessibles($pseudo) {
     return $out;
 }
 
+// Fonctions push mutualisées (NPVB_AppareilsPush + FCM HTTP v1)
+include_once(__DIR__ . '/../../push.inc.php');
+
 // Récupérer endpoint
 $endpoint = isset($_GET['endpoint']) ? trim($_GET['endpoint'], '/') : '';
 
@@ -659,6 +662,11 @@ if ($resource == 'chat') {
         if (mysql_query("INSERT INTO NPVB_MessagesChat (Conversation, Auteur, Contenu, DateEnvoi) VALUES ($convId, '$ue', '$ce', NOW())")) {
             $newId = mysql_insert_id();
             echo json_encode(array('success' => true, 'data' => array('success' => true, 'id' => $newId)));
+            $convRow = mysql_fetch_object(mysql_query("SELECT Nom FROM NPVB_Conversations WHERE Id=$convId"));
+            $convNom = $convRow ? $convRow->Nom : 'Chat';
+            $dest = destinatairesChat($convId, $username, $dblink);
+            $apercu = mb_substr($contenu, 0, 80) . (mb_strlen($contenu) > 80 ? '…' : '');
+            envoyerPush($dest, $convNom, $username . ' : ' . $apercu, $dblink, array('conv_id' => (string)$convId, 'type' => 'chat'));
         } else {
             echo json_encode(array('success' => false, 'error' => array('code' => 'DB_ERROR', 'message' => 'Enregistrement impossible')));
         }
@@ -686,6 +694,24 @@ if ($resource == 'chat') {
         mysql_query("INSERT INTO NPVB_MessagesLus (Joueur, Conversation, DernierLuId) VALUES ('$ue', $convId, $lastid)
                      ON DUPLICATE KEY UPDATE DernierLuId=GREATEST(DernierLuId, $lastid)");
         echo json_encode(array('success' => true, 'data' => array('success' => true)));
+        mysql_close($dblink); exit;
+    }
+
+    // POST /chat/token — enregistrement token FCM
+    if ($sousRes == 'token' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+        $input    = file_get_contents('php://input');
+        preg_match('/"token"\s*:\s*"([^"]+)"/', $input, $tk);
+        preg_match('/"username"\s*:\s*"([^"]+)"/', $input, $u);
+        preg_match('/"platform"\s*:\s*"([^"]+)"/', $input, $pl);
+        $token    = isset($tk[1]) ? trim($tk[1]) : '';
+        $uname    = isset($u[1])  ? trim($u[1])  : '';
+        $platform = isset($pl[1]) ? trim($pl[1]) : 'ios';
+        if (!$token || !$uname) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'token et username requis')));
+            mysql_close($dblink); exit;
+        }
+        $ok = enregistrerAppareilPush($uname, $token, $platform, $dblink);
+        echo json_encode(array('success' => (bool)$ok, 'data' => array('ok' => (bool)$ok)));
         mysql_close($dblink); exit;
     }
 
