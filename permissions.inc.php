@@ -283,9 +283,11 @@ function trouverOuCreerPrive($a, $b, $sdblink) {
 // Crée une conversation d'équipe active pour chaque équipe qui n'en a pas
 // (idempotent ; appelé à l'ouverture du chat). Inclut ASSO/SEANCE/CODIR.
 function assurerConversationsEquipes($sdblink) {
+	// Créer une conversation pour chaque équipe qui a des membres et n'a pas déjà une conversation active
 	mysql_query("INSERT INTO NPVB_Conversations (Type, Nom, Equipe, DateCreation)
 	             SELECT 'equipe', e.Nom, e.Nom, NOW() FROM NPVB_Equipes e
-	             WHERE NOT EXISTS (SELECT 1 FROM NPVB_Conversations c
+	             WHERE EXISTS (SELECT 1 FROM NPVB_Appartenance WHERE Equipe=e.Nom)
+	               AND NOT EXISTS (SELECT 1 FROM NPVB_Conversations c
 	                               WHERE c.Type='equipe' AND c.Equipe=e.Nom AND c.Archive='n')", $sdblink);
 }
 
