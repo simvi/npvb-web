@@ -186,11 +186,15 @@
 .ChatArchForm { margin: 12px 4px 4px; }
 .ChatArchForm button { font-size: 12px; width: 100%; }
 .ChatGererGroupes {
-	display: block;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	margin: 6px 4px;
 	font-size: 12px;
 	text-align: center;
 	color: var(--couleur-secondaire);
+	height: 36px;
+	line-height: 1;
 }
 .ChatArchivesToggle {
 	margin-top: 8px;
