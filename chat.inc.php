@@ -25,6 +25,14 @@ if (isset($_REQUEST['Prive']) && $_REQUEST['Prive'] != '' && $_REQUEST['Prive'] 
 // Conversations accessibles au membre (avec non-lus)
 $conversations = conversationsAccessibles($Joueur, $sdblink);
 
+// Séparer les conversations actives et archivées
+$conversationsActives  = array();
+$conversationsArchives = array();
+foreach ($conversations as $c) {
+	if ($c->Archive == 'o') { $conversationsArchives[] = $c; }
+	else                    { $conversationsActives[]  = $c; }
+}
+
 // Conversation sélectionnée (Prive prioritaire, sinon ?conv, sinon 1ère accessible)
 $convSel = $convForce ? $convForce : (isset($_REQUEST['conv']) ? (int)$_REQUEST['conv'] : 0);
 $conv = null;
@@ -89,15 +97,12 @@ function chatTypeLabel($t) {
 
 	<div id="ChatListe">
 		<h3>Conversations</h3>
-<?php if (!count($conversations)) { ?>
+<?php if (!count($conversationsActives)) { ?>
 		<p class="Remarque">Aucune conversation.</p>
-<?php } $sectionArchive = false; foreach ($conversations as $c) {
-		if ($c->Archive == 'o' && !$sectionArchive) { $sectionArchive = true; ?>
-		<h3 class="ChatArchTitre">Archives</h3>
-<?php }
+<?php } foreach ($conversationsActives as $c) {
 		$actif = ($c->Id == $convId);
 ?>
-		<a class="ChatConv<?=($actif?' ChatConvActif':'')?><?=($c->Archive=='o'?' ChatConvArchive':'')?>" href="<?=$PHP_SELF?>?Page=chat&amp;conv=<?=(int)$c->Id?>">
+		<a class="ChatConv<?=($actif?' ChatConvActif':'')?>" href="<?=$PHP_SELF?>?Page=chat&amp;conv=<?=(int)$c->Id?>">
 			<span class="ChatConvType"><?=chatTypeLabel($c->Type)?></span>
 			<span class="ChatConvNom"><?=htmlspecialchars(nomConversationPourJoueur($c, $Joueur, $sdblink), ENT_QUOTES)?></span>
 <?php if ($c->nonlus > 0) { ?><span class="ChatBadge"><?=(int)$c->nonlus?></span><?php } ?>
@@ -110,6 +115,22 @@ function chatTypeLabel($t) {
 			<button type="submit" class="PetitBouton Annule">Archiver les conversations d'équipe</button>
 		</form>
 		<a class="ChatGererGroupes" href="<?=$PHP_SELF?>?Page=adminchat">Gérer les groupes bureau</a>
+<?php } ?>
+<?php
+$archivesOuvertes = ($conv && $conv->Archive == 'o');
+?>
+<?php if (count($conversationsArchives)) { ?>
+		<a class="ChatGererGroupes ChatArchivesToggle" href="#" onclick="var p=document.getElementById('ChatArchivesListe');var ouvert=p.style.display!=='none';p.style.display=ouvert?'none':'block';this.textContent=ouvert?'Afficher les archives':'Masquer les archives';return false;"><?=($archivesOuvertes?'Masquer les archives':'Afficher les archives')?></a>
+		<div id="ChatArchivesListe" style="display:<?=($archivesOuvertes?'block':'none')?>;">
+<?php foreach ($conversationsArchives as $c) {
+		$actif = ($c->Id == $convId);
+?>
+			<a class="ChatConv ChatConvArchive<?=($actif?' ChatConvActif':'')?>" href="<?=$PHP_SELF?>?Page=chat&amp;conv=<?=(int)$c->Id?>">
+				<span class="ChatConvType"><?=chatTypeLabel($c->Type)?></span>
+				<span class="ChatConvNom"><?=htmlspecialchars(nomConversationPourJoueur($c, $Joueur, $sdblink), ENT_QUOTES)?></span>
+			</a>
+<?php } ?>
+		</div>
 <?php } ?>
 	</div>
 
