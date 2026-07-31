@@ -22,11 +22,6 @@ foreach($LettresNoms as $Lettre=>$Presente){
 }
 ?>
 
-<form action="<?=$PHP_SELF?>" method="get">
-	<b>Ajout d'un nouveau message</b>
-	<input type="hidden" name="Page" value="adminnewmessage" />
-	<input type="submit" value="Ajouter" class="Bouton Action" />
-</form>
 
 <table id="Membres">
 <?
@@ -110,7 +105,7 @@ foreach($Joueurs as $UnJoueur){
 					<td colspan="2" align="right">
 						<form action="<?=$PHP_SELF?>" method="get">
 							<div>
-							<input type="hidden" name="Page" value="adminnewmessage" />
+							<input type="hidden" name="Page" value="adminfichemembre" />
 							<input type="hidden" name="Membre" value="<?=$Joueurs[$Membre]->Pseudonyme?>" />
 							<input type="submit" value="Modifier" class="PetitBouton Action" />
 							</div>

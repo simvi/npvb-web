@@ -88,7 +88,7 @@ if ($is_api_endpoint) {
 $pages_autorisees = array(
 	'accueil', 'calendrier', 'jour', 'membres', 'Erreur404', 'maintenance',
 	'adminstats', 'adminfichejour', 'adminevenements', 'adminequipes',
-	'adminmembres', 'adminnewmessage', 'adminfichemembre', 'adminmessages',
+	'adminmembres', 'adminfichemembre',
 	'adminaccueilimage', 'resetmotdepasse', 'chat', 'chatapi', 'adminchat', 'resultats'
 );
 
@@ -167,8 +167,6 @@ print ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		switch ($Page){
 			case "adminequipes": print(lienCSS("AdminEquipes.css")); break;
 			case "adminfichemembre":
-			case "adminnewmessage":
-			case "adminnewmessage":
 			case "adminmembres":
 			case "membres": print(lienCSS("Membres.css")); break;
 			case "adminfichejour": print(lienCSS("AdminFicheJour.css")); break;
@@ -271,8 +269,6 @@ if (isset($Joueur) && is_object($Joueur) && estAdminQuelconque($Joueur)){
 		<li<?php echo ((($Page=="adminevenements")||($Page=="adminfichejour"))?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=adminevenements">Admin.Evenements</a></li>
 <?php } if (peutAccederPage($Joueur, 'adminmembres')){ ?>
 		<li<?php echo ((($Page=="adminmembres")||($Page=="adminfichemembre"))?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=adminmembres">Admin.Membres</a></li>
-<?php } if (peutAccederPage($Joueur, 'adminmessages')){ ?>
-		<li<?php echo (($Page=="adminmessages")?" class=\"MenuActif\"":""); ?>><a href="<?php echo $script_name; ?>?Page=adminmessages">Admin.Messages</a></li>
 <?php } ?>
 	</ul>
 <?php

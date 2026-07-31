@@ -755,19 +755,6 @@ if ($resource == 'resources') {
     exit;
 }
 
-// === MESSAGES (news du club) ===
-if ($resource == 'messages') {
-    $query = "SELECT id, title, content, created_at FROM NPVB_Messages
-              WHERE is_active = 1 ORDER BY created_at DESC";
-    $result = mysql_query($query);
-    $data = array();
-    while ($row = mysql_fetch_assoc($result)) $data[] = $row;
-
-    echo json_encode(array('success' => true, 'data' => $data));
-    mysql_close($dblink);
-    exit;
-}
-
 // Endpoint non trouvé
 echo json_encode(array('success' => false, 'error' => array('code' => 'NOT_FOUND', 'message' => 'Endpoint not found')));
 mysql_close($dblink);
