@@ -618,6 +618,39 @@ if ($resource == 'chat') {
         mysql_close($dblink); exit;
     }
 
+    // GET /chat/messages/{id}/lecteurs?username=X
+    if ($sousRes == 'messages' && isset($segments[2]) && ctype_digit($segments[2]) && isset($segments[3]) && $segments[3] == 'lecteurs' && $_SERVER['REQUEST_METHOD'] != 'POST') {
+        $msgId = (int)$segments[2];
+        $username = $usernameToken ?: (isset($_GET['username']) ? trim($_GET['username']) : '');
+        if (empty($username)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'username requis')));
+            mysql_close($dblink); exit;
+        }
+        $Joueur = mobileChargerJoueur($username);
+        $msg = mysql_fetch_object(mysql_query("SELECT Conversation FROM NPVB_MessagesChat WHERE Id=$msgId"));
+        if (!$Joueur || !$msg || !peut($Joueur, 'gerer_roles')) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Accès refusé')));
+            mysql_close($dblink); exit;
+        }
+        $result = lecteursMessage((int)$msg->Conversation, $msgId, $dblink);
+        $lu = array();
+        $nonlu = array();
+        foreach ($result['lu'] as $p) {
+            $r = mysql_query("SELECT Prenom, Nom FROM NPVB_Joueurs WHERE Pseudonyme='".mysql_real_escape_string($p)."'");
+            $j = mysql_fetch_object($r);
+            $nom = $j ? trim($j->Prenom.' '.$j->Nom) : $p;
+            $lu[] = ($nom != '') ? $nom : $p;
+        }
+        foreach ($result['nonlu'] as $p) {
+            $r = mysql_query("SELECT Prenom, Nom FROM NPVB_Joueurs WHERE Pseudonyme='".mysql_real_escape_string($p)."'");
+            $j = mysql_fetch_object($r);
+            $nom = $j ? trim($j->Prenom.' '.$j->Nom) : $p;
+            $nonlu[] = ($nom != '') ? $nom : $p;
+        }
+        echo json_encode(array('success' => true, 'data' => array('lu' => $lu, 'nonlu' => $nonlu, 'totalLu' => count($lu), 'total' => count($lu) + count($nonlu))));
+        mysql_close($dblink); exit;
+    }
+
     // GET /chat/messages?conv=X&since=Y&username=Z  (polling avant)
     // GET /chat/messages?conv=X&avant=Y&username=Z   (pagination arrière, 50 messages précédant l'id `avant`)
     if ($sousRes == 'messages' && $_SERVER['REQUEST_METHOD'] != 'POST') {
@@ -719,6 +752,51 @@ if ($resource == 'chat') {
             mysql_close($dblink); exit;
         }
         mysql_query("UPDATE NPVB_MessagesChat SET Supprime='o' WHERE Id=$msgId");
+        echo json_encode(array('success' => true, 'data' => array('success' => true)));
+        mysql_close($dblink); exit;
+    }
+
+    // POST /chat/messages/{id}/pin  body: {username}
+    if ($sousRes == 'messages' && isset($segments[2]) && ctype_digit($segments[2]) && isset($segments[3]) && $segments[3] == 'pin' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+        $msgId = (int)$segments[2];
+        $input = file_get_contents('php://input');
+        preg_match('/"username"\s*:\s*"([^"]+)"/', $input, $u);
+        $username = $usernameToken ?: (isset($u[1]) ? trim($u[1]) : '');
+        if (empty($username)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'username requis')));
+            mysql_close($dblink); exit;
+        }
+        $Joueur = mobileChargerJoueur($username);
+        $msg = mysql_fetch_object(mysql_query("SELECT Conversation FROM NPVB_MessagesChat WHERE Id=$msgId"));
+        if (!$Joueur || !$msg || !peut($Joueur, 'gerer_roles')) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Accès refusé')));
+            mysql_close($dblink); exit;
+        }
+        $cid = (int)$msg->Conversation;
+        mysql_query("UPDATE NPVB_MessagesChat SET Epingle='n' WHERE Conversation=$cid AND Epingle='o'");
+        mysql_query("UPDATE NPVB_MessagesChat SET Epingle='o' WHERE Id=$msgId AND Conversation=$cid");
+        echo json_encode(array('success' => true, 'data' => array('success' => true)));
+        mysql_close($dblink); exit;
+    }
+
+    // POST /chat/messages/{id}/unpin  body: {username}
+    if ($sousRes == 'messages' && isset($segments[2]) && ctype_digit($segments[2]) && isset($segments[3]) && $segments[3] == 'unpin' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+        $msgId = (int)$segments[2];
+        $input = file_get_contents('php://input');
+        preg_match('/"username"\s*:\s*"([^"]+)"/', $input, $u);
+        $username = $usernameToken ?: (isset($u[1]) ? trim($u[1]) : '');
+        if (empty($username)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'username requis')));
+            mysql_close($dblink); exit;
+        }
+        $Joueur = mobileChargerJoueur($username);
+        $msg = mysql_fetch_object(mysql_query("SELECT Conversation FROM NPVB_MessagesChat WHERE Id=$msgId"));
+        if (!$Joueur || !$msg || !peut($Joueur, 'gerer_roles')) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Accès refusé')));
+            mysql_close($dblink); exit;
+        }
+        $cid = (int)$msg->Conversation;
+        mysql_query("UPDATE NPVB_MessagesChat SET Epingle='n' WHERE Id=$msgId AND Conversation=$cid");
         echo json_encode(array('success' => true, 'data' => array('success' => true)));
         mysql_close($dblink); exit;
     }
