@@ -91,6 +91,20 @@ function rolesJoueur($Joueur) {
 	return $roles;
 }
 
+// Charge les rôles du joueur depuis NPVB_JoueurRoles et les attache à l'objet
+// sous forme de tableau $Joueur->Roles
+function chargerRolesJoueur($Joueur, $sdblink) {
+	$Joueur->Roles = array();
+	$pseudo = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
+	$res = mysql_query("SELECT Role FROM NPVB_JoueurRoles WHERE Pseudonyme='".$pseudo."'", $sdblink);
+	if ($res) {
+		while ($row = mysql_fetch_object($res)) {
+			$Joueur->Roles[] = $row->Role;
+		}
+	}
+	return $Joueur;
+}
+
 // Vrai si le joueur possède une capacité GLOBALE
 function peut($Joueur, $capacite) {
 	if (!isset($Joueur) || !is_object($Joueur)) return false;
