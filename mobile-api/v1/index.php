@@ -635,10 +635,18 @@ if ($resource == 'chat') {
         }
         $champs = "Id, Conversation AS conv, Auteur AS auteur, Contenu AS contenu, DateEnvoi AS dateEnvoi,
                    DateModif AS dateModif, Epingle AS epingle";
+        // Trois cas : pagination arrière (avant), chargement initial (since=0, borné aux 50
+        // derniers pour rester cohérent avec la pagination), poll incrémental (since>0, non
+        // borné : on veut TOUS les nouveaux messages depuis le dernier since connu du client).
         if ($avant > 0) {
             $q = "SELECT $champs
                   FROM NPVB_MessagesChat
                   WHERE Conversation=$convId AND Supprime='n' AND Id < $avant
+                  ORDER BY Id DESC LIMIT 50";
+        } elseif ($since == 0) {
+            $q = "SELECT $champs
+                  FROM NPVB_MessagesChat
+                  WHERE Conversation=$convId AND Supprime='n'
                   ORDER BY Id DESC LIMIT 50";
         } else {
             $q = "SELECT $champs
@@ -659,10 +667,11 @@ if ($resource == 'chat') {
                 'modifie' => !empty($row['dateModif'])
             );
         }
-        if ($avant > 0) {
+        $borne = ($avant > 0 || $since == 0);
+        if ($borne) {
             $msgs = array_reverse($msgs); // remettre en ordre chronologique ascendant
         }
-        echo json_encode(array('success' => true, 'data' => array('messages' => $msgs, 'hasMore' => ($avant > 0 && count($msgs) == 50))));
+        echo json_encode(array('success' => true, 'data' => array('messages' => $msgs, 'hasMore' => ($borne && count($msgs) == 50))));
         mysql_close($dblink); exit;
     }
 
