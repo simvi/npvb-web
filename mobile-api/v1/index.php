@@ -618,10 +618,12 @@ if ($resource == 'chat') {
         mysql_close($dblink); exit;
     }
 
-    // GET /chat/messages?conv=X&since=Y&username=Z
+    // GET /chat/messages?conv=X&since=Y&username=Z  (polling avant)
+    // GET /chat/messages?conv=X&avant=Y&username=Z   (pagination arrière, 50 messages précédant l'id `avant`)
     if ($sousRes == 'messages' && $_SERVER['REQUEST_METHOD'] != 'POST') {
         $convId = isset($_GET['conv']) ? (int)$_GET['conv'] : 0;
         $since = isset($_GET['since']) ? (int)$_GET['since'] : 0;
+        $avant = isset($_GET['avant']) ? (int)$_GET['avant'] : 0;
         $username = $usernameToken ?: (isset($_GET['username']) ? trim($_GET['username']) : '');
         if (!$username || !$convId) {
             echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'conv et username requis')));
@@ -631,11 +633,19 @@ if ($resource == 'chat') {
             echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Accès refusé')));
             mysql_close($dblink); exit;
         }
-        $q = "SELECT Id, Conversation AS conv, Auteur AS auteur, Contenu AS contenu, DateEnvoi AS dateEnvoi,
-                     DateModif AS dateModif, Epingle AS epingle
-              FROM NPVB_MessagesChat
-              WHERE Conversation=$convId AND Supprime='n' AND Id > $since
-              ORDER BY Id ASC";
+        $champs = "Id, Conversation AS conv, Auteur AS auteur, Contenu AS contenu, DateEnvoi AS dateEnvoi,
+                   DateModif AS dateModif, Epingle AS epingle";
+        if ($avant > 0) {
+            $q = "SELECT $champs
+                  FROM NPVB_MessagesChat
+                  WHERE Conversation=$convId AND Supprime='n' AND Id < $avant
+                  ORDER BY Id DESC LIMIT 50";
+        } else {
+            $q = "SELECT $champs
+                  FROM NPVB_MessagesChat
+                  WHERE Conversation=$convId AND Supprime='n' AND Id > $since
+                  ORDER BY Id ASC";
+        }
         $r = mysql_query($q);
         $msgs = array();
         while ($row = mysql_fetch_assoc($r)) {
@@ -649,7 +659,10 @@ if ($resource == 'chat') {
                 'modifie' => !empty($row['dateModif'])
             );
         }
-        echo json_encode(array('success' => true, 'data' => array('messages' => $msgs)));
+        if ($avant > 0) {
+            $msgs = array_reverse($msgs); // remettre en ordre chronologique ascendant
+        }
+        echo json_encode(array('success' => true, 'data' => array('messages' => $msgs, 'hasMore' => ($avant > 0 && count($msgs) == 50))));
         mysql_close($dblink); exit;
     }
 
