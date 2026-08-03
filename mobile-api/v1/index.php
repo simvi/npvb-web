@@ -963,6 +963,134 @@ if ($resource == 'chat') {
         mysql_close($dblink); exit;
     }
 
+    // POST /chat/groups  body: {nom, username}  — créer un groupe bureau (admin)
+    if ($sousRes == 'groups' && !isset($segments[2]) && $_SERVER['REQUEST_METHOD'] == 'POST') {
+        $input = file_get_contents('php://input');
+        preg_match('/"username"\s*:\s*"([^"]+)"/', $input, $u);
+        preg_match('/"nom"\s*:\s*"([^"]+)"/', $input, $n);
+        $username = $usernameToken ?: (isset($u[1]) ? trim($u[1]) : '');
+        $nom      = isset($n[1]) ? trim($n[1]) : '';
+        if (empty($username) || $nom === '') {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'nom et username requis')));
+            mysql_close($dblink); exit;
+        }
+        $Joueur = mobileChargerJoueur($username);
+        if (!$Joueur || !peut($Joueur, 'gerer_roles')) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Accès refusé')));
+            mysql_close($dblink); exit;
+        }
+        $ne = mysql_real_escape_string($nom);
+        mysql_query("INSERT INTO NPVB_Conversations (Type, Nom, DateCreation) VALUES ('bureau', '$ne', NOW())");
+        $newConvId = mysql_insert_id();
+        if (!$newConvId) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'DB_ERROR', 'message' => 'Création impossible')));
+            mysql_close($dblink); exit;
+        }
+        $ue = mysql_real_escape_string($username);
+        mysql_query("INSERT IGNORE INTO NPVB_ConversationMembres (Conversation, Joueur) VALUES ($newConvId, '$ue')");
+        echo json_encode(array('success' => true, 'data' => array('convId' => (int)$newConvId)));
+        mysql_close($dblink); exit;
+    }
+
+    // POST /chat/groups/{id}/rename  body: {nom, username}  (admin)
+    if ($sousRes == 'groups' && isset($segments[2]) && ctype_digit($segments[2]) && isset($segments[3]) && $segments[3] == 'rename' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+        $sid = (int)$segments[2];
+        $input = file_get_contents('php://input');
+        preg_match('/"username"\s*:\s*"([^"]+)"/', $input, $u);
+        preg_match('/"nom"\s*:\s*"([^"]+)"/', $input, $n);
+        $username = $usernameToken ?: (isset($u[1]) ? trim($u[1]) : '');
+        $nom      = isset($n[1]) ? trim($n[1]) : '';
+        if (empty($username) || $nom === '') {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'nom et username requis')));
+            mysql_close($dblink); exit;
+        }
+        $Joueur = mobileChargerJoueur($username);
+        if (!$Joueur || !peut($Joueur, 'gerer_roles')) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Accès refusé')));
+            mysql_close($dblink); exit;
+        }
+        $ne = mysql_real_escape_string($nom);
+        mysql_query("UPDATE NPVB_Conversations SET Nom='$ne' WHERE Id=$sid AND Type != 'prive'");
+        echo json_encode(array('success' => true, 'data' => array('success' => true)));
+        mysql_close($dblink); exit;
+    }
+
+    // GET /chat/groups/{id}/membres?username=X  — membres actuels du groupe (admin)
+    if ($sousRes == 'groups' && isset($segments[2]) && ctype_digit($segments[2]) && isset($segments[3]) && $segments[3] == 'membres' && $_SERVER['REQUEST_METHOD'] != 'POST') {
+        $sid = (int)$segments[2];
+        $username = $usernameToken ?: (isset($_GET['username']) ? trim($_GET['username']) : '');
+        if (empty($username)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'username requis')));
+            mysql_close($dblink); exit;
+        }
+        $Joueur = mobileChargerJoueur($username);
+        if (!$Joueur || !peut($Joueur, 'gerer_roles')) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Accès refusé')));
+            mysql_close($dblink); exit;
+        }
+        $r = mysql_query("SELECT j.Pseudonyme, j.Prenom, j.Nom FROM NPVB_ConversationMembres cm
+                          JOIN NPVB_Joueurs j ON j.Pseudonyme=cm.Joueur
+                          WHERE cm.Conversation=$sid ORDER BY j.Nom ASC");
+        $membres = array();
+        while ($row = mysql_fetch_object($r)) {
+            $nom = trim($row->Prenom.' '.$row->Nom);
+            $membres[] = array('pseudo' => $row->Pseudonyme, 'nom' => ($nom != '') ? $nom : $row->Pseudonyme);
+        }
+        echo json_encode(array('success' => true, 'data' => $membres));
+        mysql_close($dblink); exit;
+    }
+
+    // POST /chat/groups/{id}/membres  body: {action: 'add'|'remove', membre, username}  (admin)
+    if ($sousRes == 'groups' && isset($segments[2]) && ctype_digit($segments[2]) && isset($segments[3]) && $segments[3] == 'membres' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+        $sid = (int)$segments[2];
+        $input = file_get_contents('php://input');
+        preg_match('/"username"\s*:\s*"([^"]+)"/', $input, $u);
+        preg_match('/"membre"\s*:\s*"([^"]+)"/', $input, $m);
+        preg_match('/"action"\s*:\s*"([^"]+)"/', $input, $a);
+        $username = $usernameToken ?: (isset($u[1]) ? trim($u[1]) : '');
+        $membre   = isset($m[1]) ? trim($m[1]) : '';
+        $groupAction = isset($a[1]) ? trim($a[1]) : '';
+        if (empty($username) || $membre === '' || !in_array($groupAction, array('add', 'remove'))) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'membre, action et username requis')));
+            mysql_close($dblink); exit;
+        }
+        $Joueur = mobileChargerJoueur($username);
+        if (!$Joueur || !peut($Joueur, 'gerer_roles')) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Accès refusé')));
+            mysql_close($dblink); exit;
+        }
+        $me = mysql_real_escape_string($membre);
+        if ($groupAction == 'add') {
+            mysql_query("INSERT IGNORE INTO NPVB_ConversationMembres (Conversation, Joueur) VALUES ($sid, '$me')");
+        } else {
+            mysql_query("DELETE FROM NPVB_ConversationMembres WHERE Conversation=$sid AND Joueur='$me'");
+        }
+        echo json_encode(array('success' => true, 'data' => array('success' => true)));
+        mysql_close($dblink); exit;
+    }
+
+    // POST /chat/groups/{id}/archive  body: {username}  (admin, id=1 "Annonces du club" non archivable)
+    if ($sousRes == 'groups' && isset($segments[2]) && ctype_digit($segments[2]) && isset($segments[3]) && $segments[3] == 'archive' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+        $sid = (int)$segments[2];
+        $input = file_get_contents('php://input');
+        preg_match('/"username"\s*:\s*"([^"]+)"/', $input, $u);
+        $username = $usernameToken ?: (isset($u[1]) ? trim($u[1]) : '');
+        if (empty($username)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'username requis')));
+            mysql_close($dblink); exit;
+        }
+        $Joueur = mobileChargerJoueur($username);
+        if (!$Joueur || !peut($Joueur, 'gerer_roles')) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Accès refusé')));
+            mysql_close($dblink); exit;
+        }
+        if ($sid > 1) {
+            mysql_query("UPDATE NPVB_Conversations SET Archive='o', ArchiveDate=NOW() WHERE Id=$sid AND Archive='n'");
+        }
+        echo json_encode(array('success' => true, 'data' => array('success' => true)));
+        mysql_close($dblink); exit;
+    }
+
     echo json_encode(array('success' => false, 'error' => array('code' => 'NOT_FOUND', 'message' => 'Chat endpoint inconnu')));
     mysql_close($dblink); exit;
 }
