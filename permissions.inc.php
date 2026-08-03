@@ -361,12 +361,14 @@ function conversationsAccessibles($Joueur, $sdblink) {
 	if (!isset($Joueur) || !is_object($Joueur)) return array();
 	$pseudo = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
 
-	// Admin : voir toutes les conversations SAUF privées, triées par activité récente
+	// Admin : voir toutes les conversations SAUF les privées dont il n'est PAS membre
+	// (pas de bypass admin sur les privés des autres — seulement les siens), triées par activité récente
 	if (peut($Joueur, 'gerer_roles')) {
 		$res = mysql_query("SELECT c.*, COALESCE(MAX(m.DateEnvoi), c.DateCreation) AS dernierMsg
 		                    FROM NPVB_Conversations c
 		                    LEFT JOIN NPVB_MessagesChat m ON m.Conversation = c.Id
 		                    WHERE c.Type != 'prive'
+		                       OR c.Id IN (SELECT Conversation FROM NPVB_ConversationMembres WHERE Joueur='".$pseudo."')
 		                    GROUP BY c.Id
 		                    ORDER BY c.Archive ASC, dernierMsg DESC", $sdblink);
 		$convs = array();

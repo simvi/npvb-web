@@ -876,6 +876,93 @@ if ($resource == 'chat') {
         mysql_close($dblink); exit;
     }
 
+    // GET /chat/membres?username=X  (liste pour le sélecteur "Nouveau message")
+    if ($sousRes == 'membres' && $_SERVER['REQUEST_METHOD'] != 'POST') {
+        $username = $usernameToken ?: (isset($_GET['username']) ? trim($_GET['username']) : '');
+        if (empty($username)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'username requis')));
+            mysql_close($dblink); exit;
+        }
+        $ue = mysql_real_escape_string($username);
+        $r = mysql_query("SELECT Pseudonyme, Prenom, Nom FROM NPVB_Joueurs WHERE Etat='V' AND Pseudonyme != '$ue' ORDER BY Nom ASC");
+        $membres = array();
+        while ($row = mysql_fetch_object($r)) {
+            $nom = trim($row->Prenom.' '.$row->Nom);
+            $membres[] = array('pseudo' => $row->Pseudonyme, 'nom' => ($nom != '') ? $nom : $row->Pseudonyme);
+        }
+        echo json_encode(array('success' => true, 'data' => $membres));
+        mysql_close($dblink); exit;
+    }
+
+    // POST /chat/prive  body: {cible, username}  — ouvre ou crée la conversation privée
+    if ($sousRes == 'prive' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+        $input = file_get_contents('php://input');
+        preg_match('/"username"\s*:\s*"([^"]+)"/', $input, $u);
+        preg_match('/"cible"\s*:\s*"([^"]+)"/', $input, $ci);
+        $username = $usernameToken ?: (isset($u[1]) ? trim($u[1]) : '');
+        $cible    = isset($ci[1]) ? trim($ci[1]) : '';
+        if (empty($username) || empty($cible)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'cible et username requis')));
+            mysql_close($dblink); exit;
+        }
+        if ($cible == $username) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'INVALID', 'message' => 'Cible invalide')));
+            mysql_close($dblink); exit;
+        }
+        $ce = mysql_real_escape_string($cible);
+        $existe = mysql_fetch_object(mysql_query("SELECT 1 FROM NPVB_Joueurs WHERE Pseudonyme='$ce' AND Etat='V'"));
+        if (!$existe) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'NOT_FOUND', 'message' => 'Membre introuvable')));
+            mysql_close($dblink); exit;
+        }
+        $convId = trouverOuCreerPrive($username, $cible, $dblink);
+        if (!$convId) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'DB_ERROR', 'message' => 'Création impossible')));
+            mysql_close($dblink); exit;
+        }
+        echo json_encode(array('success' => true, 'data' => array('convId' => $convId)));
+        mysql_close($dblink); exit;
+    }
+
+    // GET /chat/search?q=...&username=X  (recherche scopée aux conversations accessibles)
+    if ($sousRes == 'search' && $_SERVER['REQUEST_METHOD'] != 'POST') {
+        $username = $usernameToken ?: (isset($_GET['username']) ? trim($_GET['username']) : '');
+        $q = isset($_GET['q']) ? trim($_GET['q']) : '';
+        if (empty($username)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'username requis')));
+            mysql_close($dblink); exit;
+        }
+        if (mb_strlen($q) < 2) {
+            echo json_encode(array('success' => true, 'data' => array()));
+            mysql_close($dblink); exit;
+        }
+        $convs = mobileConvsAccessibles($username);
+        if (empty($convs)) {
+            echo json_encode(array('success' => true, 'data' => array()));
+            mysql_close($dblink); exit;
+        }
+        $convIds = array_map(function($c) { return (int)$c['id']; }, $convs);
+        $convList = implode(',', $convIds);
+        $qe = mysql_real_escape_string('%'.$q.'%');
+        $r = mysql_query("SELECT m.Id, m.Conversation, m.Contenu, m.DateEnvoi, c.Nom AS ConvNom
+                          FROM NPVB_MessagesChat m JOIN NPVB_Conversations c ON c.Id=m.Conversation
+                          WHERE m.Conversation IN ($convList) AND m.Supprime='n' AND m.Contenu LIKE '$qe'
+                          ORDER BY m.DateEnvoi DESC LIMIT 30");
+        $resultats = array();
+        while ($row = mysql_fetch_object($r)) {
+            $apercu = mb_substr($row->Contenu, 0, 60) . (mb_strlen($row->Contenu) > 60 ? '…' : '');
+            $resultats[] = array(
+                'id'      => (int)$row->Id,
+                'conv'    => (int)$row->Conversation,
+                'nomConv' => $row->ConvNom,
+                'apercu'  => $apercu,
+                'date'    => substr($row->DateEnvoi, 0, 10)
+            );
+        }
+        echo json_encode(array('success' => true, 'data' => $resultats));
+        mysql_close($dblink); exit;
+    }
+
     echo json_encode(array('success' => false, 'error' => array('code' => 'NOT_FOUND', 'message' => 'Chat endpoint inconnu')));
     mysql_close($dblink); exit;
 }
