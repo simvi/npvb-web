@@ -176,6 +176,10 @@ function mobileConvsAccessibles($pseudo) {
     $convs = conversationsAccessibles($Joueur, $dblink);
     $out = array();
     foreach ($convs as $c) {
+        // Archivées : visibles sur le web dans une section repliable dédiée. Aucune app
+        // mobile n'a d'UI pour les distinguer — les exposer ici créerait un doublon visuel
+        // avec la conversation active du même nom/équipe (cf. NPVB_Beach/NPVB_L1/SEANCE en prod).
+        if ($c->Archive == 'o') continue;
         $nom = $c->Nom;
         if ($c->Type == 'prive') {
             $pe = mysql_real_escape_string($pseudo, $dblink);
