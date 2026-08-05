@@ -419,6 +419,37 @@ if ($EnvoiMail){
 					</fieldset>
 				</td>
 			</tr>
+				<tr>
+					<td colspan="2">
+						<fieldset>
+							<legend>R&eacute;initialisation mot de passe</legend>
+							<form method="post" action="<?=$PHP_SELF?>?Page=adminfichemembre&Membre=<?=$Membre?>" style="margin:0;">
+								<input type="hidden" name="MembrePourReset" value="<?=$Membre?>" />
+								<input type="hidden" name="GenererLienReset" value="o" />
+
+								<?php if ($LienGenere) { ?>
+									<div style="padding:12px;background:#d4edda;border:1px solid #c3e6cb;border-radius:4px;margin-bottom:10px;">
+										<strong style="color:#155724;">OK - Lien g&eacute;n&eacute;r&eacute; avec succ&egrave;s !</strong><br/>
+										<small style="color:#155724;">Valable 24h - Copiez et envoyez au membre :</small><br/>
+										<input type="text" value="<?=$LienGenere?>"
+										       style="width:100%;margin-top:8px;padding:6px;border:1px solid #c3e6cb;font-size:11px;font-family:monospace;"
+										       readonly onclick="this.select();" />
+									</div>
+								<?php } ?>
+
+								<?php if ($ErreurGeneration) { ?>
+									<div style="padding:10px;background:#f8d7da;border:1px solid #f5c6cb;border-radius:4px;margin-bottom:10px;color:#721c24;">
+										<strong>ERREUR :</strong> <?=$ErreurGeneration?>
+									</div>
+								<?php } ?>
+
+								<input type="submit" value="G&eacute;n&eacute;rer un lien de r&eacute;initialisation" class="PetitBouton Action"
+								       style="background:#ff9800;border-color:#f57c00;" />
+								<br/><small style="color:#666;">Le membre recevra le lien par email (à copier/coller depuis ici)</small>
+							</form>
+						</fieldset>
+					</td>
+				</tr>
 		</table>
 
 <?
@@ -459,37 +490,7 @@ if ($ErreurDonnees["Pseudonyme"]){
 ?>
 
 							<tr><td class="Colonne1">Etat du compte</td><td class="Colonne2"><select name="Etat"><option value="V"<?=(($Etat=="V")?" selected=\"selected\"":"")?>>Actif</option><?if($Mode=="Modif"){?><option value="I"<?=(($Etat=="I")?" selected=\"selected\"":"").(($estDansUneEquipe)?" disabled=\"disabled\"":"")?>>Inactif</option><?}?><option value="E"<?=(($Etat=="E")?" selected=\"selected\"":"").(($estDansUneEquipe)?" disabled=\"disabled\"":"")?>>Essai</option></select><?=(($estDansUneEquipe)?"<a href=\"javascript:alert('Vous devez supprimer le joueur de toute �quipe\\navant de le passer inactif');\">?</a>":"")?></td></tr>
-<?php if ($Mode=="Modif") { ?>
-							<tr>
-								<td class="Colonne1">R&eacute;initialisation<br/>mot de passe</td>
-								<td class="Colonne2">
-									<form method="post" action="<?=$PHP_SELF?>?Page=adminfichemembre&Membre=<?=$Membre?>" style="margin:0;">
-										<input type="hidden" name="MembrePourReset" value="<?=$Membre?>" />
-										<input type="hidden" name="GenererLienReset" value="o" />
-
-										<?php if ($LienGenere) { ?>
-											<div style="padding:12px;background:#d4edda;border:1px solid #c3e6cb;border-radius:4px;margin-bottom:10px;">
-												<strong style="color:#155724;">OK - Lien g&eacute;n&eacute;r&eacute; avec succ&egrave;s !</strong><br/>
-												<small style="color:#155724;">Valable 24h - Copiez et envoyez au membre :</small><br/>
-												<input type="text" value="<?=$LienGenere?>"
-												       style="width:100%;margin-top:8px;padding:6px;border:1px solid #c3e6cb;font-size:11px;font-family:monospace;"
-												       readonly onclick="this.select();" />
-											</div>
-										<?php } ?>
-
-										<?php if ($ErreurGeneration) { ?>
-											<div style="padding:10px;background:#f8d7da;border:1px solid #f5c6cb;border-radius:4px;margin-bottom:10px;color:#721c24;">
-												<strong>ERREUR :</strong> <?=$ErreurGeneration?>
-											</div>
-										<?php } ?>
-
-										<input type="submit" value="G&eacute;n&eacute;rer un lien de r&eacute;initialisation" class="PetitBouton Action"
-										       style="background:#ff9800;border-color:#f57c00;" />
-										<br/><small style="color:#666;">Le membre recevra le lien par email (à copier/coller depuis ici)</small>
-									</form>
-								</td>
-							</tr>
-<?php } else { ?>
+<?php if ($Mode=="Nouveau") { ?>
 							<tr><td class="Colonne1">Mot de passe<br/>initial</td><td class="Colonne2"><input type="password" name="MotDePasse" size="30" /><br/><small style="color:#666;">Obligatoire pour créer le compte</small></td></tr>
 <?php } ?>
 							<tr><td class="Colonne1">Accord pour<br/>diffusion</td><td class="Colonne2"><input type="radio" name="Accord" value="o"<?=($Accord=="o")?" checked=\"checked\"":""?>/>oui / <input type="radio" name="Accord" value="n"<?=($Accord=="n")?" checked=\"checked\"":""?>/>non</td></tr>
