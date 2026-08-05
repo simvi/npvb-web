@@ -22,20 +22,6 @@ function old_password_hash($password) {
 	return sprintf("%08x%08x", $result1, $result2);
 }
 
-// Charge les rôles du joueur depuis NPVB_JoueurRoles et les attache à l'objet
-// sous forme de tableau $Joueur->Roles (système de permissions, voir permissions.inc.php)
-function chargerRolesJoueur($Joueur, $sdblink) {
-	$Joueur->Roles = array();
-	$pseudo = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
-	$res = mysql_query("SELECT Role FROM NPVB_JoueurRoles WHERE Pseudonyme='".$pseudo."'", $sdblink);
-	if ($res) {
-		while ($row = mysql_fetch_object($res)) {
-			$Joueur->Roles[] = $row->Role;
-		}
-	}
-	return $Joueur;
-}
-
 //Tentative de connexion a la base de donnees
 $ConnectDB=true;
 $motdepassesqlok = $config['db_pass'];
