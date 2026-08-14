@@ -212,6 +212,13 @@ if (!$Joueur){
 		</div>
 
 		<br />
+   		<h3>Sites disponibles</h3>
+		<p>Environnement de développement debianair :</p>
+		<ul>
+			<li><a href="/">NPVB</a> — site principal du club</li>
+		</ul>
+
+		<br />
    		<h3>Contact</h3>
 
 		<p><u>Pour tous renseignements</u> :</p>
