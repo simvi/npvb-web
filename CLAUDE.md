@@ -1,5 +1,11 @@
 # Règles Claude — projet nantespvb-dev
 
+## Git : ne jamais travailler directement sur `main`
+
+Toujours travailler sur `develop` ou sur une branche `feature/...` (ou `fix/...`), jamais de commit direct sur `main`. Avant tout `git commit`, vérifier la branche courante (`git status`/`git branch`) et créer/checkout une branche appropriée si on se trouve sur `main`.
+
+Raison : `develop` et `main` ont divergé sur `npvb-ios` (nécessité d'un merge de rattrapage) suite à des commits faits directement sur `main`.
+
 ## Déploiement en production
 
 **Toujours demander une confirmation explicite avant toute mise en production.**
