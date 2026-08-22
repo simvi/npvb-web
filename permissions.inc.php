@@ -23,15 +23,15 @@ $ROLES_ASSIGNABLES = array(
 // Capacités GLOBALES (toutes équipes confondues)
 $CAPACITES_GLOBALES = array(
 	'admin'        => array('*'),  // tout
-	'organisateur' => array('gerer_evenements', 'saisir_presences', 'cloturer_evenements', 'voir_stats'),
-	'redacteur'    => array('editer_accueil', 'poster_annonce'),
+	'organisateur' => array('gerer_evenements', 'saisir_presences', 'cloturer_evenements', 'voir_stats', 'acceder_chat'),
+	'redacteur'    => array('editer_accueil', 'poster_annonce', 'acceder_chat'),
 	'capitaine'    => array(),     // rien en global — uniquement par équipe
 	'membre'       => array(),
 );
 
 // Capacités PAR ÉQUIPE (le capitaine sur ses propres équipes)
 $CAPACITES_EQUIPE = array(
-	'capitaine' => array('gerer_evenements', 'saisir_presences', 'cloturer_evenements', 'gerer_membres'),
+	'capitaine' => array('gerer_evenements', 'saisir_presences', 'cloturer_evenements', 'gerer_membres', 'acceder_chat'),
 );
 
 // Capacité globale requise pour accéder à chaque page admin
@@ -195,12 +195,16 @@ function peutPosterConversation($Joueur, $posterCapacite) {
 //   equipe   : membre de l'équipe (appartenance) ou responsable/suppléant, OU admin (sauf privées)
 //   bureau   : membre explicite OU admin (sauf privées)
 //   prive    : seulement membres explicites (pas d'exception admin)
+// Restriction : si pas 'acceder_chat', accès seulement à la conversation générale ID=1
 function peutAccederConversation($Joueur, $conv, $sdblink) {
 	if (!isset($Joueur) || !is_object($Joueur) || !$conv) return false;
 	$pseudo = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
 
 	// Type générale: accessible à tous les connectés
 	if ($conv->Type == 'generale') return true;
+
+	// Si l'utilisateur n'a pas accès au chat complet, bloquer les autres conversations
+	if (!peut($Joueur, 'acceder_chat') && !peut($Joueur, 'gerer_roles')) return false;
 
 	// Type équipe
 	if ($conv->Type == 'equipe') {
@@ -357,9 +361,29 @@ function nonLusConversation($Joueur, $convId, $sdblink) {
 // Conversations accessibles au joueur (objets NPVB_Conversations + ->nonlus).
 // Admins : voient équipes, générales, bureau, SEANCE — PAS les conversations privées
 // Membres : voient seulement leurs équipes, générales, privées, bureau
+// Si l'utilisateur n'a pas 'acceder_chat' : voir seulement la conversation générale ID=1 (Annonces du club)
 function conversationsAccessibles($Joueur, $sdblink) {
 	if (!isset($Joueur) || !is_object($Joueur)) return array();
 	$pseudo = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
+
+	// Vérifier si l'utilisateur a accès au chat complet
+	$aAccesChat = peut($Joueur, 'acceder_chat') || peut($Joueur, 'gerer_roles');
+
+	// Si pas accès au chat : retourner seulement l'Annonce du club (ID=1, Type='generale')
+	if (!$aAccesChat) {
+		$res = mysql_query("SELECT c.*, COALESCE(MAX(m.DateEnvoi), c.DateCreation) AS dernierMsg
+		                    FROM NPVB_Conversations c
+		                    LEFT JOIN NPVB_MessagesChat m ON m.Conversation = c.Id
+		                    WHERE c.Id = 1
+		                    GROUP BY c.Id
+		                    ORDER BY c.Archive ASC, dernierMsg DESC", $sdblink);
+		$convs = array();
+		if ($res) { while ($c = mysql_fetch_object($res)) {
+			$c->nonlus = 0;  // Les annonces ne comptent pas comme non-lues
+			$convs[] = $c;
+		} }
+		return $convs;
+	}
 
 	// Admin : voir toutes les conversations SAUF les privées dont il n'est PAS membre
 	// (pas de bypass admin sur les privés des autres — seulement les siens), triées par activité récente
@@ -379,7 +403,7 @@ function conversationsAccessibles($Joueur, $sdblink) {
 		return $convs;
 	}
 
-	// Membre normal : accès restreint, triés par activité récente
+	// Membre avec accès au chat : accès restreint, triés par activité récente
 	$ids = array();
 	$r = mysql_query("SELECT Id FROM NPVB_Conversations WHERE Type='generale'", $sdblink);
 	if ($r) while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
