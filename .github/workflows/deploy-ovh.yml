@@ -1,0 +1,50 @@
+name: Deploy to OVH
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to OVH via SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.OVH_SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.OVH_SSH_HOST }}
+          SSH_USER: ${{ secrets.OVH_SSH_USER }}
+          DEPLOY_PATH: ${{ secrets.OVH_DEPLOY_PATH }}
+        run: |
+          # Create SSH directory
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          # Add SSH key (without password prompt)
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          # Add host to known_hosts (avoid prompt)
+          ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts 2>/dev/null
+
+          # Deploy files using SCP
+          scp -i ~/.ssh/deploy_key politique-confidentialite.html $SSH_USER@$SSH_HOST:$DEPLOY_PATH/
+          scp -i ~/.ssh/deploy_key politique-confidentialite.txt $SSH_USER@$SSH_HOST:$DEPLOY_PATH/
+
+          # Optional: Set correct permissions on server
+          ssh -i ~/.ssh/deploy_key $SSH_USER@$SSH_HOST "chmod 644 $DEPLOY_PATH/politique-confidentialite.html $DEPLOY_PATH/politique-confidentialite.txt"
+
+          # Clean up
+          rm ~/.ssh/deploy_key
+
+          echo "✅ Deployment to OVH completed successfully"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed!"
+          exit 1
