@@ -33,10 +33,9 @@ jobs:
 
           # Deploy files using SCP
           scp -i ~/.ssh/deploy_key politique-confidentialite.html $SSH_USER@$SSH_HOST:$DEPLOY_PATH/
-          scp -i ~/.ssh/deploy_key politique-confidentialite.txt $SSH_USER@$SSH_HOST:$DEPLOY_PATH/
 
           # Optional: Set correct permissions on server
-          ssh -i ~/.ssh/deploy_key $SSH_USER@$SSH_HOST "chmod 644 $DEPLOY_PATH/politique-confidentialite.html $DEPLOY_PATH/politique-confidentialite.txt"
+          ssh -i ~/.ssh/deploy_key $SSH_USER@$SSH_HOST "chmod 644 $DEPLOY_PATH/politique-confidentialite.html"
 
           # Clean up
           rm ~/.ssh/deploy_key
