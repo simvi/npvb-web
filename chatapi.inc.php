@@ -81,6 +81,8 @@ if ($action == 'send') {
 	$c = mysql_real_escape_string($contenu, $sdblink);
 	if (mySql_query("INSERT INTO NPVB_MessagesChat (Conversation, Auteur, Contenu, DateEnvoi) VALUES (".$convId.", '".$pseudoEcap."', '".$c."', NOW())", $sdblink)) {
 		$newId = mysql_insert_id($sdblink);
+		// Un nouveau message ré-affiche la conversation chez ceux qui l'avaient masquée
+		demasquerConversation($convId, $sdblink);
 		// Notification push aux autres membres (no-op si FCM non configuré)
 		include_once('push.inc.php');
 		$dest = destinatairesChat($convId, $Joueur->Pseudonyme, $sdblink);

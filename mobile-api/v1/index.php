@@ -51,6 +51,18 @@ if (!function_exists('json_encode')) {
                 $data = str_replace("\r", "\\r", $data);
                 $data = str_replace("\n", "\\n", $data);
                 $data = str_replace("\t", "\\t", $data);
+                $data = str_replace("\x08", "\\b", $data);
+                $data = str_replace("\x0c", "\\f", $data);
+                // Tout autre caractère de contrôle C0 restant → \u00XX (sinon JSON invalide).
+                // NB: sur PHP >= 5.2 cette fonction n'est jamais définie (json_encode natif) ;
+                //     ce bloc n'est qu'un filet PHP 4 historique, désormais inatteignable.
+                for ($__i = 0; $__i < 0x20; $__i++) {
+                    $__ch = chr($__i);
+                    if (strpos("\r\n\t\x08\x0c", $__ch) !== false) continue;
+                    if (strpos($data, $__ch) !== false) {
+                        $data = str_replace($__ch, sprintf('\\u%04x', $__i), $data);
+                    }
+                }
                 return '"' . $data . '"';
             case 'object':
                 $data = get_object_vars($data);
@@ -140,6 +152,20 @@ function utilisateurRequete($secret) {
     return null;
 }
 
+// Corps de requête JSON décodé nativement (PHP 8.4 : json_decode toujours dispo).
+// Les handlers POST historiques extraient les champs par regex sur le corps BRUT,
+// ce qui stocke les séquences d'échappement JSON (\n, \t, \", \uXXXX) LITTÉRALEMENT
+// dans NPVB_MessagesChat.Contenu — d'où les "sauts de ligne / codes ASCII" vus par
+// les apps. Passer par json_decode restitue le vrai texte (vrais retours ligne, etc.).
+function corpsJSON() {
+    static $c = null;
+    if ($c !== null) return $c;
+    $raw = file_get_contents('php://input');
+    $d = json_decode($raw, true);
+    $c = is_array($d) ? $d : array();
+    return $c;
+}
+
 // Charge un $Joueur (avec ->Roles) depuis un pseudo, pour réutiliser permissions.inc.php
 function mobileChargerJoueur($pseudo) {
     global $dblink;
@@ -181,15 +207,23 @@ function mobileConvsAccessibles($pseudo) {
         // avec la conversation active du même nom/équipe (cf. NPVB_Beach/NPVB_L1/SEANCE en prod).
         if ($c->Archive == 'o') continue;
         $nom = $c->Nom;
+        $prenom = null;       // Prénom brut de l'interlocuteur (prive uniquement)
+        $nomFamille = null;   // Nom brut de l'interlocuteur (prive uniquement)
         if ($c->Type == 'prive') {
             $pe = mysql_real_escape_string($pseudo, $dblink);
             $rr = mysql_query("SELECT j.Prenom, j.Nom, j.Pseudonyme FROM NPVB_ConversationMembres cm
                                JOIN NPVB_Joueurs j ON j.Pseudonyme=cm.Joueur
                                WHERE cm.Conversation=".(int)$c->Id." AND cm.Joueur<>'".$pe."' LIMIT 1", $dblink);
-            if ($rr && ($jj = mysql_fetch_object($rr))) { $n = trim($jj->Prenom.' '.$jj->Nom); $nom = ($n != '') ? $n : $jj->Pseudonyme; }
+            if ($rr && ($jj = mysql_fetch_object($rr))) {
+                $n = trim($jj->Prenom.' '.$jj->Nom);
+                $nom = ($n != '') ? $n : $jj->Pseudonyme;
+                $prenom = $jj->Prenom;
+                $nomFamille = $jj->Nom;
+            }
         }
         $out[] = array(
             'id' => (int)$c->Id, 'type' => $c->Type, 'nom' => $nom,
+            'prenom' => $prenom, 'nomFamille' => $nomFamille,
             'archive' => ($c->Archive == 'o'),
             'nonlus' => (int)$c->nonlus,
             'peutPoster' => peutPosterDansConv($Joueur, $c, $dblink)
@@ -613,6 +647,8 @@ if ($resource == 'chat') {
                 'id' => $cid,
                 'type' => $c['type'],
                 'nom' => $c['nom'],
+                'prenom' => isset($c['prenom']) ? $c['prenom'] : null,
+                'nomFamille' => isset($c['nomFamille']) ? $c['nomFamille'] : null,
                 'lastMessage' => $lastMessage,
                 'lastDate' => $lastDate,
                 'unread' => (int)$c['nonlus']
@@ -639,19 +675,21 @@ if ($resource == 'chat') {
         $result = lecteursMessage((int)$msg->Conversation, $msgId, $dblink);
         $lu = array();
         $nonlu = array();
+        $luMembres = array();      // [{pseudo, prenom, nom}] — prenom/nom bruts NPVB_Joueurs
+        $nonluMembres = array();
         foreach ($result['lu'] as $p) {
-            $r = mysql_query("SELECT Prenom, Nom FROM NPVB_Joueurs WHERE Pseudonyme='".mysql_real_escape_string($p)."'");
-            $j = mysql_fetch_object($r);
+            $j = mysql_fetch_object(mysql_query("SELECT Prenom, Nom FROM NPVB_Joueurs WHERE Pseudonyme='".mysql_real_escape_string($p)."'"));
             $nom = $j ? trim($j->Prenom.' '.$j->Nom) : $p;
             $lu[] = ($nom != '') ? $nom : $p;
+            $luMembres[] = array('pseudo' => $p, 'prenom' => $j ? $j->Prenom : null, 'nom' => $j ? $j->Nom : null);
         }
         foreach ($result['nonlu'] as $p) {
-            $r = mysql_query("SELECT Prenom, Nom FROM NPVB_Joueurs WHERE Pseudonyme='".mysql_real_escape_string($p)."'");
-            $j = mysql_fetch_object($r);
+            $j = mysql_fetch_object(mysql_query("SELECT Prenom, Nom FROM NPVB_Joueurs WHERE Pseudonyme='".mysql_real_escape_string($p)."'"));
             $nom = $j ? trim($j->Prenom.' '.$j->Nom) : $p;
             $nonlu[] = ($nom != '') ? $nom : $p;
+            $nonluMembres[] = array('pseudo' => $p, 'prenom' => $j ? $j->Prenom : null, 'nom' => $j ? $j->Nom : null);
         }
-        echo json_encode(array('success' => true, 'data' => array('lu' => $lu, 'nonlu' => $nonlu, 'totalLu' => count($lu), 'total' => count($lu) + count($nonlu))));
+        echo json_encode(array('success' => true, 'data' => array('lu' => $lu, 'nonlu' => $nonlu, 'luMembres' => $luMembres, 'nonluMembres' => $nonluMembres, 'totalLu' => count($lu), 'total' => count($lu) + count($nonlu))));
         mysql_close($dblink); exit;
     }
 
@@ -670,26 +708,25 @@ if ($resource == 'chat') {
             echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Accès refusé')));
             mysql_close($dblink); exit;
         }
-        $champs = "Id, Conversation AS conv, Auteur AS auteur, Contenu AS contenu, DateEnvoi AS dateEnvoi,
-                   DateModif AS dateModif, Epingle AS epingle";
+        $champs = "m.Id, m.Conversation AS conv, m.Auteur AS auteur, m.Contenu AS contenu, m.DateEnvoi AS dateEnvoi,
+                   m.DateModif AS dateModif, m.Epingle AS epingle, j.Prenom AS prenom, j.Nom AS nom";
+        // LEFT JOIN → auteur supprimé/inconnu : prenom/nom NULL, le client retombe sur `auteur`.
+        $jointure = "FROM NPVB_MessagesChat m LEFT JOIN NPVB_Joueurs j ON j.Pseudonyme = m.Auteur";
         // Trois cas : pagination arrière (avant), chargement initial (since=0, borné aux 50
         // derniers pour rester cohérent avec la pagination), poll incrémental (since>0, non
         // borné : on veut TOUS les nouveaux messages depuis le dernier since connu du client).
         if ($avant > 0) {
-            $q = "SELECT $champs
-                  FROM NPVB_MessagesChat
-                  WHERE Conversation=$convId AND Supprime='n' AND Id < $avant
-                  ORDER BY Id DESC LIMIT 50";
+            $q = "SELECT $champs $jointure
+                  WHERE m.Conversation=$convId AND m.Supprime='n' AND m.Id < $avant
+                  ORDER BY m.Id DESC LIMIT 50";
         } elseif ($since == 0) {
-            $q = "SELECT $champs
-                  FROM NPVB_MessagesChat
-                  WHERE Conversation=$convId AND Supprime='n'
-                  ORDER BY Id DESC LIMIT 50";
+            $q = "SELECT $champs $jointure
+                  WHERE m.Conversation=$convId AND m.Supprime='n'
+                  ORDER BY m.Id DESC LIMIT 50";
         } else {
-            $q = "SELECT $champs
-                  FROM NPVB_MessagesChat
-                  WHERE Conversation=$convId AND Supprime='n' AND Id > $since
-                  ORDER BY Id ASC";
+            $q = "SELECT $champs $jointure
+                  WHERE m.Conversation=$convId AND m.Supprime='n' AND m.Id > $since
+                  ORDER BY m.Id ASC";
         }
         $r = mysql_query($q);
         $msgs = array();
@@ -698,6 +735,8 @@ if ($resource == 'chat') {
                 'id' => (int)$row['Id'],
                 'conv' => (int)$row['conv'],
                 'auteur' => $row['auteur'],
+                'prenom' => isset($row['prenom']) ? $row['prenom'] : null,
+                'nom' => isset($row['nom']) ? $row['nom'] : null,
                 'contenu' => $row['contenu'],
                 'dateEnvoi' => $row['dateEnvoi'],
                 'epingle' => ($row['epingle'] == 'o'),
@@ -715,11 +754,18 @@ if ($resource == 'chat') {
     // POST /chat/messages/{id}/edit  body: {contenu, username}
     if ($sousRes == 'messages' && isset($segments[2]) && ctype_digit($segments[2]) && isset($segments[3]) && $segments[3] == 'edit' && $_SERVER['REQUEST_METHOD'] == 'POST') {
         $msgId = (int)$segments[2];
+        $body = corpsJSON();
         $input = file_get_contents('php://input');
         preg_match('/"username"\s*:\s*"([^"]+)"/', $input, $u);
-        preg_match('/"contenu"\s*:\s*"(.*?)(?<!\\\\)"\s*[,}]/s', $input, $c);
-        $username = $usernameToken ?: (isset($u[1]) ? trim($u[1]) : '');
-        $contenu  = isset($c[1]) ? trim($c[1]) : '';
+        $username = $usernameToken ?: (isset($body['username']) ? trim($body['username']) : (isset($u[1]) ? trim($u[1]) : ''));
+        // json_decode restitue les vrais caractères (\n → vrai saut de ligne). Fallback
+        // regex sur corps brut si le corps n'est pas du JSON exploitable.
+        if (isset($body['contenu']) && is_string($body['contenu'])) {
+            $contenu = trim($body['contenu']);
+        } else {
+            preg_match('/"contenu"\s*:\s*"(.*?)(?<!\\\\)"\s*[,}]/s', $input, $c);
+            $contenu = isset($c[1]) ? trim($c[1]) : '';
+        }
         if (empty($username) || $contenu === '') {
             echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'contenu et username requis')));
             mysql_close($dblink); exit;
@@ -807,13 +853,20 @@ if ($resource == 'chat') {
 
     // POST /chat/messages  body: {conv, contenu, username}
     if ($sousRes == 'messages' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+        $body = corpsJSON();
         $input = file_get_contents('php://input');
         preg_match('/"username"\s*:\s*"([^"]+)"/', $input, $u);
-        preg_match('/"contenu"\s*:\s*"(.*?)(?<!\\\\)"\s*[,}]/s', $input, $c);
         preg_match('/"conv"\s*:\s*(\d+)/', $input, $cv);
-        $username = $usernameToken ?: (isset($u[1]) ? trim($u[1]) : '');
-        $contenu  = isset($c[1]) ? trim($c[1]) : '';
-        $convId   = isset($cv[1]) ? (int)$cv[1] : 0;
+        $username = $usernameToken ?: (isset($body['username']) ? trim($body['username']) : (isset($u[1]) ? trim($u[1]) : ''));
+        // json_decode restitue les vrais caractères (\n → vrai saut de ligne). Fallback
+        // regex sur corps brut si le corps n'est pas du JSON exploitable.
+        if (isset($body['contenu']) && is_string($body['contenu'])) {
+            $contenu = trim($body['contenu']);
+        } else {
+            preg_match('/"contenu"\s*:\s*"(.*?)(?<!\\\\)"\s*[,}]/s', $input, $c);
+            $contenu = isset($c[1]) ? trim($c[1]) : '';
+        }
+        $convId   = isset($body['conv']) ? (int)$body['conv'] : (isset($cv[1]) ? (int)$cv[1] : 0);
         if (empty($username) || $contenu === '' || !$convId) {
             echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'conv, contenu et username requis')));
             mysql_close($dblink); exit;
@@ -826,6 +879,8 @@ if ($resource == 'chat') {
         $ce = mysql_real_escape_string($contenu);
         if (mysql_query("INSERT INTO NPVB_MessagesChat (Conversation, Auteur, Contenu, DateEnvoi) VALUES ($convId, '$ue', '$ce', NOW())")) {
             $newId = mysql_insert_id();
+            // Un nouveau message ré-affiche la conversation chez ceux qui l'avaient masquée
+            demasquerConversation($convId, $dblink);
             echo json_encode(array('success' => true, 'data' => array('success' => true, 'id' => $newId)));
             $convRow = mysql_fetch_object(mysql_query("SELECT Nom FROM NPVB_Conversations WHERE Id=$convId"));
             $convNom = $convRow ? $convRow->Nom : 'Chat';
@@ -892,7 +947,12 @@ if ($resource == 'chat') {
         $membres = array();
         while ($row = mysql_fetch_object($r)) {
             $nom = trim($row->Prenom.' '.$row->Nom);
-            $membres[] = array('pseudo' => $row->Pseudonyme, 'nom' => ($nom != '') ? $nom : $row->Pseudonyme);
+            $membres[] = array(
+                'pseudo' => $row->Pseudonyme,
+                'nom' => ($nom != '') ? $nom : $row->Pseudonyme,
+                'prenom' => $row->Prenom,
+                'nomFamille' => $row->Nom
+            );
         }
         echo json_encode(array('success' => true, 'data' => $membres));
         mysql_close($dblink); exit;
@@ -948,8 +1008,11 @@ if ($resource == 'chat') {
         $convIds = array_map(function($c) { return (int)$c['id']; }, $convs);
         $convList = implode(',', $convIds);
         $qe = mysql_real_escape_string('%'.$q.'%');
-        $r = mysql_query("SELECT m.Id, m.Conversation, m.Contenu, m.DateEnvoi, c.Nom AS ConvNom
-                          FROM NPVB_MessagesChat m JOIN NPVB_Conversations c ON c.Id=m.Conversation
+        $r = mysql_query("SELECT m.Id, m.Conversation, m.Auteur, m.Contenu, m.DateEnvoi, c.Nom AS ConvNom,
+                                 j.Prenom, j.Nom
+                          FROM NPVB_MessagesChat m
+                          JOIN NPVB_Conversations c ON c.Id=m.Conversation
+                          LEFT JOIN NPVB_Joueurs j ON j.Pseudonyme=m.Auteur
                           WHERE m.Conversation IN ($convList) AND m.Supprime='n' AND m.Contenu LIKE '$qe'
                           ORDER BY m.DateEnvoi DESC LIMIT 30");
         $resultats = array();
@@ -959,6 +1022,9 @@ if ($resource == 'chat') {
                 'id'      => (int)$row->Id,
                 'conv'    => (int)$row->Conversation,
                 'nomConv' => $row->ConvNom,
+                'auteur'  => $row->Auteur,
+                'prenom'  => $row->Prenom,
+                'nom'     => $row->Nom,
                 'apercu'  => $apercu,
                 'date'    => substr($row->DateEnvoi, 0, 10)
             );
@@ -1038,7 +1104,12 @@ if ($resource == 'chat') {
         $membres = array();
         while ($row = mysql_fetch_object($r)) {
             $nom = trim($row->Prenom.' '.$row->Nom);
-            $membres[] = array('pseudo' => $row->Pseudonyme, 'nom' => ($nom != '') ? $nom : $row->Pseudonyme);
+            $membres[] = array(
+                'pseudo' => $row->Pseudonyme,
+                'nom' => ($nom != '') ? $nom : $row->Pseudonyme,
+                'prenom' => $row->Prenom,
+                'nomFamille' => $row->Nom
+            );
         }
         echo json_encode(array('success' => true, 'data' => $membres));
         mysql_close($dblink); exit;
@@ -1090,6 +1161,63 @@ if ($resource == 'chat') {
         }
         if ($sid > 1) {
             mysql_query("UPDATE NPVB_Conversations SET Archive='o', ArchiveDate=NOW() WHERE Id=$sid AND Archive='n'");
+        }
+        echo json_encode(array('success' => true, 'data' => array('success' => true)));
+        mysql_close($dblink); exit;
+    }
+
+    // POST /chat/conversations/{id}/hide  body: {username}
+    // Masque une conversation PRIVÉE de la liste de l'appelant (jusqu'au prochain
+    // message). Réservé au type 'prive' et aux membres de la conversation.
+    if ($sousRes == 'conversations' && isset($segments[2]) && ctype_digit($segments[2]) && isset($segments[3]) && $segments[3] == 'hide' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+        $sid = (int)$segments[2];
+        $input = file_get_contents('php://input');
+        preg_match('/"username"\s*:\s*"([^"]+)"/', $input, $u);
+        $username = $usernameToken ?: (isset($u[1]) ? trim($u[1]) : '');
+        if (empty($username)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'username requis')));
+            mysql_close($dblink); exit;
+        }
+        $Joueur = mobileChargerJoueur($username);
+        $conv = $Joueur ? mysql_fetch_object(mysql_query("SELECT * FROM NPVB_Conversations WHERE Id=$sid")) : null;
+        if (!$Joueur || !$conv) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'NOT_FOUND', 'message' => 'Conversation introuvable')));
+            mysql_close($dblink); exit;
+        }
+        if ($conv->Type != 'prive') {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Seules les conversations privées peuvent être masquées')));
+            mysql_close($dblink); exit;
+        }
+        if (!masquerConversationPourJoueur($Joueur, $conv, $dblink)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => 'Accès refusé')));
+            mysql_close($dblink); exit;
+        }
+        echo json_encode(array('success' => true, 'data' => array('success' => true)));
+        mysql_close($dblink); exit;
+    }
+
+    // POST /chat/groups/{id}/leave  body: {username}
+    // L'appelant quitte lui-même un groupe 'bureau'. Ne touche pas au chemin
+    // admin de retrait de membre (POST /chat/groups/{id}/membres action=remove).
+    if ($sousRes == 'groups' && isset($segments[2]) && ctype_digit($segments[2]) && isset($segments[3]) && $segments[3] == 'leave' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+        $sid = (int)$segments[2];
+        $input = file_get_contents('php://input');
+        preg_match('/"username"\s*:\s*"([^"]+)"/', $input, $u);
+        $username = $usernameToken ?: (isset($u[1]) ? trim($u[1]) : '');
+        if (empty($username)) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'MISSING_FIELDS', 'message' => 'username requis')));
+            mysql_close($dblink); exit;
+        }
+        $Joueur = mobileChargerJoueur($username);
+        $conv = $Joueur ? mysql_fetch_object(mysql_query("SELECT * FROM NPVB_Conversations WHERE Id=$sid")) : null;
+        if (!$Joueur || !$conv) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'NOT_FOUND', 'message' => 'Conversation introuvable')));
+            mysql_close($dblink); exit;
+        }
+        $res = quitterGroupeBureau($Joueur, $conv, $dblink);
+        if (!$res['ok']) {
+            echo json_encode(array('success' => false, 'error' => array('code' => 'FORBIDDEN', 'message' => $res['err'])));
+            mysql_close($dblink); exit;
         }
         echo json_encode(array('success' => true, 'data' => array('success' => true)));
         mysql_close($dblink); exit;

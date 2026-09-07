@@ -164,11 +164,19 @@ CREATE TABLE IF NOT EXISTS `NPVB_MessagesChat` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `NPVB_ConversationMembres` (
-  `Conversation` int(11)     NOT NULL,
-  `Joueur`       varchar(30) NOT NULL,
+  `Conversation` int(11)      NOT NULL,
+  `Joueur`       varchar(30)  NOT NULL,
+  -- Masque='o' : la conversation privée est cachée de la liste de CE membre
+  -- (jusqu'au prochain message posté, qui la ré-affiche pour tous). Cf. endpoint
+  -- POST /chat/conversations/{id}/hide (mobile-api) et demasquerConversation().
+  `Masque`       enum('o','n') NOT NULL DEFAULT 'n',
   PRIMARY KEY (`Conversation`, `Joueur`),
   KEY `idx_joueur` (`Joueur`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- MIGRATION (bases dev/prod existantes) — à jouer une fois :
+--   ALTER TABLE `NPVB_ConversationMembres`
+--     ADD COLUMN `Masque` enum('o','n') NOT NULL DEFAULT 'n';
 
 CREATE TABLE IF NOT EXISTS `NPVB_MessagesLus` (
   `Joueur`       varchar(30) NOT NULL,

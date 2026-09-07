@@ -391,8 +391,9 @@ function conversationsAccessibles($Joueur, $sdblink) {
 		$res = mysql_query("SELECT c.*, COALESCE(MAX(m.DateEnvoi), c.DateCreation) AS dernierMsg
 		                    FROM NPVB_Conversations c
 		                    LEFT JOIN NPVB_MessagesChat m ON m.Conversation = c.Id
-		                    WHERE c.Type != 'prive'
-		                       OR c.Id IN (SELECT Conversation FROM NPVB_ConversationMembres WHERE Joueur='".$pseudo."')
+		                    WHERE (c.Type != 'prive'
+		                       OR c.Id IN (SELECT Conversation FROM NPVB_ConversationMembres WHERE Joueur='".$pseudo."'))
+		                      AND c.Id NOT IN (SELECT Conversation FROM NPVB_ConversationMembres WHERE Joueur='".$pseudo."' AND Masque='o')
 		                    GROUP BY c.Id
 		                    ORDER BY c.Archive ASC, dernierMsg DESC", $sdblink);
 		$convs = array();
@@ -411,7 +412,7 @@ function conversationsAccessibles($Joueur, $sdblink) {
 	                    c.Equipe IN (SELECT Equipe FROM NPVB_Appartenance WHERE Joueur='".$pseudo."')
 	                    OR c.Equipe IN (SELECT Nom FROM NPVB_Equipes WHERE Responsable='".$pseudo."' OR Supleant='".$pseudo."'))", $sdblink);
 	if ($r) while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
-	$r = mysql_query("SELECT Conversation AS Id FROM NPVB_ConversationMembres WHERE Joueur='".$pseudo."'", $sdblink);
+	$r = mysql_query("SELECT Conversation AS Id FROM NPVB_ConversationMembres WHERE Joueur='".$pseudo."' AND Masque='n'", $sdblink);
 	if ($r) while ($x = mysql_fetch_object($r)) $ids[(int)$x->Id] = true;
 	if (empty($ids)) return array();
 	$in = implode(',', array_keys($ids));
@@ -443,10 +444,68 @@ function compterNonLus($Joueur, $sdblink) {
 	            c.Type='generale'
 	            OR (c.Type='equipe' AND (c.Equipe IN (SELECT Equipe FROM NPVB_Appartenance WHERE Joueur='".$pseudo."')
 	                                     OR c.Equipe IN (SELECT Nom FROM NPVB_Equipes WHERE Responsable='".$pseudo."' OR Supleant='".$pseudo."')))
-	            OR (c.Type IN ('bureau','prive') AND c.Id IN (SELECT Conversation FROM NPVB_ConversationMembres WHERE Joueur='".$pseudo."'))
+	            OR (c.Type IN ('bureau','prive') AND c.Id IN (SELECT Conversation FROM NPVB_ConversationMembres WHERE Joueur='".$pseudo."' AND Masque='n'))
 	          )";
 	$res = mysql_query($sql, $sdblink);
 	if ($res && ($row = mysql_fetch_object($res))) return (int)$row->n;
 	return 0;
+}
+
+// Masque une conversation PRIVÉE pour le joueur appelant : elle disparaît de sa
+// liste (NPVB_ConversationMembres.Masque='o') jusqu'à ce qu'un nouveau message y
+// soit posté (cf. demasquerConversation). Aucun message n'est supprimé, l'autre
+// participant n'est pas affecté. Retourne true si effectué, false sinon
+// (conv absente, pas de type 'prive', ou appelant non membre).
+function masquerConversationPourJoueur($Joueur, $conv, $sdblink) {
+	if (!isset($Joueur) || !is_object($Joueur) || !$conv) return false;
+	if ($conv->Type != 'prive') return false;
+	$pseudo = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
+	$cid = (int)$conv->Id;
+	$r = mysql_query("SELECT 1 FROM NPVB_ConversationMembres WHERE Conversation=".$cid." AND Joueur='".$pseudo."' LIMIT 1", $sdblink);
+	if (!$r || mysql_num_rows($r) == 0) return false;
+	mysql_query("UPDATE NPVB_ConversationMembres SET Masque='o' WHERE Conversation=".$cid." AND Joueur='".$pseudo."'", $sdblink);
+	return true;
+}
+
+// Ré-affiche une conversation masquée chez TOUS ses membres. À appeler juste après
+// l'insertion d'un message (web + mobile-api) : un nouveau message doit "réveiller"
+// une conversation privée précédemment masquée.
+function demasquerConversation($convId, $sdblink) {
+	$cid = (int)$convId;
+	if ($cid <= 0) return;
+	mysql_query("UPDATE NPVB_ConversationMembres SET Masque='n' WHERE Conversation=".$cid." AND Masque='o'", $sdblink);
+}
+
+// Le joueur appelant quitte LUI-MÊME un groupe 'bureau' (supprime sa ligne
+// NPVB_ConversationMembres). Ne touche PAS au chemin admin de retrait de membre.
+// Retourne array('ok' => bool, 'err' => string).
+// Règles de rejet :
+//   - conversation inexistante / Id <= 1 / type != 'bureau'
+//   - appelant non membre
+//   - appelant dernier administrateur (rôle global 'admin') encore listé comme
+//     membre du groupe : on lui demande d'en désigner un autre d'abord.
+//     (Les admins gardent de toute façon l'accès via peutAccederConversation,
+//     mais on évite qu'un groupe se retrouve sans référent dans sa liste de membres.)
+function quitterGroupeBureau($Joueur, $conv, $sdblink) {
+	if (!isset($Joueur) || !is_object($Joueur)) return array('ok' => false, 'err' => 'Non connecté');
+	if (!$conv || (int)$conv->Id <= 1 || $conv->Type != 'bureau') {
+		return array('ok' => false, 'err' => 'Action non disponible pour cette conversation');
+	}
+	$pseudo = mysql_real_escape_string($Joueur->Pseudonyme, $sdblink);
+	$cid = (int)$conv->Id;
+	$r = mysql_query("SELECT 1 FROM NPVB_ConversationMembres WHERE Conversation=".$cid." AND Joueur='".$pseudo."' LIMIT 1", $sdblink);
+	if (!$r || mysql_num_rows($r) == 0) {
+		return array('ok' => false, 'err' => "Vous n'êtes pas membre de ce groupe");
+	}
+	if (peut($Joueur, 'gerer_roles')) {
+		$rr = mysql_query("SELECT 1 FROM NPVB_ConversationMembres cm
+		                   JOIN NPVB_JoueurRoles jr ON jr.Pseudonyme = cm.Joueur AND jr.Role = 'admin'
+		                   WHERE cm.Conversation=".$cid." AND cm.Joueur <> '".$pseudo."' LIMIT 1", $sdblink);
+		if (!$rr || mysql_num_rows($rr) == 0) {
+			return array('ok' => false, 'err' => "Vous êtes le dernier administrateur du groupe : ajoutez-en un autre avant de le quitter");
+		}
+	}
+	mysql_query("DELETE FROM NPVB_ConversationMembres WHERE Conversation=".$cid." AND Joueur='".$pseudo."'", $sdblink);
+	return array('ok' => true, 'err' => '');
 }
 ?>

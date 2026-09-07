@@ -173,6 +173,7 @@ if ($conv && isset($_POST['Action']) && $_POST['Action']=="ChatEnvoi" && $peutPo
 	if ($contenu !== '') {
 		$cc = mysql_real_escape_string($contenu, $sdblink);
 		mySql_query("INSERT INTO NPVB_MessagesChat (Conversation, Auteur, Contenu, DateEnvoi) VALUES (".$convId.", '".$pseudoEcap."', '".$cc."', NOW())", $sdblink);
+		demasquerConversation($convId, $sdblink);
 		include_once('push.inc.php');
 		$apercu = (strlen($contenu) > 80) ? substr($contenu, 0, 77).'...' : $contenu;
 		envoyerPush(destinatairesChat($convId, $Joueur->Pseudonyme, $sdblink), $conv->Nom, $apercu, $sdblink, array('conv' => $convId, 'type' => 'chat'));
