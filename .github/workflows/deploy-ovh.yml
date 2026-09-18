@@ -9,10 +9,14 @@ on:
       - main
   workflow_dispatch:
     inputs:
-      dry_run:
-        description: "Essai à blanc (aucune écriture sur le serveur)"
-        type: boolean
-        default: false
+      mode:
+        description: "Mode d'exécution"
+        type: choice
+        default: deploy
+        options:
+          - deploy
+          - dry-run
+          - diagnose
 
 concurrency:
   # Deux déploiements simultanés écriraient par-dessus les mêmes fichiers.
@@ -50,12 +54,31 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Deploy to OVH via rsync
+      - name: Diagnostic serveur
+        # Mode "diagnose" : on ne transfère rien, on regarde juste qui possède quoi
+        # sur la prod. Sert à comprendre un refus d'écriture (mkstemp / Permission
+        # denied) sans avoir à tâtonner en modifiant le déploiement.
+        if: ${{ inputs.mode == 'diagnose' }}
         env:
           SSH_HOST: ${{ secrets.OVH_SSH_HOST }}
           SSH_USER: ${{ secrets.OVH_SSH_USER }}
           DEPLOY_PATH: ${{ secrets.OVH_DEPLOY_PATH }}
-          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes \
+            "$SSH_USER@$SSH_HOST" \
+            "id; echo '--- racine ---'; ls -la '$DEPLOY_PATH' | head -40; \
+             echo '--- sous-dossiers ---'; \
+             ls -ld '$DEPLOY_PATH'/Documents '$DEPLOY_PATH'/Images \
+                    '$DEPLOY_PATH'/app '$DEPLOY_PATH'/mobile-api \
+                    '$DEPLOY_PATH'/.well-known 2>&1"
+
+      - name: Deploy to OVH via rsync
+        if: ${{ inputs.mode != 'diagnose' }}
+        env:
+          SSH_HOST: ${{ secrets.OVH_SSH_HOST }}
+          SSH_USER: ${{ secrets.OVH_SSH_USER }}
+          DEPLOY_PATH: ${{ secrets.OVH_DEPLOY_PATH }}
+          MODE: ${{ inputs.mode }}
         run: |
           set -euo pipefail
 
@@ -63,11 +86,15 @@ jobs:
           # (config.php, _passwrds.inc.php, sessions/, Images/contenu/...).
           # Les supprimer casserait le site. Un fichier retiré du dépôt doit
           # donc être supprimé à la main sur le serveur.
-          opts=(-rlvz --chmod=D755,F644 --exclude-from=.github/rsync-exclude.txt)
+          #
+          # --no-perms : les fichiers existants sur la prod n'appartiennent pas
+          # tous au compte de déploiement ; tenter de leur imposer un mode échoue.
+          # On laisse le serveur appliquer son umask.
+          opts=(-rlvz --no-perms --exclude-from=.github/rsync-exclude.txt)
 
-          if [ "${DRY_RUN:-false}" = "true" ]; then
-            opts+=(--dry-run)
-            echo "::notice::Essai à blanc — aucune écriture sur le serveur"
+          if [ "${MODE:-deploy}" = "dry-run" ]; then
+            opts+=(--dry-run --checksum --itemize-changes)
+            echo "::notice::Essai à blanc — aucune écriture, comparaison par somme de contrôle"
           fi
 
           rsync "${opts[@]}" \
