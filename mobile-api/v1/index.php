@@ -317,7 +317,7 @@ if ($resource == 'members') {
         // GET /members (tous)
         $query = "SELECT Pseudonyme, Nom, Prenom, Sexe, DateNaissance,
                          Profession, Adresse, CPVille, Telephones, Email, Accord, NumeroLicence
-                  FROM NPVB_Joueurs WHERE etat='V' ORDER BY Nom, Prenom";
+                  FROM NPVB_Joueurs WHERE etat='V' ORDER BY Prenom, Nom";
         $result = mysql_query($query);
         $data = array();
 
@@ -888,7 +888,7 @@ if ($resource == 'chat') {
             mysql_close($dblink); exit;
         }
         $ue = mysql_real_escape_string($username);
-        $r = mysql_query("SELECT Pseudonyme, Prenom, Nom FROM NPVB_Joueurs WHERE Etat='V' AND Pseudonyme != '$ue' ORDER BY Nom ASC");
+        $r = mysql_query("SELECT Pseudonyme, Prenom, Nom FROM NPVB_Joueurs WHERE Etat='V' AND Pseudonyme != '$ue' ORDER BY Prenom ASC, Nom ASC");
         $membres = array();
         while ($row = mysql_fetch_object($r)) {
             $nom = trim($row->Prenom.' '.$row->Nom);
@@ -1034,7 +1034,7 @@ if ($resource == 'chat') {
         }
         $r = mysql_query("SELECT j.Pseudonyme, j.Prenom, j.Nom FROM NPVB_ConversationMembres cm
                           JOIN NPVB_Joueurs j ON j.Pseudonyme=cm.Joueur
-                          WHERE cm.Conversation=$sid ORDER BY j.Nom ASC");
+                          WHERE cm.Conversation=$sid ORDER BY j.Prenom ASC, j.Nom ASC");
         $membres = array();
         while ($row = mysql_fetch_object($r)) {
             $nom = trim($row->Prenom.' '.$row->Nom);
