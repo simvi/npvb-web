@@ -111,7 +111,7 @@ if ((($Mode=="Modif")||($Mode=="Nouveau")) && !isset($_POST['GenererLienReset'])
 	if (($Telephone2)&&(!preg_match("/^[0-9]{10}$/", $Telephone2))){$ErreurDonnees["Contact"] .= "Le second numéro de téléphone est incorrect<br/>";}
 	if (($Mobile1)&&(!preg_match("/^[0-9]{10}$/", $Mobile1))){$ErreurDonnees["Contact"] .= "Le premier numéro de mobile est incorrect<br/>";}
 	if (($Mobile2)&&(!preg_match("/^[0-9]{10}$/", $Mobile2))){$ErreurDonnees["Contact"] .= "Le second numéro de mobile est incorrect<br/>";}
-	if (($Email)&&(!preg_match("/^[a-zA-Z0-9.-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9]{2,}$/", $Email)))
+	if (($Email)&&(!EmailValide($Email)))
 		{$ErreurDonnees["Contact"] .= "Le format de l'email est incorrect<br/>";}
 	
 	//Test des Coordonnées

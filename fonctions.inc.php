@@ -291,12 +291,19 @@ function NettoyerTokensExpires() {
 	return mysql_query($query, $sdblink);
 }
 
-// V�rifie si un email est valide (regex PHP 4 compatible)
+// Source de vérité unique pour la validation d'email : tout formulaire qui
+// contrôle un email doit passer par ici, jamais par une regex locale.
+//
+// filter_var plutôt qu'une regex : conforme RFC, rien à maintenir, et il accepte
+// les formes légitimes que les regex maison oublient (underscore, alias "+",
+// sous-domaines). Il refuse bien les formes incomplètes (a@b, test@localhost).
+//
+// À ne pas confondre avec la regex de ConvertirLiensCliquables() plus haut :
+// celle-là *cherche* des emails dans du texte libre (non ancrée, pour
+// preg_replace). Les deux ne sont pas interchangeables.
 function EmailValide($email) {
 	if (!$email) return false;
-
-	// Regex simple mais efficace pour PHP 4
-	return preg_match("/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/", $email);
+	return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 }
 
 // Recherche un membre par pseudonyme OU email
