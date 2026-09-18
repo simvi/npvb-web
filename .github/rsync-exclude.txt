@@ -1,0 +1,33 @@
+# Fichiers versionnés qui ne doivent PAS être servis par nantespvb.fr.
+# Utilisé par .github/workflows/deploy-ovh.yml (rsync --exclude-from).
+#
+# À ne pas confondre avec .gitignore : celui-ci liste ce qui est dans le dépôt
+# mais reste hors du serveur web. .gitignore liste ce qui n'est pas dans le dépôt
+# du tout (config.php, _passwrds.inc.php, sessions/, Images/contenu/...).
+
+# Plomberie Git / CI
+.git/
+.github/
+.gitignore
+
+# Documentation interne
+CLAUDE.md
+README.md
+schemaTables.md.rtf
+mobile-api/DEPLOY.txt
+
+# Schéma de base et scripts d'administration
+scripts/
+
+# Ancien dump de base (2021) — téléchargeable par n'importe qui sinon
+Documents/dump_old_2021.7z
+
+# Exemples de configuration : révèlent la structure des secrets attendus
+config.example.php
+_passwrds.inc.php.example
+
+# phpinfo() expose toute la configuration serveur
+phpinfo.php
+
+# Fragment de code inclus ailleurs, pas une page servable
+admin_reset_insert.txt
